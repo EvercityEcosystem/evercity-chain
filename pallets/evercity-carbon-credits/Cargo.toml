@@ -1,0 +1,60 @@
+[package]
+authors = ["Dima Bushuev diman1ghtly@gmail.com"]
+name = "pallet-evercity-carbon-credits"
+description = 'Pallet for evercity carbon credits'
+version = "0.1.13"
+edition = "2018"
+homepage = 'https://evercity.io'
+license = 'Apache-2.0'
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies.serde]
+optional = true
+features = ['derive']
+version = '1.0.124'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+[dev-dependencies.serde]
+version = '1.0.119'
+
+[dependencies.codec]
+default-features = false
+features = ['derive']
+package = 'parity-scale-codec'
+version = '2.0.0'
+
+[dependencies]
+frame-support = { default-features = false, version = '3.0.0' }
+frame-system = { default-features = false, version = '3.0.0' }
+pallet-timestamp = { default-features = false, version = '3.0.0' }
+sp-api = { default-features = false, version = '3.0.0' }
+sp-runtime = { default-features = false, version = '3.0.0' }
+sp-std = { default-features = false, version = '3.0.0' }
+pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
+pallet-evercity-accounts = { default-features = false, version = '0.1.7', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
+# add filesign with temp branch:
+pallet-evercity-filesign = { default-features = false, version = '0.1.4', git = 'https://github.com/EvercityEcosystem/filesign'}
+pallet-randomness-collective-flip = { default-features = false, version = '3.0.0' }
+
+[dev-dependencies]
+sp-core = {  version = '3.0.0' }
+sp-io = { default-features = false, version = '3.0.0' }
+pallet-balances = { version = '3.0.0' }
+
+[features]
+default = ['std']
+std = [
+    'serde',
+    'codec/std',
+    'sp-api/std',
+    'frame-support/std',
+    'frame-system/std',
+    'pallet-timestamp/std',
+    'pallet-evercity-accounts/std',
+    'pallet-evercity-filesign/std',
+]
+
+[dependencies.fixed-hash]
+version = "0.7"
+default-features = false 
