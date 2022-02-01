@@ -3815,26 +3815,30 @@ dependencies = [
 [[package]]
 name = "pallet-evercity-accounts"
 version = "0.1.7"
-source = "git+https://github.com/EvercityEcosystem/evercity-accounts#a34fc4b5d647e7c7c593f0e780342bdea61d47be"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-core",
+ "sp-io",
 ]
 
 [[package]]
 name = "pallet-evercity-assets"
-version = "0.1.0"
-source = "git+https://github.com/EvercityEcosystem/evercity-assets#2643a30a32ccc7e2e3e05de4a73ab243397d08ab"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "parity-scale-codec",
  "serde",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -3858,11 +3862,11 @@ dependencies = [
 [[package]]
 name = "pallet-evercity-carbon-credits"
 version = "0.1.13"
-source = "git+https://github.com/EvercityEcosystem/carbon-credits#6aa83e51e7fab3f39ad2050fe3ff16588a6dae11"
 dependencies = [
  "fixed-hash",
  "frame-support",
  "frame-system",
+ "pallet-balances",
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
  "pallet-evercity-filesign",
@@ -3871,6 +3875,8 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -3878,7 +3884,6 @@ dependencies = [
 [[package]]
 name = "pallet-evercity-filesign"
 version = "0.1.4"
-source = "git+https://github.com/EvercityEcosystem/filesign#ad6c18551063032d7ceb201d928a97127adaeea4"
 dependencies = [
  "fixed-hash",
  "frame-support",
@@ -3888,6 +3893,7 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
+ "sp-core",
  "sp-io",
 ]
 
