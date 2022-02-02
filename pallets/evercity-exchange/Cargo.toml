@@ -34,7 +34,7 @@ pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'h
 
 pallet-evercity-bonds = { default-features = false, version = '0.1.1', path = '../evercity-bonds'}
 # pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', git = 'https://github.com/EvercityEcosystem/carbon-credits', branch = 'unite_create_file_and_annual_report' }
-pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', git = 'https://github.com/EvercityEcosystem/carbon-credits' }
+pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-cabon-credits' }
 
 [dev-dependencies]
 sp-core = {  version = '3.0.0' }
