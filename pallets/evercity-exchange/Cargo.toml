@@ -1,5 +1,5 @@
 [package]
-name = "pallet-everusd-carbon-credits-swap"
+name = "pallet-evercity-exchange"
 version = "0.1.0"
 edition = "2018"
 
@@ -29,12 +29,11 @@ pallet-timestamp = { default-features = false, version = '3.0.0' }
 sp-api = { default-features = false, version = '3.0.0' }
 sp-runtime = { default-features = false, version = '3.0.0' }
 sp-std = { default-features = false, version = '3.0.0' }
-pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
-# pallet-evercity = { default-features = false, version = '0.1.1', git = 'https://github.com/EvercityEcosystem/smart-sustainable-bond', branch = 'add_carbon_credits' }
 
+pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
 pallet-evercity-bonds = { default-features = false, version = '0.1.1', path = '../evercity-bonds'}
-# pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', git = 'https://github.com/EvercityEcosystem/carbon-credits', branch = 'unite_create_file_and_annual_report' }
 pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-cabon-credits' }
+pallet-assets = { version = '3.0.0' }
 
 [dev-dependencies]
 sp-core = {  version = '3.0.0' }

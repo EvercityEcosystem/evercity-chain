@@ -32,7 +32,8 @@
 //         Eq, 
 //         PartialEq}, 
 // };
-// use pallet_evercity_assets as pallet_assets;
+// use pallet_evercity_assets;
+// use pallet_assets;
 // use exchange::{ExchangeStruct, HolderType};
 // use pallet_evercity::{EverUSDBalance};
 // use everusdasset::{EverUSDAssetMinRequest};
@@ -43,7 +44,6 @@
 
 // pub trait Config: 
 //     frame_system::Config + 
-//     // pallet_evercity_accounts::Config + 
 //     pallet_timestamp::Config + 
 //     pallet_assets::Config + 
 //     pallet_evercity_carbon_credits::Config + 

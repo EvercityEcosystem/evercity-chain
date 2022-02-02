@@ -296,7 +296,20 @@ impl pallet_evercity_accounts::Config for Runtime {
     type Event = Event;
 }
 
-// pub use pallet_assets;
+pub use pallet_assets;
+impl pallet_assets::Config for Runtime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u64;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+    type AssetDepositBase = AssetDepositBase;
+    type AssetDepositPerZombie = AssetDepositPerZombie;
+    type StringLimit = StringLimit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
 
 parameter_types! {
     pub const AssetDepositBase: Balance = 0;
@@ -307,22 +320,7 @@ parameter_types! {
     pub const MetadataDepositPerByte: Balance = 0;
 }
 
-// impl pallet_assets::Config for Runtime {
-//     type Event = Event;
-//     type Balance = Balance;
-//     type AssetId = u64;
-//     type Currency = Balances;
-//     type ForceOrigin = frame_system::EnsureRoot<AccountId>;
-//     type AssetDepositBase = AssetDepositBase;
-//     type AssetDepositPerZombie = AssetDepositPerZombie;
-//     type StringLimit = StringLimit;
-//     type MetadataDepositBase = MetadataDepositBase;
-//     type MetadataDepositPerByte = MetadataDepositPerByte;
-//     type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-// }
-
 use pallet_evercity_assets;
-
 impl pallet_evercity_assets::Config for Runtime {
     type Event = Event;
     type Balance = Balance;
@@ -366,7 +364,7 @@ construct_runtime!(
         TransactionPayment: pallet_transaction_payment::{Module, Storage},
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 
-        // Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
+        Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
 
         // Include the custom logic from the template pallet in the runtime.
         Evercity: pallet_evercity_bonds::{Module, Call, Storage, Config<T>, Event<T>},
@@ -375,7 +373,7 @@ construct_runtime!(
         EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
-        // EvercitySwap: pallet_everusd_carbon_credits_swap::{ Module, Call, Storage, Event<T> },
+        // EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
     }
 );
 
