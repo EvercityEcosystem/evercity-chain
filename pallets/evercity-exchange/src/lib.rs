@@ -1,3 +1,78 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
+use sp_std::{fmt::Debug, prelude::*};
+use sp_runtime::{
+	RuntimeDebug,
+	traits::{
+		AtLeast32BitUnsigned, Zero, StaticLookup, Saturating, CheckedSub, CheckedAdd,
+	}
+};
+use codec::{Encode, Decode, HasCompact};
+use frame_support::{
+	ensure,
+	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
+	dispatch::DispatchError,
+};
+
+pub use pallet::*;
+
+
+#[frame_support::pallet]
+pub mod pallet {
+    use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
+		pallet_prelude::*,
+	};
+	use frame_system::pallet_prelude::*;
+	use super::*;
+
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
+	pub struct Pallet<T>(_);
+
+
+    #[pallet::config]
+	/// The module configuration trait.
+	pub trait Config: frame_system::Config {
+		/// The overarching event type.
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+	}
+
+    #[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+
+
+    #[pallet::call]
+	impl<T: Config> Pallet<T> {
+
+    }
+
+    #[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
+	pub enum Event<T: Config> {
+
+    }
+
+    #[deprecated(note = "use `Event` instead")]
+	pub type RawEvent<T> = Event<T>;
+
+    #[pallet::error]
+	pub enum Error<T> {
+        
+    }
+
+}
+
+
+
+
+
+
+
 // #![allow(clippy::unused_unit)]
 // #![cfg_attr(not(feature = "std"), no_std)]
 

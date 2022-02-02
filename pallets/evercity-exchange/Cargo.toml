@@ -32,7 +32,7 @@ sp-std = { default-features = false, version = '3.0.0' }
 
 pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
 pallet-evercity-bonds = { default-features = false, version = '0.1.1', path = '../evercity-bonds'}
-pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-cabon-credits' }
+pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-carbon-credits' }
 pallet-assets = { version = '3.0.0' }
 
 [dev-dependencies]
