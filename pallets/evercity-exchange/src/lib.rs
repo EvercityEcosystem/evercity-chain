@@ -53,6 +53,19 @@ pub mod pallet {
     #[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
+	#[pallet::storage]
+	/// Details of a asset-carbon crdits trade request
+	pub(super) type TradeRequestById<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		TradeRequestId,
+		Option<TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>>
+	>;
+
+	#[pallet::storage]
+	/// Id of last trade request
+	pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
+
 
     #[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -88,7 +101,11 @@ pub mod pallet {
 					carbon_credits_id,
 					approve_mask
 				);
-
+			
+			let new_id = match LastTradeRequestId::<T>::get().checked_add(1) {
+                Some(id) => id,
+                None => todo!()//return Err(Error::<T>::ExchangeIdOwerflow.into()),
+            };
 
 			// ensure!(asset_count <= asset_bal, todo!());
 			
@@ -111,18 +128,7 @@ pub mod pallet {
         
     }
 
-	#[pallet::storage]
-	/// Details of a asset-carbon crdits trade request
-	pub(super) type TradeRequestById<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		TradeRequestId,
-		Option<TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>>
-	>;
 
-	#[pallet::storage]
-	/// Id of last trade request
-	pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId>;
 }
 
 
