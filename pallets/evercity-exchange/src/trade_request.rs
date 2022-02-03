@@ -1,7 +1,12 @@
-// use frame_support::{
-//     codec::{Decode, Encode},
-//     sp_runtime::RuntimeDebug,
-// };
+use frame_support::{
+    codec::{Decode, Encode},
+    sp_runtime::RuntimeDebug,
+};
+
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
+pub struct TradeRequest {
+
+}
 
 // #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 // pub struct ExchangeStruct<AccountId, AssetId, AssetCount, EverUsdCount> {

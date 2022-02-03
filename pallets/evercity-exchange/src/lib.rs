@@ -3,6 +3,8 @@
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+mod trade_request;
+
 use sp_std::{fmt::Debug, prelude::*};
 use sp_runtime::{
 	RuntimeDebug,
@@ -64,6 +66,23 @@ pub mod pallet {
 	pub enum Error<T> {
         
     }
+
+	pub type TradeRequestId = u128;
+
+	#[pallet::storage]
+	/// Details of an asset.
+	pub(super) type TradeRequestById<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		TradeRequestId,
+		// AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>
+		trade_request::TradeRequest
+	>;
+
+	//         ExchangeById
+//             get(fn exchange_by_id):
+//             map hasher(blake2_128_concat) ExchangeId => Option<ExchangeStruct<T::AccountId, AssetId<T>, T::Balance, EverUSDBalance>>;    
+//         LastID: ExchangeId;
 
 }
 
