@@ -75,6 +75,8 @@ pub mod pallet {
         InsufficientAssetBalance,
         InsufficientCarbonCreditsBalance,
 		ExchangeIdOwerflow,
+		InvalidTradeRequestState,
+		BadHolder
     }
 
 	#[pallet::event]
@@ -82,13 +84,15 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
         /// \[AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
-        CarbonCreditsTradeRequestCreated(T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, <T as pallet_evercity_assets::Config>::AssetId),
+        CarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, <T as pallet_evercity_assets::Config>::AssetId),
     }
+	#[deprecated(note = "use `Event` instead")]
+	pub type RawEvent<T> = Event<T>;
 
 
     #[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(10000)]
+		#[pallet::weight(10_000)]
 		pub fn create_trade_request(
 			origin: OriginFor<T>,
 			partner_trader: T::AccountId, 
@@ -114,29 +118,49 @@ pub mod pallet {
 
 			let trate_request = 
 				TradeRequest::new(
-					asset_holder, 
-					carbon_credits_holder, 
+					asset_holder.clone(), 
+					carbon_credits_holder.clone(), 
 					asset_count, 
 					asset_id, 
 					carbon_credits_count, 
 					carbon_credits_id,
 					approve_mask
-				);
-			
+			);
 			let new_id = match LastTradeRequestId::<T>::get().checked_add(1) {
                 Some(id) => id,
                 None => return Err(Error::<T>::ExchangeIdOwerflow.into()),
             };
 			TradeRequestById::<T>::insert(new_id, trate_request);
-			
+			Self::deposit_event(Event::CarbonCreditsTradeRequestCreated(new_id, asset_holder, carbon_credits_holder, asset_id, carbon_credits_id));
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn accept_trade_request(origin: OriginFor<T>, trade_request_id: TradeRequestId, holder_type: HolderType) -> DispatchResultWithPostInfo { 
+			let caller = ensure_signed(origin)?;
+			TradeRequestById::<T>::try_mutate(trade_request_id, |trade_request_opt| -> DispatchResultWithPostInfo {
+				match trade_request_opt {
+					None => todo!(),
+					Some(trade_request) => {
+						match holder_type {
+							HolderType::AssetHolder => {
+								ensure!(trade_request.approved == trade_request::CARBON_CREDITS_HOLDER_APPROVED, Error::<T>::InvalidTradeRequestState);
+								ensure!(caller == trade_request.asset_holder, Error::<T>::BadHolder);
+
+							},
+							HolderType::CarbonCreditsHolder => {
+								ensure!(trade_request.approved == trade_request::ASSET_HOLDER_APPROVED, Error::<T>::InvalidTradeRequestState);
+								ensure!(caller == trade_request.carbon_credits_holder, Error::<T>::BadHolder);
+							},
+						}
+
+					}
+				}
+				Ok(().into())
+			})?;
 			Ok(().into())
 		}
     }
-
-
-
-    #[deprecated(note = "use `Event` instead")]
-	pub type RawEvent<T> = Event<T>;
 }
 
 
