@@ -91,7 +91,7 @@ pub mod pallet {
 
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> where T: pallet_evercity_carbon_credits::Config + pallet_evercity_assets::Config {
 		#[pallet::weight(10_000)]
 		pub fn create_trade_request(
 			origin: OriginFor<T>,
@@ -154,25 +154,28 @@ pub mod pallet {
 							},
 						}
 
-							let current_asset_balance = pallet_assets::Module::<T>::balance(trade_request.asset_id, trade_request.asset_holder.clone());
-                            let carbon_credits_balance = 
-								pallet_evercity_assets::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
+						let current_asset_balance = pallet_assets::Module::<T>::balance(trade_request.asset_id, trade_request.asset_holder.clone());
+						let carbon_credits_balance = 
+							pallet_evercity_assets::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
 
-                            if trade_request.asset_count > current_asset_balance {
-                                return Err(Error::<T>::InsufficientAssetBalance.into());
-                            }
-                            if trade_request.carbon_credits_count > carbon_credits_balance  {
-                                return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
-                            }
+						if trade_request.asset_count > current_asset_balance {
+							return Err(Error::<T>::InsufficientAssetBalance.into());
+						}
+						if trade_request.carbon_credits_count > carbon_credits_balance  {
+							return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
+						}
 
-                            // transfer carbon credits
-                            let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
-                            pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
-                                    cc_holder_origin, 
-                                    trade_request.carbon_credits_id, 
-                                    trade_request.asset_holder.clone(), 
-                                    trade_request.carbon_credits_count
-                            )?;
+						// transfer carbon credits
+						let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
+
+						let lol = pallet_evercity_carbon_credits::Module::<T>::is_passport_correct(trade_request.carbon_credits_id);
+
+                            // pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+                            //         cc_holder_origin, 
+                            //         trade_request.carbon_credits_id, 
+                            //         trade_request.asset_holder.clone(), 
+                            //         trade_request.carbon_credits_count
+                            // )?;
 							// let asset_holder_source = 
 							// 	<T::Lookup as StaticLookup>::unlookup(trade_request.asset_holder.clone());
 							// let call = 
