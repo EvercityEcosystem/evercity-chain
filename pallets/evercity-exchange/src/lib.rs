@@ -2,7 +2,6 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
 mod trade_request;
 
 use sp_std::{fmt::Debug, prelude::*};
@@ -32,7 +31,7 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
-	use crate::trade_request::TradeRequest;
+	use crate::trade_request::{TradeRequest, HolderType, CARBON_CREDITS_HOLDER_APPROVED, ASSET_HOLDER_APPROVED};
 	use super::*;
 
 	#[pallet::pallet]
@@ -57,7 +56,44 @@ pub mod pallet {
 
     #[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(10000)]
+		pub fn create_trade_request(
+			origin: OriginFor<T>,
+			partner_trader: T::AccountId, 
+			asset_id: AssetId<T>,
+			carbon_credits_id: CarbonCreditsId<T>,
+			asset_count: <T as pallet_assets::Config>::Balance,
+			carbon_credits_count: <T as pallet_evercity_assets::Config>::Balance,
+			holder_type: HolderType,
+		) -> DispatchResultWithPostInfo {
+			let (asset_holder, carbon_credits_holder, approve_mask) = match holder_type {
+				HolderType::CarbonCreditsHolder => {
+					(partner_trader, ensure_signed(origin)?, CARBON_CREDITS_HOLDER_APPROVED)
+				},
+				HolderType::AssetHolder => {
+					(ensure_signed(origin)?, partner_trader, ASSET_HOLDER_APPROVED)
+				}
+			};
 
+            let asset_balance = pallet_assets::Module::<T>::balance(asset_id, asset_holder.clone());
+			let current_carbon_credits_balace = pallet_evercity_assets::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
+
+			let trate_request = 
+				TradeRequest::new(
+					asset_holder, 
+					carbon_credits_holder, 
+					asset_count, 
+					asset_id, 
+					carbon_credits_count, 
+					carbon_credits_id,
+					approve_mask
+				);
+
+
+			// ensure!(asset_count <= asset_bal, todo!());
+			
+			Ok(().into())
+		}
     }
 
     #[pallet::event]
@@ -74,8 +110,6 @@ pub mod pallet {
 	pub enum Error<T> {
         
     }
-
-
 
 	#[pallet::storage]
 	/// Details of a asset-carbon crdits trade request

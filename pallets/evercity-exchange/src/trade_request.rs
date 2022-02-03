@@ -15,26 +15,30 @@ pub struct TradeRequest<AccountId, AssetId, CarbonCreditId, AssetCount, CarbonCr
 }
 
 
-// impl<AccountId, AssetId, AssetCount, EverUsdCount> ExchangeStruct<AccountId, AssetId, AssetCount, EverUsdCount> {
-//     pub fn new(ever_usd_holder: AccountId,
-//         carbon_credits_holder: AccountId,
-//         ever_usd_count: EverUsdCount,
-//         carbon_credits_asset_id: AssetId,
-//         carbon_credits_count: AssetCount,
-//         approved: ApproveMask,
-//     ) -> Self {
-//             Self {
-//                 ever_usd_holder,
-//                 carbon_credits_holder,
-//                 ever_usd_count,
-//                 carbon_credits_asset_id,
-//                 carbon_credits_count,
-//                 approved,
-//             }
-//     }
-// }
+impl<AccountId, AssetId, CarbonCreditId, AssetCount, CarbonCreditsCount> TradeRequest<AccountId, AssetId, CarbonCreditId, AssetCount, CarbonCreditsCount> {
+    pub fn new(
+        asset_holder: AccountId,
+        carbon_credits_holder: AccountId,
+        asset_count: AssetCount,
+        asset_id: AssetId,
+        carbon_credits_count: CarbonCreditsCount,
+        carbon_credits_id: CarbonCreditId,
+        approved: ApproveMask,
+    ) -> Self {
+            Self {
+                asset_holder,
+                carbon_credits_holder,
+                asset_count,
+                asset_id,
+                carbon_credits_count,
+                carbon_credits_id,
+                approved,
+            }
+    }
+}
 
 pub type ApproveMask = u8;
+pub const NO_APPROVES: ApproveMask = 0;
 pub const ASSET_HOLDER_APPROVED: ApproveMask = 1;
 pub const CARBON_CREDITS_HOLDER_APPROVED: ApproveMask = 2;
 
