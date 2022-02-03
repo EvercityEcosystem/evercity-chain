@@ -154,6 +154,34 @@ pub mod pallet {
 							},
 						}
 
+							let current_asset_balance = pallet_assets::Module::<T>::balance(trade_request.asset_id, trade_request.asset_holder.clone());
+                            let carbon_credits_balance = 
+								pallet_evercity_assets::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
+
+                            if trade_request.asset_count > current_asset_balance {
+                                return Err(Error::<T>::InsufficientAssetBalance.into());
+                            }
+                            if trade_request.carbon_credits_count > carbon_credits_balance  {
+                                return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
+                            }
+
+                            // transfer carbon credits
+                            let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
+                            pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+                                    cc_holder_origin, 
+                                    trade_request.carbon_credits_id, 
+                                    trade_request.asset_holder.clone(), 
+                                    trade_request.carbon_credits_count
+                            )?;
+							// let asset_holder_source = 
+							// 	<T::Lookup as StaticLookup>::unlookup(trade_request.asset_holder.clone());
+							// let call = 
+							// 	pallet_evercity_assets::Call::<T>::transfer(trade_request.carbon_credits_id, asset_holder_source, trade_request.carbon_credits_count);
+							// let result = transfer_call.dispatch_bypass_filter(origin);
+
+                            // transfer everusd then
+                            // pallet_evercity::Module::<T>::transfer_everusd(&exchange.ever_usd_holder, &exchange.carbon_credits_holder, exchange.ever_usd_count)?;
+
 					}
 				}
 				Ok(().into())
