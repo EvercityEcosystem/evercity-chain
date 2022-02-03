@@ -4,19 +4,16 @@ use frame_support::{
 };
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
-pub struct TradeRequest {
-
+pub struct TradeRequest<AccountId, AssetId, CarbonCreditId, AssetCount, CarbonCreditsCount> {
+    pub asset_holder: AccountId,
+    pub carbon_credits_holder: AccountId,
+    pub asset_count: AssetCount,
+    pub asset_id: AssetId,
+    pub carbon_credits_count: CarbonCreditsCount,
+    pub carbon_credits_id: CarbonCreditId,
+    pub approved: ApproveMask,
 }
 
-// #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
-// pub struct ExchangeStruct<AccountId, AssetId, AssetCount, EverUsdCount> {
-//     pub ever_usd_holder: AccountId,
-//     pub carbon_credits_holder: AccountId,
-//     pub ever_usd_count: EverUsdCount,
-//     pub carbon_credits_count: AssetCount,
-//     pub carbon_credits_asset_id: AssetId,
-//     pub approved: ApproveMask,
-// }
 
 // impl<AccountId, AssetId, AssetCount, EverUsdCount> ExchangeStruct<AccountId, AssetId, AssetCount, EverUsdCount> {
 //     pub fn new(ever_usd_holder: AccountId,
@@ -37,12 +34,12 @@ pub struct TradeRequest {
 //     }
 // }
 
-// pub type ApproveMask = u8;
-// pub const EVERUSD_HOLDER_APPROVED: ApproveMask = 1;
-// pub const CARBON_CREDITS_HOLDER_APPROVED: ApproveMask = 2;
+pub type ApproveMask = u8;
+pub const ASSET_HOLDER_APPROVED: ApproveMask = 1;
+pub const CARBON_CREDITS_HOLDER_APPROVED: ApproveMask = 2;
 
-// #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
-// pub enum HolderType {
-//     EverUSDHolder,
-//     CarbonCreditsHolder
-// }
+#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
+pub enum HolderType {
+    AssetHolder,
+    CarbonCreditsHolder
+}

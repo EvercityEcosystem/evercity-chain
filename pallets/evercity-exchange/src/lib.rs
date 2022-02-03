@@ -21,6 +21,9 @@ use frame_support::{
 
 pub use pallet::*;
 
+pub type TradeRequestId = u128;
+pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
+pub type CarbonCreditsId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -29,6 +32,7 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
+	use crate::trade_request::TradeRequest;
 	use super::*;
 
 	#[pallet::pallet]
@@ -38,8 +42,12 @@ pub mod pallet {
 
     #[pallet::config]
 	/// The module configuration trait.
-	pub trait Config: frame_system::Config {
-		/// The overarching event type.
+	pub trait Config: 
+		frame_system::Config +
+		pallet_assets::Config + 
+		pallet_evercity_assets::Config + 
+		pallet_evercity_carbon_credits::Config + 
+	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
@@ -67,23 +75,20 @@ pub mod pallet {
         
     }
 
-	pub type TradeRequestId = u128;
+
 
 	#[pallet::storage]
-	/// Details of an asset.
+	/// Details of a asset-carbon crdits trade request
 	pub(super) type TradeRequestById<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		TradeRequestId,
-		// AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>
-		trade_request::TradeRequest
+		Option<TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>>
 	>;
 
-	//         ExchangeById
-//             get(fn exchange_by_id):
-//             map hasher(blake2_128_concat) ExchangeId => Option<ExchangeStruct<T::AccountId, AssetId<T>, T::Balance, EverUSDBalance>>;    
-//         LastID: ExchangeId;
-
+	#[pallet::storage]
+	/// Id of last trade request
+	pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId>;
 }
 
 
