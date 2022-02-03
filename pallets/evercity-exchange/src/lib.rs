@@ -53,18 +53,37 @@ pub mod pallet {
     #[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
+	// pallet storages:
+
 	#[pallet::storage]
 	/// Details of a asset-carbon crdits trade request
 	pub(super) type TradeRequestById<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		TradeRequestId,
-		Option<TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>>
+		TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>, 
+		OptionQuery
 	>;
 
 	#[pallet::storage]
 	/// Id of last trade request
 	pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
+
+
+	#[pallet::error]
+	pub enum Error<T> {
+        InsufficientAssetBalance,
+        InsufficientCarbonCreditsBalance,
+		ExchangeIdOwerflow,
+    }
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
+	pub enum Event<T: Config> {
+        /// \[AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
+        CarbonCreditsTradeRequestCreated(T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, <T as pallet_evercity_assets::Config>::AssetId),
+    }
 
 
     #[pallet::call]
@@ -89,7 +108,9 @@ pub mod pallet {
 			};
 
             let asset_balance = pallet_assets::Module::<T>::balance(asset_id, asset_holder.clone());
+			ensure!(asset_balance >= asset_count, Error::<T>::InsufficientAssetBalance);
 			let current_carbon_credits_balace = pallet_evercity_assets::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
+			ensure!(current_carbon_credits_balace >= carbon_credits_count, Error::<T>::InsufficientCarbonCreditsBalance);
 
 			let trate_request = 
 				TradeRequest::new(
@@ -104,31 +125,18 @@ pub mod pallet {
 			
 			let new_id = match LastTradeRequestId::<T>::get().checked_add(1) {
                 Some(id) => id,
-                None => todo!()//return Err(Error::<T>::ExchangeIdOwerflow.into()),
+                None => return Err(Error::<T>::ExchangeIdOwerflow.into()),
             };
-
-			// ensure!(asset_count <= asset_bal, todo!());
+			TradeRequestById::<T>::insert(new_id, trate_request);
 			
 			Ok(().into())
 		}
     }
 
-    #[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
-	pub enum Event<T: Config> {
 
-    }
 
     #[deprecated(note = "use `Event` instead")]
 	pub type RawEvent<T> = Event<T>;
-
-    #[pallet::error]
-	pub enum Error<T> {
-        
-    }
-
-
 }
 
 
