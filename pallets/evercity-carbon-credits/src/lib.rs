@@ -1019,4 +1019,14 @@ impl<T: Config> Module<T> {
     pub fn get_certificates_by_account(account: T::AccountId) -> Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::Balance>> {
         BurnCertificates::<T>::get(account)
     }
+
+    #[cfg(test)]
+    pub fn create_test_carbon_credits(account_id: T::AccountId, cc_amount: T::Balance, asset_id: T::AssetId, fake_project_id: ProjectId) -> DispatchResult {
+        let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
+        let mint_call = pallet_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
+        let origin = frame_system::RawOrigin::Signed(account_id).into();
+        let _ = mint_call.dispatch_bypass_filter(origin);
+        <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
+        Ok(())
+    }
 }

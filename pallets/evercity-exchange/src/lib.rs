@@ -1,11 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
 mod trade_request;
 
 #[cfg(test)]
 mod mock;
+
+#[cfg(test)]
+mod tests;
 
 use sp_std::{fmt::Debug, prelude::*};
 use sp_runtime::{
@@ -190,6 +191,24 @@ pub mod pallet {
 			Ok(().into())
 		}
     }
+
+	impl<T: Config> Pallet<T> {
+		#[cfg(test)]
+		pub fn create_and_mint_test_asset(
+			account_id: T::AccountId, 
+			asset_id: AssetId<T>, 
+			min_balance: <T as pallet_assets::Config>::Balance, 
+			balance: <T as pallet_assets::Config>::Balance
+		) {
+			let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
+			let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
+			let create_call = pallet_assets::Call::<T>::create(asset_id, carbon_credits_holder_source.clone(), 0, min_balance);
+			let create_res = create_call.dispatch_bypass_filter(cc_holder_origin);
+			let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
+			let mint_call = pallet_assets::Call::<T>::mint(asset_id, carbon_credits_holder_source, balance);
+			let mint_res = mint_call.dispatch_bypass_filter(cc_holder_origin);
+		}
+	}
 }
 
 
