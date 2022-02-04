@@ -30,7 +30,7 @@ pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 pub mod pallet {
     use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*,
+		pallet_prelude::*, traits::UnfilteredDispatchable,
 	};
 	use frame_system::pallet_prelude::*;
 	use crate::trade_request::{TradeRequest, HolderType, CARBON_CREDITS_HOLDER_APPROVED, ASSET_HOLDER_APPROVED};
@@ -169,23 +169,17 @@ pub mod pallet {
 
 						// transfer carbon credits
 						let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
-
-						// let lol = pallet_evercity_carbon_credits::Module::<T>::is_passport_correct(trade_request.carbon_credits_id);
-
 						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 								cc_holder_origin, 
 								trade_request.carbon_credits_id, 
 								trade_request.asset_holder.clone(), 
 								trade_request.carbon_credits_count
 						)?;
-						// let asset_holder_source = 
-						// 	<T::Lookup as StaticLookup>::unlookup(trade_request.asset_holder.clone());
-						// let call = 
-						// 	pallet_evercity_assets::Call::<T>::transfer(trade_request.carbon_credits_id, asset_holder_source, trade_request.carbon_credits_count);
-						// let result = transfer_call.dispatch_bypass_filter(origin);
+						let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(trade_request.carbon_credits_holder.clone());
+						let asset_transfer_call = pallet_assets::Call::<T>::transfer(trade_request.asset_id, carbon_credits_holder_source, trade_request.asset_count);
+						let asset_holder_origin = frame_system::RawOrigin::Signed(trade_request.asset_holder.clone()).into();
+						asset_transfer_call.dispatch_bypass_filter(asset_holder_origin)?;
 
-						//transfer everusd then
-						// pallet_evercity::Module::<T>::transfer_everusd(&exchange.ever_usd_holder, &exchange.carbon_credits_holder, exchange.ever_usd_count)?;
 
 					}
 				}
