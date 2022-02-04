@@ -4,6 +4,9 @@
 mod benchmarking;
 mod trade_request;
 
+#[cfg(test)]
+mod mock;
+
 use sp_std::{fmt::Debug, prelude::*};
 use sp_runtime::{
 	RuntimeDebug,
@@ -48,6 +51,7 @@ pub mod pallet {
 		// pallet_evercity_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 	{
+		// type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 

@@ -1402,12 +1402,12 @@ dependencies = [
  "pallet-assets",
  "pallet-aura",
  "pallet-balances",
- "pallet-evercity-accounts 0.1.7",
+ "pallet-evercity-accounts",
  "pallet-evercity-assets",
  "pallet-evercity-bonds",
  "pallet-evercity-carbon-credits",
  "pallet-evercity-exchange",
- "pallet-evercity-filesign 0.1.4",
+ "pallet-evercity-filesign",
  "pallet-evercity-transfer",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
@@ -3818,18 +3818,6 @@ dependencies = [
 [[package]]
 name = "pallet-evercity-accounts"
 version = "0.1.7"
-source = "git+https://github.com/EvercityEcosystem/evercity-accounts#a34fc4b5d647e7c7c593f0e780342bdea61d47be"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "sp-api",
-]
-
-[[package]]
-name = "pallet-evercity-accounts"
-version = "0.1.7"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3882,9 +3870,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-evercity-accounts 0.1.7",
+ "pallet-evercity-accounts",
  "pallet-evercity-assets",
- "pallet-evercity-filesign 0.1.4",
+ "pallet-evercity-filesign",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -3904,9 +3892,12 @@ dependencies = [
  "frame-system",
  "pallet-assets",
  "pallet-balances",
- "pallet-evercity-accounts 0.1.7 (git+https://github.com/EvercityEcosystem/evercity-accounts)",
+ "pallet-evercity-accounts",
+ "pallet-evercity-assets",
  "pallet-evercity-carbon-credits",
- "pallet-evercity-filesign 0.1.4 (git+https://github.com/EvercityEcosystem/filesign)",
+ "pallet-evercity-filesign",
+ "pallet-randomness-collective-flip",
+ "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-api",
@@ -3914,21 +3905,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-evercity-filesign"
-version = "0.1.4"
-source = "git+https://github.com/EvercityEcosystem/filesign#ad6c18551063032d7ceb201d928a97127adaeea4"
-dependencies = [
- "fixed-hash",
- "frame-support",
- "frame-system",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
- "parity-scale-codec",
- "sp-api",
- "sp-io",
 ]
 
 [[package]]

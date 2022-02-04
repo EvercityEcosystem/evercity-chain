@@ -6,9 +6,8 @@ use frame_support::sp_runtime::{
 };
 use frame_support::parameter_types;
 use sp_core::H256;
-use crate as pallet_carbon_credits;
+use crate as pallet_evercity_exchange;
 use pallet_evercity_accounts::accounts::*;
-pub use pallet_evercity_assets as pallet_assets;
 
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
@@ -23,14 +22,20 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{ Module, Call, Config, Storage, Event<T> },
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		CarbonCredits: pallet_carbon_credits::{ Module, Call, Storage, Event<T> },
+		CarbonCredits: pallet_evercity_carbon_credits::{ Module, Call, Storage, Event<T> },
 		EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Event<T> },
 		Timestamp: pallet_timestamp::{ Module, Call, Storage, Inherent},
+        EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
         Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+        EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
 	}
 );
+
+impl pallet_evercity_exchange::Config for TestRuntime {
+    type Event = Event;
+}
 
 type AccountId = u64;
 
@@ -59,7 +64,7 @@ impl frame_system::Config for TestRuntime {
 	type SS58Prefix = ();
 }
 
-impl pallet_carbon_credits::Config for TestRuntime {
+impl pallet_evercity_carbon_credits::Config for TestRuntime {
 	type Event = Event;
 }
 
@@ -108,6 +113,20 @@ parameter_types! {
 }
 
 impl pallet_assets::Config for TestRuntime {
+    type Event = Event;
+    type Balance = Balance;
+    type AssetId = u32;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureSigned<AccountId>;
+    type AssetDepositBase = AssetDeposit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type AssetDepositPerZombie = AssetDeposit;
+    type StringLimit = StringLimit;
+    type WeightInfo = ();
+}
+
+impl pallet_evercity_assets::Config for TestRuntime {
     type Event = Event;
     type Balance = Balance;
     type AssetId = u32;
