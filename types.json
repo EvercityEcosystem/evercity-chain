@@ -205,10 +205,22 @@
   },
   "HolderType": {
     "_enum": [
-      "EverUSDHolder",
+      "AssetHolder",
       "CarbonCreditsHolder"
     ]
   },
   "ExchangeId": "u128",
-  "EverUSDAssetMintRequestId": "u128"
+  "EverUSDAssetMintRequestId": "u128",
+  "TradeRequest": {
+    "asset_holder": "AccountId",
+    "carbon_credits_holder": "AccountId",
+    "asset_count": "Balance",
+    "asset_id": "AssetId",
+    "carbon_credits_count": "Balance",
+    "carbon_credits_id": "AssetId",
+    "approved": "ApproveMask"
+  },
+  "TradeRequestId": "u128",
+  "CarbonCreditsId": "AssetId",
+  "CarbonCreditsBalance": "Balance"
 }

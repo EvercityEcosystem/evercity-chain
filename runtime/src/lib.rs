@@ -336,16 +336,15 @@ impl pallet_evercity_assets::Config for Runtime {
 }
 
 use pallet_evercity_filesign;
-
 impl pallet_evercity_filesign::Config for Runtime {
     type Event = Event;
     type Randomness = RandomnessCollectiveFlip;
 }
 
-// use pallet_everusd_carbon_credits_swap;
-// impl pallet_everusd_carbon_credits_swap::Config for Runtime {
-//     type Event = Event;
-// }
+use pallet_evercity_exchange;
+impl pallet_evercity_exchange::Config for Runtime {
+    type Event = Event;
+}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 
@@ -366,14 +365,14 @@ construct_runtime!(
 
         Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
 
-        // Include the custom logic from the template pallet in the runtime.
+        // Evercity pallets:
         Evercity: pallet_evercity_bonds::{Module, Call, Storage, Config<T>, Event<T>},
         EvercityTransfer: pallet_evercity_transfer::{Module, Call, Storage, Event<T>},
         EvercityCarbonCredits: pallet_evercity_carbon_credits::{ Module, Call, Storage, Event<T>},
         EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
-        // EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
+        EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
     }
 );
 

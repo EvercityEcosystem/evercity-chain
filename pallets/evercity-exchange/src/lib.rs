@@ -24,7 +24,6 @@ pub type TradeRequestId = u128;
 pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
 pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
-// pub type CarbonCreditsId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -46,7 +45,7 @@ pub mod pallet {
 	pub trait Config: 
 		frame_system::Config +
 		pallet_assets::Config + 
-		pallet_evercity_assets::Config + 
+		// pallet_evercity_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -71,7 +70,6 @@ pub mod pallet {
 	/// Id of last trade request
 	pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
 
-
 	#[pallet::error]
 	pub enum Error<T> {
         InsufficientAssetBalance,
@@ -87,13 +85,15 @@ pub mod pallet {
 	pub enum Event<T: Config> {
         /// \[AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
         CarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, CarbonCreditsId<T>),
+		/// \[AssetHolder\]
+        CarbonCreditsTradeRequestAccepted(TradeRequestId),
     }
+	
 	#[deprecated(note = "use `Event` instead")]
 	pub type RawEvent<T> = Event<T>;
 
-
     #[pallet::call]
-	impl<T: Config> Pallet<T> where T: pallet_evercity_carbon_credits::Config + pallet_evercity_assets::Config {
+	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn create_trade_request(
 			origin: OriginFor<T>,
@@ -115,8 +115,8 @@ pub mod pallet {
 
             let asset_balance = pallet_assets::Module::<T>::balance(asset_id, asset_holder.clone());
 			ensure!(asset_balance >= asset_count, Error::<T>::InsufficientAssetBalance);
-			let current_carbon_credits_balace = pallet_evercity_carbon_credits::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
-			ensure!(current_carbon_credits_balace >= carbon_credits_count, Error::<T>::InsufficientCarbonCreditsBalance);
+			let carbon_credits_balance = pallet_evercity_carbon_credits::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
+			ensure!(carbon_credits_balance >= carbon_credits_count, Error::<T>::InsufficientCarbonCreditsBalance);
 
 			let trate_request = 
 				TradeRequest::new(
@@ -179,8 +179,6 @@ pub mod pallet {
 						let asset_transfer_call = pallet_assets::Call::<T>::transfer(trade_request.asset_id, carbon_credits_holder_source, trade_request.asset_count);
 						let asset_holder_origin = frame_system::RawOrigin::Signed(trade_request.asset_holder.clone()).into();
 						asset_transfer_call.dispatch_bypass_filter(asset_holder_origin)?;
-
-
 					}
 				}
 				Ok(().into())

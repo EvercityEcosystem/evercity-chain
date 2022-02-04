@@ -1403,9 +1403,10 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-evercity-accounts 0.1.7",
- "pallet-evercity-assets 0.1.1",
+ "pallet-evercity-assets",
  "pallet-evercity-bonds",
  "pallet-evercity-carbon-credits",
+ "pallet-evercity-exchange",
  "pallet-evercity-filesign 0.1.4",
  "pallet-evercity-transfer",
  "pallet-grandpa",
@@ -3844,18 +3845,6 @@ dependencies = [
 [[package]]
 name = "pallet-evercity-assets"
 version = "0.1.1"
-source = "git+https://github.com/EvercityEcosystem/evercity-assets#3132d71ca0a392da476861170d4e51808e386ff3"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-evercity-assets"
-version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -3894,7 +3883,7 @@ dependencies = [
  "frame-system",
  "pallet-balances",
  "pallet-evercity-accounts 0.1.7",
- "pallet-evercity-assets 0.1.1",
+ "pallet-evercity-assets",
  "pallet-evercity-filesign 0.1.4",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -3916,11 +3905,8 @@ dependencies = [
  "pallet-assets",
  "pallet-balances",
  "pallet-evercity-accounts 0.1.7 (git+https://github.com/EvercityEcosystem/evercity-accounts)",
- "pallet-evercity-assets 0.1.1 (git+https://github.com/EvercityEcosystem/evercity-assets)",
- "pallet-evercity-bonds",
  "pallet-evercity-carbon-credits",
  "pallet-evercity-filesign 0.1.4 (git+https://github.com/EvercityEcosystem/filesign)",
- "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-api",
