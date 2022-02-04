@@ -58,7 +58,8 @@ pub trait Config:
         type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
-type AssetId<T> = <T as pallet_assets::Config>::AssetId;
+pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
+pub type Balance<T> = <T as pallet_assets::Config>::Balance;
 
 // Pallet Storage
 decl_storage! {
@@ -998,6 +999,10 @@ impl<T: Config> Module<T> {
     fn is_correct_annual_report_signer(annual_report: &annual_report::AnnualReportStruct<T::AccountId, T, T::Balance>, account: T::AccountId, role: RoleMask) -> bool {
         pallet_evercity_accounts::Module::<T>::account_is_selected_role(&account, role) &&
         annual_report.is_required_signer((account, role))
+    }
+
+    pub fn balance(asset_id: AssetId<T>, account_id: T::AccountId) -> T::Balance {
+        pallet_evercity_assets::Module::<T>::balance(asset_id, account_id)
     }
 
     #[cfg(test)]

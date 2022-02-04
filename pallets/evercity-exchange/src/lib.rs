@@ -22,7 +22,9 @@ pub use pallet::*;
 
 pub type TradeRequestId = u128;
 pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
-pub type CarbonCreditsId<T> = <T as pallet_evercity_assets::Config>::AssetId;
+pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
+pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
+// pub type CarbonCreditsId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -61,7 +63,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		TradeRequestId,
-		TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, <T as pallet_evercity_assets::Config>::Balance>, 
+		TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, CarbonCreditsBalance<T>>, 
 		OptionQuery
 	>;
 
@@ -84,7 +86,7 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
         /// \[AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
-        CarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, <T as pallet_evercity_assets::Config>::AssetId),
+        CarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, CarbonCreditsId<T>),
     }
 	#[deprecated(note = "use `Event` instead")]
 	pub type RawEvent<T> = Event<T>;
@@ -99,7 +101,7 @@ pub mod pallet {
 			asset_id: AssetId<T>,
 			carbon_credits_id: CarbonCreditsId<T>,
 			asset_count: <T as pallet_assets::Config>::Balance,
-			carbon_credits_count: <T as pallet_evercity_assets::Config>::Balance,
+			carbon_credits_count: CarbonCreditsBalance<T>,
 			holder_type: HolderType,
 		) -> DispatchResultWithPostInfo {
 			let (asset_holder, carbon_credits_holder, approve_mask) = match holder_type {
@@ -113,7 +115,7 @@ pub mod pallet {
 
             let asset_balance = pallet_assets::Module::<T>::balance(asset_id, asset_holder.clone());
 			ensure!(asset_balance >= asset_count, Error::<T>::InsufficientAssetBalance);
-			let current_carbon_credits_balace = pallet_evercity_assets::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
+			let current_carbon_credits_balace = pallet_evercity_carbon_credits::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
 			ensure!(current_carbon_credits_balace >= carbon_credits_count, Error::<T>::InsufficientCarbonCreditsBalance);
 
 			let trate_request = 
@@ -156,7 +158,7 @@ pub mod pallet {
 
 						let current_asset_balance = pallet_assets::Module::<T>::balance(trade_request.asset_id, trade_request.asset_holder.clone());
 						let carbon_credits_balance = 
-							pallet_evercity_assets::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
+							pallet_evercity_carbon_credits::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
 
 						if trade_request.asset_count > current_asset_balance {
 							return Err(Error::<T>::InsufficientAssetBalance.into());
@@ -168,22 +170,22 @@ pub mod pallet {
 						// transfer carbon credits
 						let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
 
-						let lol = pallet_evercity_carbon_credits::Module::<T>::is_passport_correct(trade_request.carbon_credits_id);
+						// let lol = pallet_evercity_carbon_credits::Module::<T>::is_passport_correct(trade_request.carbon_credits_id);
 
-                            // pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
-                            //         cc_holder_origin, 
-                            //         trade_request.carbon_credits_id, 
-                            //         trade_request.asset_holder.clone(), 
-                            //         trade_request.carbon_credits_count
-                            // )?;
-							// let asset_holder_source = 
-							// 	<T::Lookup as StaticLookup>::unlookup(trade_request.asset_holder.clone());
-							// let call = 
-							// 	pallet_evercity_assets::Call::<T>::transfer(trade_request.carbon_credits_id, asset_holder_source, trade_request.carbon_credits_count);
-							// let result = transfer_call.dispatch_bypass_filter(origin);
+						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+								cc_holder_origin, 
+								trade_request.carbon_credits_id, 
+								trade_request.asset_holder.clone(), 
+								trade_request.carbon_credits_count
+						)?;
+						// let asset_holder_source = 
+						// 	<T::Lookup as StaticLookup>::unlookup(trade_request.asset_holder.clone());
+						// let call = 
+						// 	pallet_evercity_assets::Call::<T>::transfer(trade_request.carbon_credits_id, asset_holder_source, trade_request.carbon_credits_count);
+						// let result = transfer_call.dispatch_bypass_filter(origin);
 
-                            // transfer everusd then
-                            // pallet_evercity::Module::<T>::transfer_everusd(&exchange.ever_usd_holder, &exchange.carbon_credits_holder, exchange.ever_usd_count)?;
+						//transfer everusd then
+						// pallet_evercity::Module::<T>::transfer_everusd(&exchange.ever_usd_holder, &exchange.carbon_credits_holder, exchange.ever_usd_count)?;
 
 					}
 				}
