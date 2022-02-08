@@ -190,6 +190,10 @@ pub mod pallet {
     }
 
 	impl<T: Config> Pallet<T> {
+		pub fn u64_to_balance(num: u64) -> <T as pallet_assets::pallet::Config>::Balance where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
+			num.into()
+		}
+
 		#[cfg(test)]
 		pub fn create_and_mint_test_asset(
 			account_id: T::AccountId, 
