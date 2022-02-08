@@ -75,24 +75,79 @@ fn it_fails_create_exhange_insufficient_cc_count() {
         EvercityExchange::create_and_mint_test_asset(asset_holder, asset_id, 1, asset_balance);
         
 
-        let create_trade_request_call_no_cc = 
+        let create_trade_request_call_no_cc_1 = 
             EvercityExchange::create_trade_request(
                 Origin::signed(cc_holder), asset_holder, asset_id, carbon_credits_id, 50, 60, HolderType::CarbonCreditsHolder);
+
+        
+        let create_trade_request_call_no_cc_2 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(asset_holder), asset_holder, asset_id, carbon_credits_id, 50, 60, HolderType::AssetHolder);
 
         let _ = CarbonCredits::release_carbon_credits(
             Origin::signed(cc_holder), project_id, carbon_credits_id, cc_holder, 1);
         // let cc_balance = CarbonCredits::balance(carbon_credits_id, cc_holder);
 
-        let create_trade_request_call_not_enough_cc = 
+        let create_trade_request_call_not_enough_cc_1 = 
             EvercityExchange::create_trade_request(
                 Origin::signed(cc_holder), 
                     asset_holder, asset_id, carbon_credits_id, 50, 60 + TEST_CARBON_CREDITS_COUNT, HolderType::CarbonCreditsHolder);
 
+        let create_trade_request_call_not_enough_cc_2 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(asset_holder), 
+                    asset_holder, asset_id, carbon_credits_id, 50, 60 + TEST_CARBON_CREDITS_COUNT, HolderType::AssetHolder);
+
         let cc_holder_asset_balance = Assets::balance(asset_id, cc_holder);
         let asset_holder_cc_balance = CarbonCredits::balance(carbon_credits_id, asset_holder);
 
-        assert_noop!(create_trade_request_call_no_cc, RuntimeError::InsufficientCarbonCreditsBalance);
-        assert_noop!(create_trade_request_call_not_enough_cc, RuntimeError::InsufficientCarbonCreditsBalance);
+        assert_noop!(create_trade_request_call_no_cc_1, RuntimeError::InsufficientCarbonCreditsBalance);
+        assert_noop!(create_trade_request_call_no_cc_2, RuntimeError::InsufficientCarbonCreditsBalance);
+        assert_noop!(create_trade_request_call_not_enough_cc_1, RuntimeError::InsufficientCarbonCreditsBalance);
+        assert_noop!(create_trade_request_call_not_enough_cc_2, RuntimeError::InsufficientCarbonCreditsBalance);
+        assert_eq!(0, cc_holder_asset_balance);
+        assert_eq!(0, asset_holder_cc_balance);
+    });
+}
+
+#[test]
+fn it_fails_create_exhange_insufficient_asset_count() {
+    new_test_ext().execute_with(|| {
+        let asset_holder = 1;
+        let carbon_credits_id = 666;
+        let asset_id = 13;
+        let asset_balance = 10000;
+        let (project_id, cc_holder) = full_sign_annual_report_gold_standard();
+        let _ = CarbonCredits::release_carbon_credits(
+            Origin::signed(cc_holder), project_id, carbon_credits_id, cc_holder, 1);        
+
+        let create_trade_request_call_no_asset_1 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(cc_holder), asset_holder, asset_id, carbon_credits_id, 50, 60, HolderType::CarbonCreditsHolder);
+        
+        let create_trade_request_call_no_asset_2 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(asset_holder), asset_holder, asset_id, carbon_credits_id, 50, 60, HolderType::AssetHolder);
+
+        EvercityExchange::create_and_mint_test_asset(asset_holder, asset_id, 1, asset_balance);
+
+        let create_trade_request_call_not_enough_asset_1 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(cc_holder), 
+                    asset_holder, asset_id, carbon_credits_id, 50 + asset_balance, 60, HolderType::CarbonCreditsHolder);
+
+        let create_trade_request_call_not_enough_asset_2 = 
+            EvercityExchange::create_trade_request(
+                Origin::signed(asset_holder), 
+                    asset_holder, asset_id, carbon_credits_id, 50 + asset_balance, 60, HolderType::AssetHolder);
+
+        let cc_holder_asset_balance = Assets::balance(asset_id, cc_holder);
+        let asset_holder_cc_balance = CarbonCredits::balance(carbon_credits_id, asset_holder);
+
+        assert_noop!(create_trade_request_call_no_asset_1, RuntimeError::InsufficientAssetBalance);
+        assert_noop!(create_trade_request_call_no_asset_2, RuntimeError::InsufficientAssetBalance);
+        assert_noop!(create_trade_request_call_not_enough_asset_1, RuntimeError::InsufficientAssetBalance);
+        assert_noop!(create_trade_request_call_not_enough_asset_2, RuntimeError::InsufficientAssetBalance);
         assert_eq!(0, cc_holder_asset_balance);
         assert_eq!(0, asset_holder_cc_balance);
     });

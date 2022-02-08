@@ -11,12 +11,12 @@ mod tests;
 use sp_std::{prelude::*};
 use sp_runtime::{traits::{StaticLookup}
 };
-use codec::{Encode, Decode, HasCompact};
-use frame_support::{
-	ensure,
-	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
-	dispatch::DispatchError,
-};
+// use codec::{Encode, Decode, HasCompact};
+// use frame_support::{
+// 	ensure,
+// 	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
+// 	dispatch::DispatchError,
+// };
 
 pub use pallet::*;
 
