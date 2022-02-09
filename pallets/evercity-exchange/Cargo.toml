@@ -31,6 +31,7 @@ sp-std = { default-features = false, version = '3.0.0' }
 # pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
 pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-carbon-credits' }
 pallet-assets = { default-features = false, version = '3.0.0' }
+pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../evercity-assets' }
 
 [dev-dependencies]
 sp-core = {  version = '3.0.0' }
@@ -38,7 +39,7 @@ sp-io = { default-features = false, version = '3.0.0' }
 pallet-balances = { default-features = false, version = '3.0.0' }
 pallet-evercity-accounts = { default-features = false, version = '0.1.7', path = '../evercity-accounts' }
 pallet-evercity-filesign = { default-features = false, version = '0.1.4', path = '../evercity-filesign' }
-pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../evercity-assets' }
+# pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../evercity-assets' }
 pallet-timestamp = { default-features = false, version = '3.0.0' }
 pallet-randomness-collective-flip = { default-features = false, version = '3.0.0' }
 

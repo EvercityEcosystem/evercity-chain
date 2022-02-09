@@ -34,6 +34,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use crate::trade_request::{TradeRequest, HolderType, CARBON_CREDITS_HOLDER_APPROVED, ASSET_HOLDER_APPROVED};
 	use super::*;
+	// use pallet_evercity_assets;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -94,7 +95,7 @@ pub mod pallet {
 	pub type RawEvent<T> = Event<T>;
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> {
 		#[pallet::weight(10_000)]
 		pub fn create_trade_request(
 			origin: OriginFor<T>,
@@ -187,7 +188,20 @@ pub mod pallet {
 			})?;
 			Ok(().into())
 		}
+
+		#[pallet::weight(10_000)]
+		pub fn test_extrinsic(origin: OriginFor<T>, carbon_credits_id: CarbonCreditsId<T>, carbon_credits_count: CarbonCreditsBalance<T>, bond_id: [u8; 16]) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+			let a = 
+				pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, bond_id, carbon_credits_id, carbon_credits_count);
+			Ok(().into())
+		}
     }
+
+	// #[pallet::call]
+	// impl<T: Config> Pallet<T> where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
+
+	// }
 
 	impl<T: Config> Pallet<T> {
 		pub fn u64_to_balance(num: u64) -> <T as pallet_assets::pallet::Config>::Balance where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
