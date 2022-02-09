@@ -1030,3 +1030,31 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 }
+
+impl<T: Config> Module<T> where <T as pallet_assets::pallet::Config>::Balance: From<u64> { 
+    pub fn create_bond_carbon_credits(account: T::AccountId, bond_id: [u8; 16], asset_id: T::AssetId, amount: T::Balance, ) -> DispatchResult {
+        let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account.clone());
+        let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
+        let min_bal = Self::u64_to_balance(1);
+        let create_asset_call = pallet_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source.clone(), 0, min_bal);
+        let create_asset_result = create_asset_call.dispatch_bypass_filter(cc_holder_origin);
+        ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
+
+        let mint_call = pallet_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, amount);
+        let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
+        let result = mint_call.dispatch_bypass_filter(cc_holder_origin);
+        ensure!(!result.is_err(), {
+            // destroy if failed
+            let _ = pallet_assets::Call::<T>::destroy(asset_id, 0);
+            Error::<T>::ErrorMintingAsset
+        });
+
+        // Create passport
+        <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new_from_bond(asset_id, bond_id));
+        Ok(())
+    }
+
+    fn u64_to_balance(num: u64) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> {
+        num.into()
+    }
+}
