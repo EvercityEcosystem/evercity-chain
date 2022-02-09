@@ -296,6 +296,18 @@ impl<Moment, Hash> BondInnerStruct<Moment, Hash> {
     }
 }
 
+#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
+pub enum CarbonCreditsInclude {
+    Not,
+    Included,
+}
+
+impl Default for CarbonCreditsInclude {
+    fn default() -> Self {
+        Self::Not
+    }
+}
+
 /// <pre>
 /// Main bond struct, storing all data about given bond
 /// Consists of:
@@ -351,6 +363,8 @@ pub struct BondStruct<AccountId, Moment, Hash> {
     /// situations with outdated updates bond data on frontend
     #[codec(compact)]
     pub nonce: u64,
+
+    pub carbon_credits_included: bool,
 }
 
 pub type BondStructOf<T> = BondStruct<

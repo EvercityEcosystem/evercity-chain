@@ -1787,6 +1787,14 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
+    pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, EverUSDBalance)> {
+        BondUnitPackageRegistry::<T>::iter()
+                                    .filter(|(x, _, _)|{ x == bond_id })
+                                    .map(|(x, y, z)| 
+                                            {(y, z.iter().map(|x| x.coupon_yield).reduce(|a, b| a + b).unwrap_or(0))})
+                                    .collect::<Vec<(T::AccountId, EverUSDBalance)>>()
+    }
+
 
     /// <pre>
     /// Deletes expired burn requests.

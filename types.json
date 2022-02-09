@@ -81,7 +81,8 @@
     "bond_debit": "Compact<EverUSDBalance>",
     "bond_credit": "Compact<EverUSDBalance>",
     "coupon_yield": "Compact<EverUSDBalance>",
-    "nonce": "Compact<u64>"
+    "nonce": "Compact<u64>",
+    "carbon_credits_included": "bool"
   },
   "AccountYield": {
     "coupon_yield": "Compact<EverUSDBalance>",

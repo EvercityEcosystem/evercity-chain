@@ -200,6 +200,7 @@ pub fn get_test_bond() -> BondStruct {
         bond_credit: 0,
         coupon_yield: 0,
         nonce: 0,
+        carbon_credits_included: Default::default(),
     }
 }
 
@@ -250,6 +251,7 @@ pub fn get_test_bond_stable() -> BondStruct {
         bond_credit: 0,
         coupon_yield: 0,
         nonce: 0,
+        carbon_credits_included: Default::default(),
     }
 }
 
