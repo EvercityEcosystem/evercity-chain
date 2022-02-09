@@ -1031,7 +1031,7 @@ impl<T: Config> Module<T> {
     }
 }
 
-impl<T: Config> Module<T> where <T as pallet_assets::pallet::Config>::Balance: From<u64> { 
+impl<T: Config> Module<T> where T::Balance: From<u64> { 
     pub fn create_bond_carbon_credits(account: T::AccountId, bond_id: [u8; 16], asset_id: T::AssetId, amount: T::Balance, ) -> DispatchResult {
         let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account.clone());
         let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
