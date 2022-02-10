@@ -189,13 +189,13 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
-		pub fn test_extrinsic(origin: OriginFor<T>, carbon_credits_id: CarbonCreditsId<T>, carbon_credits_count: CarbonCreditsBalance<T>, bond_id: [u8; 16]) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin)?;
-			let a = 
-				pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, bond_id, carbon_credits_id, carbon_credits_count);
-			Ok(().into())
-		}
+		// #[pallet::weight(10_000)]
+		// pub fn test_extrinsic(origin: OriginFor<T>, carbon_credits_id: CarbonCreditsId<T>, carbon_credits_count: CarbonCreditsBalance<T>, bond_id: [u8; 16]) -> DispatchResultWithPostInfo {
+		// 	let caller = ensure_signed(origin)?;
+		// 	let a = 
+		// 		pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, bond_id, carbon_credits_id, carbon_credits_count);
+		// 	Ok(().into())
+		// }
 
 
 		#[pallet::weight(10_000)]

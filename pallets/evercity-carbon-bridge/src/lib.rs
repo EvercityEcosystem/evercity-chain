@@ -93,7 +93,7 @@ pub mod pallet {
 	pub type RawEvent<T> = Event<T>;
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 		#[pallet::weight(10_000)]
 		pub fn release_bond_carbon_credits(
 			origin: OriginFor<T>, 
@@ -132,18 +132,18 @@ pub mod pallet {
     }
 
 	impl<T: Config> Pallet<T> {
-		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
+		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 			num.into()
 		}
 
-		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
+		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 			bal.into()
 		}
 
 		pub fn divide_balance(
 			percent: f64, 
 			bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
-		) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
+		) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 			let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
 			Self::u64_to_balance(temp_u64)
 		}
