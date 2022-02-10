@@ -93,7 +93,7 @@ pub mod pallet {
 	pub type RawEvent<T> = Event<T>;
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
 		#[pallet::weight(10_000)]
 		pub fn release_bond_carbon_credits(
 			origin: OriginFor<T>, 
@@ -106,6 +106,17 @@ pub mod pallet {
 			ensure!(bond.state == BondState::FINISHED, Error::<T>::BondNotFinished);
 			let bond_investment_tubple = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
 
+			let total_everusd_balance = bond_investment_tubple.iter()
+											.map(|(_, everusd)| everusd)
+											.fold(0, |a, b| {a + b});
+
+			let parts = bond_investment_tubple
+														.into_iter()
+														.map(|(acc, everusd)| {
+															(acc, (everusd/total_everusd_balance) as f64)
+														})
+														.collect::<Vec<(T::AccountId, f64)>>();
+
 			Ok(().into())
 		}
     }
@@ -113,6 +124,18 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn u64_to_balance(num: u64) -> <T as pallet_assets::pallet::Config>::Balance where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
 			num.into()
+		}
+
+		pub fn balance_to_u64(bal: <T as pallet_assets::pallet::Config>::Balance ) -> u64 where <T as pallet_assets::pallet::Config>::Balance: Into<u64> {
+			bal.into()
+		}
+
+		pub fn divide_balance(
+			percent: f64, 
+			bal_amount: <T as pallet_assets::pallet::Config>::Balance
+		) -> <T as pallet_assets::pallet::Config>::Balance where <T as pallet_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
+			let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u64;
+			Self::u64_to_balance(temp_u64)
 		}
 
 		// #[cfg(test)]
