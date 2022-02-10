@@ -93,7 +93,7 @@ pub mod pallet {
 	pub type RawEvent<T> = Event<T>;
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
 		#[pallet::weight(10_000)]
 		pub fn release_bond_carbon_credits(
 			origin: OriginFor<T>, 
@@ -132,37 +132,21 @@ pub mod pallet {
     }
 
 	impl<T: Config> Pallet<T> {
-		pub fn u64_to_balance(num: u64) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> {
+		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
 			num.into()
 		}
 
-		pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u64 where <T as pallet_evercity_assets::pallet::Config>::Balance: Into<u64> {
+		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
 			bal.into()
 		}
 
 		pub fn divide_balance(
 			percent: f64, 
 			bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
-		) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
-			let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u64;
+		) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> + From<u128> + Into<u128> {
+			let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
 			Self::u64_to_balance(temp_u64)
 		}
-
-		// #[cfg(test)]
-		// pub fn create_and_mint_test_asset(
-		// 	account_id: T::AccountId, 
-		// 	asset_id: AssetId<T>, 
-		// 	min_balance: <T as pallet_assets::Config>::Balance, 
-		// 	balance: <T as pallet_assets::Config>::Balance
-		// ) {
-		// 	let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
-		// 	let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
-		// 	let create_call = pallet_assets::Call::<T>::create(asset_id, carbon_credits_holder_source.clone(), 0, min_balance);
-		// 	let _ = create_call.dispatch_bypass_filter(cc_holder_origin);
-		// 	let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
-		// 	let mint_call = pallet_assets::Call::<T>::mint(asset_id, carbon_credits_holder_source, balance);
-		// 	let _ = mint_call.dispatch_bypass_filter(cc_holder_origin);
-		// }
 	}
 }
 

@@ -1405,6 +1405,7 @@ dependencies = [
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
  "pallet-evercity-bonds",
+ "pallet-evercity-carbon-bridge",
  "pallet-evercity-carbon-credits",
  "pallet-evercity-exchange",
  "pallet-evercity-filesign",
@@ -3863,15 +3864,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-evercity-carbon-credits"
-version = "0.1.13"
+name = "pallet-evercity-carbon-bridge"
+version = "0.1.0"
 dependencies = [
- "fixed-hash",
  "frame-support",
  "frame-system",
+ "pallet-assets",
  "pallet-balances",
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
+ "pallet-evercity-bonds",
+ "pallet-evercity-carbon-credits",
  "pallet-evercity-filesign",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
@@ -3885,17 +3888,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-evercity-carbpn-bridge"
-version = "0.1.0"
+name = "pallet-evercity-carbon-credits"
+version = "0.1.13"
 dependencies = [
+ "fixed-hash",
  "frame-support",
  "frame-system",
- "pallet-assets",
  "pallet-balances",
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
- "pallet-evercity-bonds",
- "pallet-evercity-carbon-credits",
  "pallet-evercity-filesign",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
