@@ -1705,7 +1705,7 @@ impl<T: Config> Module<T> {
     ///
     ///  Returns bond structure if it was found in BondRegistry by given BondId
     /// </pre>
-    #[cfg(test)]
+    // #[cfg(test)]
     pub fn get_bond(bond: &BondId) -> BondStructOf<T> {
         BondRegistry::<T>::get(bond)
     }
@@ -1790,11 +1790,14 @@ impl<T: Config> Module<T> {
     pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, EverUSDBalance)> {
         BondUnitPackageRegistry::<T>::iter()
                                     .filter(|(x, _, _)|{ x == bond_id })
-                                    .map(|(x, y, z)| 
+                                    .map(|(_, y, z)| 
                                             {(y, z.iter().map(|x| x.coupon_yield).reduce(|a, b| a + b).unwrap_or(0))})
                                     .collect::<Vec<(T::AccountId, EverUSDBalance)>>()
     }
 
+    // pub fn get_bond_by_id(bond_id: &BondId) -> BondStruct<<T as Config>::AccountId, <T as Config>::Moment, <T as Config>::Hash> {
+    //     BondRegistry::<T>::get(bond_id)
+    // }
 
     /// <pre>
     /// Deletes expired burn requests.

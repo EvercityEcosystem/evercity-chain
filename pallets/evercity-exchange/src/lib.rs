@@ -196,12 +196,20 @@ pub mod pallet {
 				pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, bond_id, carbon_credits_id, carbon_credits_count);
 			Ok(().into())
 		}
+
+
+		#[pallet::weight(10_000)]
+		pub fn release_bond_carbon_credits(
+			origin: OriginFor<T>, 
+			carbon_credits_id: CarbonCreditsId<T>, 
+			carbon_credits_count: CarbonCreditsBalance<T>, 
+			bond_id: [u8; 16]
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+
+			Ok(().into())
+		}
     }
-
-	// #[pallet::call]
-	// impl<T: Config> Pallet<T> where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
-
-	// }
 
 	impl<T: Config> Pallet<T> {
 		pub fn u64_to_balance(num: u64) -> <T as pallet_assets::pallet::Config>::Balance where <T as pallet_assets::pallet::Config>::Balance: From<u64> {
@@ -225,3 +233,14 @@ pub mod pallet {
 		}
 	}
 }
+
+// По этапам:
+
+// 1) Выполняется экстринзик с аргументами: AssetId, BondId, Amount
+// Экстринзик переводит инвесторам мои AssetId в соответствии с процентами
+
+// 2) Экстринзик учится дописывать в бонд информацию о финальной транзакции
+
+// 3) Бонд при создании обещает схему выплаты КК и после вополнения экстринзика он следует этой схеме валидируя транзакцию распределения
+
+// 4) Наступает сингулярность Бонда и КК на всем жизненном цикле бонда 
