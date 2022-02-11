@@ -76,7 +76,11 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		BondNotFinished
+		BondNotFinished,
+		CreateCCError,
+		TransferCCError,
+		BalanceIsZero,
+		InvestmentIsZero
     }
 
 	#[pallet::event]
@@ -103,29 +107,57 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin.clone())?;
 			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
-			ensure!(bond.state == BondState::FINISHED, Error::<T>::BondNotFinished);
+			ensure!(bond.state != BondState::PREPARE, Error::<T>::BondNotFinished);
 			let bond_investment_tubple = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
+
+			ensure!(bond_investment_tubple.len() != 0, Error::<T>::InvestmentIsZero);
+
+			let u = pallet_evercity_bonds::Module::<T>::test_get_to_delete();
+
+			log::info!("====================================================================================");
+			log::info!("======================= LENGTH IS {:?}", bond_investment_tubple.len());
+			log::info!("======================= TUPLE VEC IS {:?}", bond_investment_tubple);
+			log::info!("======================= ALL ITER VEC IS {:?}", u);
+
+			for (i, j) in bond_investment_tubple.clone() {
+				log::info!("======================= ACCOUNT {:?} IMPACT IS {:?}", i, j);
+			}
+
+			log::info!("====================================================================================");
 
 			let total_everusd_balance = bond_investment_tubple.iter()
 											.map(|(_, everusd)| everusd)
 											.fold(0, |a, b| {a + b});
 
+			ensure!(total_everusd_balance != 0, Error::<T>::BalanceIsZero);
+
 			let parts = bond_investment_tubple
-														.into_iter()
-														.map(|(acc, everusd)| {
-															// (acc, (everusd/total_everusd_balance) as f64)
-															(acc, Self::divide_balance((everusd/total_everusd_balance) as f64, carbon_credits_count))
-														})
-														.collect::<Vec<(T::AccountId, CarbonCreditsBalance<T>)>>();
+									.into_iter()
+									.map(|(acc, everusd)| {
+										// (acc, (everusd/total_everusd_balance) as f64)
+										(acc, Self::divide_balance((everusd/total_everusd_balance) as f64, carbon_credits_count))
+									})
+									.collect::<Vec<(T::AccountId, CarbonCreditsBalance<T>)>>();
 
 			let create_cc_call = 
 				pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
 
-			parts.into_iter().for_each(|(acc, bal)|{
-				let _ = 
+			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
+
+			// parts.into_iter().for_each(|(acc, bal)|{
+			// 	let res = 
+			// 		pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+			// 			origin.clone(), carbon_credits_id, acc, bal);
+			// 	ensure!(res.is_ok(), Error::<T>::TransferCCError);
+			// 	// ensure!(res.is_ok(), res.into());
+			// });
+
+			for (acc, bal) in parts {
+				let res = 
 					pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 						origin.clone(), carbon_credits_id, acc, bal);
-			});
+				ensure!(res.is_ok(), Error::<T>::TransferCCError);
+			}
 
 			Ok(().into())
 		}
