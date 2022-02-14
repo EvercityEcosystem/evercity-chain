@@ -19,12 +19,27 @@ use sp_runtime::{traits::{StaticLookup}
 // };
 use pallet_evercity_bonds::bond::{BondId, BondState};
 
-pub use pallet::*;
+use frame_support::{
+    codec::{Decode, Encode},
+    sp_runtime::RuntimeDebug,
+};
+
+pub use crate::pallet::*;
 
 pub type TradeRequestId = u128;
 pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
 pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
+
+
+#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
+pub struct CarbonCreditsBondRelease<Balance> {
+    pub amount: Balance,
+    pub period: u32,
+}
+
+// impl EncodeLike<Balance> for CarbonCreditsBondRelease<Balance> {}
+
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -39,7 +54,7 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
-	pub struct Pallet<T>(_);
+	pub struct Pallet<T> (_);
 
 
     #[pallet::config]
@@ -47,7 +62,7 @@ pub mod pallet {
 	pub trait Config: 
 		frame_system::Config +
 		pallet_assets::Config + 
-		// pallet_evercity_assets::Config + 
+		pallet_evercity_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config + 
 	{
@@ -56,7 +71,7 @@ pub mod pallet {
 	}
 
     #[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>{}
 
 	// pallet storages:
 
@@ -73,6 +88,16 @@ pub mod pallet {
 	// #[pallet::storage]
 	// /// Id of last trade request
 	// pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
+	#[pallet::storage]
+	pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		BondId,
+		Option<CarbonCreditsBondRelease<CarbonCreditsBalance<T>>>,
+		// Option<CarbonCreditsBondRelease<u128>>,
+		// Option<CarbonCreditsBondRelease<T>>,
+		ValueQuery
+	>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -80,7 +105,8 @@ pub mod pallet {
 		CreateCCError,
 		TransferCCError,
 		BalanceIsZero,
-		InvestmentIsZero
+		InvestmentIsZero,
+		AlreadyReleased,
     }
 
 	#[pallet::event]
@@ -108,6 +134,8 @@ pub mod pallet {
 			let caller = ensure_signed(origin.clone())?;
 			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
 			ensure!(bond.state != BondState::PREPARE, Error::<T>::BondNotFinished);
+			let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
+			ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
 			let bond_investment_tubple = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
 
 			ensure!(bond_investment_tubple.len() != 0, Error::<T>::InvestmentIsZero);
@@ -159,6 +187,8 @@ pub mod pallet {
 				log::info!("======================================== transfer result is:{:?} ===========================================", res);
 			}
 
+			let release = CarbonCreditsBondRelease {amount: carbon_credits_count, period: 0};
+			BondCarbonReleaseRegistry::<T>::insert(bond_id, Some(release));
 			Ok(().into())
 		}
     }
@@ -192,3 +222,11 @@ pub mod pallet {
 // 3) Бонд при создании обещает схему выплаты КК и после вополнения экстринзика он следует этой схеме валидируя транзакцию распределения
 
 // 4) Наступает сингулярность Бонда и КК на всем жизненном цикле бонда 
+
+
+
+// #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
+// pub struct CarbonCreditsBondRelease<Balance>{
+//     pub amount: Balance,
+//     pub period: u32
+// }
