@@ -156,6 +156,7 @@ pub mod pallet {
 				let res = 
 					pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 						origin.clone(), carbon_credits_id, acc, bal);
+				log::info!("======================================== transfer result is:{:?} ===========================================", res);
 				ensure!(res.is_ok(), Error::<T>::TransferCCError);
 			}
 

@@ -1787,12 +1787,13 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, EverUSDBalance)> {
+    pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, u32)> {
+        // let bond = BondRegistry::<T>::get(bond_id);
         BondUnitPackageRegistry::<T>::iter()
                                     .filter(|(x, _, _)|{ x == bond_id })
                                     .map(|(_, y, z)| 
                                             {(y, z.iter().map(|x| x.bond_units).reduce(|a, b| a + b).unwrap_or(0))})
-                                    .collect::<Vec<(T::AccountId, EverUSDBalance)>>()
+                                    .collect::<Vec<(T::AccountId, u32)>>()
     }
 
     pub fn test_get_to_delete() -> Vec<(BondId, <T as frame_system::Config>::AccountId, Vec<BondUnitPackage>)> {
