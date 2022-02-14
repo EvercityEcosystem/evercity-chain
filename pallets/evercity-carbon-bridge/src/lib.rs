@@ -129,13 +129,20 @@ pub mod pallet {
 											.map(|(_, everusd)| everusd)
 											.fold(0, |a, b| {a + b});
 
+			log::info!("======================= TOTAL BALANCE IS {:?}", total_everusd_balance);
+
 			ensure!(total_everusd_balance != 0, Error::<T>::BalanceIsZero);
 
 			let parts = bond_investment_tubple
 									.into_iter()
 									.map(|(acc, everusd)| {
 										// (acc, (everusd/total_everusd_balance) as f64)
-										(acc, Self::divide_balance((everusd/total_everusd_balance) as f64, carbon_credits_count))
+										(acc, (everusd as f64)/(total_everusd_balance as f64) )
+									})
+									.filter(|(_, part)| *part != 0.0)
+									.map(|(acc, everusd)| {
+										// (acc, (everusd/total_everusd_balance) as f64)
+										(acc, Self::divide_balance(everusd, carbon_credits_count))
 									})
 									.collect::<Vec<(T::AccountId, CarbonCreditsBalance<T>)>>();
 
@@ -144,20 +151,12 @@ pub mod pallet {
 
 			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
 
-			// parts.into_iter().for_each(|(acc, bal)|{
-			// 	let res = 
-			// 		pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
-			// 			origin.clone(), carbon_credits_id, acc, bal);
-			// 	ensure!(res.is_ok(), Error::<T>::TransferCCError);
-			// 	// ensure!(res.is_ok(), res.into());
-			// });
-
 			for (acc, bal) in parts {
+				log::info!("======================================== trying to send {:?} to acccount: {:?} ===========================================", bal, acc);
 				let res = 
 					pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 						origin.clone(), carbon_credits_id, acc, bal);
 				log::info!("======================================== transfer result is:{:?} ===========================================", res);
-				ensure!(res.is_ok(), Error::<T>::TransferCCError);
 			}
 
 			Ok(().into())
