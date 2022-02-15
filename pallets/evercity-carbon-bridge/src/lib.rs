@@ -11,12 +11,6 @@ mod tests;
 use sp_std::{prelude::*};
 use sp_runtime::{traits::{StaticLookup}
 };
-// use codec::{Encode, Decode, HasCompact};
-// use frame_support::{
-// 	ensure,
-// 	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
-// 	dispatch::DispatchError,
-// };
 use pallet_evercity_bonds::bond::{BondId, BondState};
 
 use frame_support::{
@@ -37,9 +31,6 @@ pub struct CarbonCreditsBondRelease<Balance> {
     pub amount: Balance,
     pub period: u32,
 }
-
-// impl EncodeLike<Balance> for CarbonCreditsBondRelease<Balance> {}
-
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -73,30 +64,13 @@ pub mod pallet {
     #[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>{}
 
-	// pallet storages:
-
-	// #[pallet::storage]
-	// /// Details of a asset-carbon crdits trade request
-	// pub(super) type TradeRequestById<T: Config> = StorageMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	TradeRequestId,
-	// 	TradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, CarbonCreditsBalance<T>>, 
-	// 	OptionQuery
-	// >;
-
-	// #[pallet::storage]
-	// /// Id of last trade request
-	// pub(super) type LastTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
 	#[pallet::storage]
 	pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		BondId,
-		Option<CarbonCreditsBondRelease<CarbonCreditsBalance<T>>>,
-		// Option<CarbonCreditsBondRelease<u128>>,
-		// Option<CarbonCreditsBondRelease<T>>,
-		ValueQuery
+		CarbonCreditsBondRelease<CarbonCreditsBalance<T>>,
+		OptionQuery
 	>;
 
 	#[pallet::error]
@@ -107,6 +81,7 @@ pub mod pallet {
 		BalanceIsZero,
 		InvestmentIsZero,
 		AlreadyReleased,
+		NotAnIssuer,
     }
 
 	#[pallet::event]
@@ -133,19 +108,18 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin.clone())?;
 			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
+			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
 			ensure!(bond.state != BondState::PREPARE, Error::<T>::BondNotFinished);
+
 			let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
 			ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
+
 			let bond_investment_tubple = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
-
 			ensure!(bond_investment_tubple.len() != 0, Error::<T>::InvestmentIsZero);
-
-			let u = pallet_evercity_bonds::Module::<T>::test_get_to_delete();
 
 			log::info!("====================================================================================");
 			log::info!("======================= LENGTH IS {:?}", bond_investment_tubple.len());
 			log::info!("======================= TUPLE VEC IS {:?}", bond_investment_tubple);
-			log::info!("======================= ALL ITER VEC IS {:?}", u);
 
 			for (i, j) in bond_investment_tubple.clone() {
 				log::info!("======================= ACCOUNT {:?} IMPACT IS {:?}", i, j);
@@ -153,19 +127,19 @@ pub mod pallet {
 
 			log::info!("====================================================================================");
 
-			let total_everusd_balance = bond_investment_tubple.iter()
+			let total_packages = bond_investment_tubple.iter()
 											.map(|(_, everusd)| everusd)
 											.fold(0, |a, b| {a + b});
 
-			log::info!("======================= TOTAL BALANCE IS {:?}", total_everusd_balance);
+			log::info!("======================= TOTAL BALANCE IS {:?}", total_packages);
 
-			ensure!(total_everusd_balance != 0, Error::<T>::BalanceIsZero);
+			ensure!(total_packages != 0, Error::<T>::BalanceIsZero);
 
 			let parts = bond_investment_tubple
 									.into_iter()
 									.map(|(acc, everusd)| {
 										// (acc, (everusd/total_everusd_balance) as f64)
-										(acc, (everusd as f64)/(total_everusd_balance as f64) )
+										(acc, (everusd as f64)/(total_packages as f64) )
 									})
 									.filter(|(_, part)| *part != 0.0)
 									.map(|(acc, everusd)| {
@@ -188,12 +162,12 @@ pub mod pallet {
 			}
 
 			let release = CarbonCreditsBondRelease {amount: carbon_credits_count, period: 0};
-			BondCarbonReleaseRegistry::<T>::insert(bond_id, Some(release));
+			BondCarbonReleaseRegistry::<T>::insert(bond_id, release);
 			Ok(().into())
 		}
     }
 
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
 			num.into()
 		}
@@ -205,7 +179,7 @@ pub mod pallet {
 		pub fn divide_balance(
 			percent: f64, 
 			bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
-		) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
+		) -> <T as pallet_evercity_assets::pallet::Config>::Balance  {
 			let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
 			Self::u64_to_balance(temp_u64)
 		}
@@ -222,11 +196,3 @@ pub mod pallet {
 // 3) Бонд при создании обещает схему выплаты КК и после вополнения экстринзика он следует этой схеме валидируя транзакцию распределения
 
 // 4) Наступает сингулярность Бонда и КК на всем жизненном цикле бонда 
-
-
-
-// #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
-// pub struct CarbonCreditsBondRelease<Balance>{
-//     pub amount: Balance,
-//     pub period: u32
-// }

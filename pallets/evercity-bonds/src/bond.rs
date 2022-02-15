@@ -202,6 +202,9 @@ pub struct BondInnerStruct<Moment, Hash> {
     /// Base price of Bond Unit
     #[codec(compact)]
     pub bond_units_base_price: EverUSDBalance,
+
+    // pub carbon_credits_included: bool,
+    pub carbon_metadata: Option<CarbonUnitsMetadata>
 }
 
 pub type BondInnerStructOf<T> =
@@ -296,17 +299,24 @@ impl<Moment, Hash> BondInnerStruct<Moment, Hash> {
     }
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
-pub enum CarbonCreditsInclude {
-    Not,
-    Included,
+
+// #[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
+// pub enum CarbonCreditsInclude {
+//     Not,
+//     Included,
+// }
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
+pub struct CarbonUnitsMetadata {
+    pub count: u128,
 }
 
-impl Default for CarbonCreditsInclude {
-    fn default() -> Self {
-        Self::Not
-    }
-}
+// impl Default for CarbonCreditsInclude {
+//     fn default() -> Self {
+//         Self::Not
+//     }
+// }
 
 /// <pre>
 /// Main bond struct, storing all data about given bond
@@ -363,8 +373,6 @@ pub struct BondStruct<AccountId, Moment, Hash> {
     /// situations with outdated updates bond data on frontend
     #[codec(compact)]
     pub nonce: u64,
-
-    pub carbon_credits_included: bool,
 }
 
 pub type BondStructOf<T> = BondStruct<

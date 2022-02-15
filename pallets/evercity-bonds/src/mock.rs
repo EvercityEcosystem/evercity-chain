@@ -183,6 +183,7 @@ pub fn get_test_bond() -> BondStruct {
             bond_units_mincap_amount: 1000,
             bond_units_maxcap_amount: 1800,
             bond_units_base_price: 4_000_000_000_000,
+            carbon_metadata: Default::default(),
         },
 
         issuer: 0,
@@ -200,7 +201,6 @@ pub fn get_test_bond() -> BondStruct {
         bond_credit: 0,
         coupon_yield: 0,
         nonce: 0,
-        carbon_credits_included: Default::default(),
     }
 }
 
@@ -234,6 +234,7 @@ pub fn get_test_bond_stable() -> BondStruct {
             bond_units_mincap_amount: 1000,
             bond_units_maxcap_amount: 1800,
             bond_units_base_price: 4_000_000_000_000,
+            carbon_metadata: Default::default(),
         },
 
         issuer: 0,
@@ -251,7 +252,6 @@ pub fn get_test_bond_stable() -> BondStruct {
         bond_credit: 0,
         coupon_yield: 0,
         nonce: 0,
-        carbon_credits_included: Default::default(),
     }
 }
 
