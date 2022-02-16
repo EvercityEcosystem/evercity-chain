@@ -1788,27 +1788,16 @@ impl<T: Config> Module<T> {
     }
 
     pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, u32)> {
-        // let bond = BondRegistry::<T>::get(bond_id);
         BondUnitPackageRegistry::<T>::iter()
                                     .filter(|(x, _, _)|{ x == bond_id })
                                     .map(|(_, y, z)| 
-                                            {(y, z.iter().map(|x| x.bond_units).reduce(|a, b| a + b).unwrap_or(0))})
+                                            {(y, z.iter()
+                                                    .map(|x| x.bond_units)
+                                                    .reduce(|a, b| a + b)
+                                                    .unwrap_or(0))}
+                                    )
                                     .collect::<Vec<(T::AccountId, u32)>>()
     }
-
-    pub fn test_get_to_delete() -> Vec<(BondId, <T as frame_system::Config>::AccountId, Vec<BondUnitPackage>)> {
-        let aaa = BondUnitPackageRegistry::<T>::iter()
-                    .collect::<Vec<(BondId, <T as frame_system::Config>::AccountId, Vec<BondUnitPackage>)>>();
-        aaa
-                                    // .filter(|(x, _, _)|{ x == bond_id })
-                                    // .map(|(_, y, z)| 
-                                    //         {(y, z.iter().map(|x| x.coupon_yield).reduce(|a, b| a + b).unwrap_or(0))})
-                                    // .collect::<Vec<(T::AccountId, EverUSDBalance)>>()
-    }
-
-    // pub fn get_bond_by_id(bond_id: &BondId) -> BondStruct<<T as Config>::AccountId, <T as Config>::Moment, <T as Config>::Hash> {
-    //     BondRegistry::<T>::get(bond_id)
-    // }
 
     /// <pre>
     /// Deletes expired burn requests.

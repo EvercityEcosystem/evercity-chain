@@ -9,8 +9,6 @@ mod mock;
 mod tests;
 
 use sp_std::{prelude::*};
-use sp_runtime::{traits::{StaticLookup}
-};
 use pallet_evercity_bonds::bond::{BondId, BondState};
 
 use frame_support::{
@@ -36,12 +34,10 @@ pub struct CarbonCreditsBondRelease<Balance> {
 pub mod pallet {
     use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*, traits::UnfilteredDispatchable,
+		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
-	// use crate::trade_request::{TradeRequest, HolderType, CARBON_CREDITS_HOLDER_APPROVED, ASSET_HOLDER_APPROVED};
 	use super::*;
-	// use pallet_evercity_assets;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -57,7 +53,6 @@ pub mod pallet {
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config + 
 	{
-		// type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
@@ -88,10 +83,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
-        /// \[TradeRequestId, AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
-        CarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, CarbonCreditsId<T>),
-		/// \[TradeRequestId\]
-        CarbonCreditsTradeRequestAccepted(TradeRequestId),
+		BondCarbonCreditsReleased(BondId, CarbonCreditsId<T>)
     }
 	
 	#[deprecated(note = "use `Event` instead")]
@@ -109,41 +101,28 @@ pub mod pallet {
 			let caller = ensure_signed(origin.clone())?;
 			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
 			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
-			ensure!(bond.state != BondState::PREPARE, Error::<T>::BondNotFinished);
+			ensure!(bond.state == BondState::ACTIVE || bond.state == BondState::BANKRUPT || bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+			ensure!(bond.inner.carbon_metadata.is_some(), Error::<T>::BondNotFinished);
 
 			let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
 			ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
 
-			let bond_investment_tubple = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
-			ensure!(bond_investment_tubple.len() != 0, Error::<T>::InvestmentIsZero);
+			let bond_investment_tuples = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
+			ensure!(bond_investment_tuples.len() != 0, Error::<T>::InvestmentIsZero);
 
-			log::info!("====================================================================================");
-			log::info!("======================= LENGTH IS {:?}", bond_investment_tubple.len());
-			log::info!("======================= TUPLE VEC IS {:?}", bond_investment_tubple);
-
-			for (i, j) in bond_investment_tubple.clone() {
-				log::info!("======================= ACCOUNT {:?} IMPACT IS {:?}", i, j);
-			}
-
-			log::info!("====================================================================================");
-
-			let total_packages = bond_investment_tubple.iter()
+			let total_packages = bond_investment_tuples.iter()
 											.map(|(_, everusd)| everusd)
 											.fold(0, |a, b| {a + b});
 
-			log::info!("======================= TOTAL BALANCE IS {:?}", total_packages);
-
 			ensure!(total_packages != 0, Error::<T>::BalanceIsZero);
 
-			let parts = bond_investment_tubple
+			let parts = bond_investment_tuples
 									.into_iter()
 									.map(|(acc, everusd)| {
-										// (acc, (everusd/total_everusd_balance) as f64)
 										(acc, (everusd as f64)/(total_packages as f64) )
 									})
 									.filter(|(_, part)| *part != 0.0)
 									.map(|(acc, everusd)| {
-										// (acc, (everusd/total_everusd_balance) as f64)
 										(acc, Self::divide_balance(everusd, carbon_credits_count))
 									})
 									.collect::<Vec<(T::AccountId, CarbonCreditsBalance<T>)>>();
@@ -154,15 +133,14 @@ pub mod pallet {
 			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
 
 			for (acc, bal) in parts {
-				log::info!("======================================== trying to send {:?} to acccount: {:?} ===========================================", bal, acc);
-				let res = 
+				let _ = 
 					pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 						origin.clone(), carbon_credits_id, acc, bal);
-				log::info!("======================================== transfer result is:{:?} ===========================================", res);
 			}
 
 			let release = CarbonCreditsBondRelease {amount: carbon_credits_count, period: 0};
 			BondCarbonReleaseRegistry::<T>::insert(bond_id, release);
+			Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, carbon_credits_id));
 			Ok(().into())
 		}
     }

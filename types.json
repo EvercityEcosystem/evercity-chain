@@ -65,7 +65,8 @@
     "mincap_deadline": "Compact<Moment>",
     "bond_units_mincap_amount": "Compact<BondUnitAmount>",
     "bond_units_maxcap_amount": "Compact<BondUnitAmount>",
-    "bond_units_base_price": "Compact<EverUSDBalance>"
+    "bond_units_base_price": "Compact<EverUSDBalance>",
+    "carbon_metadata": "Option<CarbonUnitsMetadata>"
   },
   "BondStructOf": {
     "inner": "BondInnerStructOf",
@@ -81,8 +82,7 @@
     "bond_debit": "Compact<EverUSDBalance>",
     "bond_credit": "Compact<EverUSDBalance>",
     "coupon_yield": "Compact<EverUSDBalance>",
-    "nonce": "Compact<u64>",
-    "carbon_credits_included": "bool"
+    "nonce": "Compact<u64>"
   },
   "AccountYield": {
     "coupon_yield": "Compact<EverUSDBalance>",
@@ -223,5 +223,8 @@
   },
   "TradeRequestId": "u128",
   "CarbonCreditsId": "AssetId",
-  "CarbonCreditsBalance": "Balance"
+  "CarbonCreditsBalance": "Balance",
+  "CarbonUnitsMetadata": {
+    "count": "u128"
+  }
 }

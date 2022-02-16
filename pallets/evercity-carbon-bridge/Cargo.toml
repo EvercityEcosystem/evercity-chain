@@ -34,7 +34,7 @@ pallet-assets = { default-features = false, version = '3.0.0' }
 pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../evercity-assets' }
 pallet-evercity-bonds ={ default-features = false, version = '0.1.1', path = '../evercity-bonds' }
 
-log = "0.4.14"
+# log = "0.4.14"
 
 [dev-dependencies]
 sp-core = {  version = '3.0.0' }
