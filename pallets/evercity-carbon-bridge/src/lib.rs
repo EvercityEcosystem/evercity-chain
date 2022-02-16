@@ -146,11 +146,11 @@ pub mod pallet {
     }
 
 	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
-		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
+		pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
 			num.into()
 		}
 
-		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
+		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 {
 			bal.into()
 		}
 

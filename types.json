@@ -226,5 +226,9 @@
   "CarbonCreditsBalance": "Balance",
   "CarbonUnitsMetadata": {
     "count": "u128"
+  },
+  "CarbonCreditsBondRelease": {
+    "amount": "Balance",
+    "period": "u32"
   }
 }
