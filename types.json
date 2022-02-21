@@ -171,8 +171,14 @@
   },
   "CarbonCreditsPassport": {
     "asset_id": "AssetId",
-    "project_id": "ProjectId",
+    "project_id": "CarbonCreditsOrigin",
     "annual_report_index": "u64"
+  },
+  "CarbonCreditsOrigin": {
+    "_enum":{
+      "CarbonProject": "ProjectId",
+      "Bond": "[u8; 16]"
+    }
   },
   "CarbonCreditsBurnCertificate": {
     "asset_id": "AssetId",
