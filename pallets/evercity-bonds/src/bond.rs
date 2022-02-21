@@ -111,7 +111,7 @@ pub type BondPeriodNumber = u32;
 /// and cannot be changed when Bond Units sell process is started
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
-pub struct BondInnerStruct<Moment, Hash> {
+pub struct BondInnerStruct<Moment, Hash, AccountId> {
     // bond document hashes
     /// Merkle root hash of general purpose documents pack of bond
     pub docs_pack_root_hash_main: Hash,
@@ -204,18 +204,18 @@ pub struct BondInnerStruct<Moment, Hash> {
     pub bond_units_base_price: EverUSDBalance,
 
     // pub carbon_credits_included: bool,
-    pub carbon_metadata: Option<CarbonUnitsMetadata>
+    pub carbon_metadata: Option<CarbonUnitsMetadata<AccountId>>
 }
 
 pub type BondInnerStructOf<T> =
-    BondInnerStruct<<T as pallet_timestamp::Config>::Moment, <T as frame_system::Config>::Hash>;
+    BondInnerStruct<<T as pallet_timestamp::Config>::Moment, <T as frame_system::Config>::Hash, <T as frame_system::Config>::AccountId>;
 
 #[inline]
 fn is_period_muliple_of_time_step(period: BondPeriod, time_step: BondPeriod) -> bool {
     (period % time_step) == 0
 }
 
-impl<Moment, Hash> BondInnerStruct<Moment, Hash> {
+impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
     /// Checks if other bond has the same financial properties
     pub fn is_financial_options_eq(&self, other: &Self) -> bool {
         self.bond_units_base_price == other.bond_units_base_price
@@ -308,8 +308,9 @@ impl<Moment, Hash> BondInnerStruct<Moment, Hash> {
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
-pub struct CarbonUnitsMetadata {
+pub struct CarbonUnitsMetadata<AccountId> {
     pub count: u128,
+    pub carbon_distribution: CarbonDistribution<AccountId>
 }
 
 
@@ -346,7 +347,7 @@ impl<AccountId> CarbonDistribution<AccountId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct BondStruct<AccountId, Moment, Hash> {
-    pub inner: BondInnerStruct<Moment, Hash>,
+    pub inner: BondInnerStruct<Moment, Hash, AccountId>,
 
     /// bond issuer account
     pub issuer: AccountId,
