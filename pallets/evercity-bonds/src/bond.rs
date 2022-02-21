@@ -312,6 +312,25 @@ pub struct CarbonUnitsMetadata {
     pub count: u128,
 }
 
+
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
+pub struct CarbonDistribution<AccountId> {
+    investors: i32,
+    issuer: (AccountId, i32),
+    evercity: (AccountId, i32), 
+    project_developer: (AccountId, i32)
+}
+
+impl<AccountId> CarbonDistribution<AccountId> {
+    pub fn is_correct(&self) -> bool {
+        self.issuer.1 + 
+        self.evercity.1 + 
+        self.project_developer.1 + 
+        self.investors == 100000
+    }
+}
+
 // impl Default for CarbonCreditsInclude {
 //     fn default() -> Self {
 //         Self::Not
