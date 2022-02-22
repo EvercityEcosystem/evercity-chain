@@ -317,26 +317,27 @@ pub struct CarbonUnitsMetadata<AccountId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct CarbonDistribution<AccountId> {
-    investors: i32,
-    issuer: (AccountId, i32),
-    evercity: (AccountId, i32), 
-    project_developer: (AccountId, i32)
+    pub investors: i32,
+    pub issuer: i32,
+    pub evercity: Option<(AccountId, i32)>, 
+    pub project_developer: Option<(AccountId, i32)>
 }
 
 impl<AccountId> CarbonDistribution<AccountId> {
     pub fn is_correct(&self) -> bool {
-        self.issuer.1 + 
-        self.evercity.1 + 
-        self.project_developer.1 + 
-        self.investors == 100000
+        let evercity_amount = match &self.evercity {
+            Some((_, amount)) => *amount,
+            None => 0,
+        };
+
+        let project_developer_amount = match &self.project_developer {
+            Some((_, amount)) => *amount,
+            None => 0,
+        };
+
+        evercity_amount + project_developer_amount + self.issuer + self.investors == 100_000
     }
 }
-
-// impl Default for CarbonCreditsInclude {
-//     fn default() -> Self {
-//         Self::Not
-//     }
-// }
 
 /// <pre>
 /// Main bond struct, storing all data about given bond

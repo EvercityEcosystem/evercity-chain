@@ -77,6 +77,7 @@ pub mod pallet {
 		InvestmentIsZero,
 		AlreadyReleased,
 		NotAnIssuer,
+		CarbonMetadataNotValid
     }
 
 	#[pallet::event]
@@ -102,7 +103,11 @@ pub mod pallet {
 			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
 			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
 			ensure!(bond.state == BondState::ACTIVE || bond.state == BondState::BANKRUPT || bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
-			ensure!(bond.inner.carbon_metadata.is_some(), Error::<T>::BondNotFinished);
+
+			let carbon_metadata = match bond.inner.carbon_metadata {
+				Some(c) => c,
+				None => return Err(Error::<T>::CarbonMetadataNotValid.into())
+			};
 
 			let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
 			ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
@@ -116,10 +121,12 @@ pub mod pallet {
 
 			ensure!(total_packages != 0, Error::<T>::BalanceIsZero);
 
-			let parts = bond_investment_tuples
+			let all_investors_percent = (carbon_metadata.carbon_distribution.investors as f64)/(100_000 as f64);
+
+			let investor_parts = bond_investment_tuples
 									.into_iter()
 									.map(|(acc, everusd)| {
-										(acc, (everusd as f64)/(total_packages as f64) )
+										(acc, ((everusd as f64)/(total_packages as f64))*all_investors_percent )
 									})
 									.filter(|(_, part)| *part != 0.0)
 									.map(|(acc, everusd)| {
@@ -132,7 +139,36 @@ pub mod pallet {
 
 			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
 
-			for (acc, bal) in parts {
+			// sends the part of balance
+			let proceed_send = |account: T::AccountId, part: i32| {
+				let perc = (part as f64)/(100_000 as f64);
+				if perc != 0.0 {
+					let balance_to_send = Self::divide_balance(perc, carbon_credits_count);
+					let _ = 
+						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+							origin.clone(), carbon_credits_id, account, balance_to_send);
+				}
+			};
+
+			// send to issuer
+			proceed_send(bond.issuer, carbon_metadata.carbon_distribution.issuer);
+			// send to evercity
+			match carbon_metadata.carbon_distribution.evercity {
+				None => {},
+				Some((acc, perc)) => {
+					proceed_send(acc, perc);
+				}
+			}
+			// send to project developer
+			match carbon_metadata.carbon_distribution.project_developer {
+				None => {},
+				Some((acc, perc)) => {
+					proceed_send(acc, perc);
+				}
+			}
+
+			// send to investors
+			for (acc, bal) in investor_parts {
 				let _ = 
 					pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 						origin.clone(), carbon_credits_id, acc, bal);
