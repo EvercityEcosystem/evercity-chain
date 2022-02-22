@@ -243,6 +243,15 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
 
     /// Checks common bounds for all bond parameters
     fn are_common_values_valid(&self, time_step: BondPeriod) -> bool {
+        match &self.carbon_metadata {
+            None => (),
+            Some(cm) => {
+                if !cm.carbon_distribution.is_correct() {
+                    return false;
+                }
+            }
+        }
+
         self.payment_period >= MIN_PAYMENT_PERIOD * time_step &&
         self.bond_duration >= MIN_BOND_DURATION &&
         self.bond_units_base_price > 0
@@ -255,15 +264,6 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
         // First - check bounds for both types of bond
         if !self.are_common_values_valid(time_step){
             return false;
-        }
-
-        match &self.carbon_metadata {
-            None => (),
-            Some(cm) => {
-                if !cm.carbon_distribution.is_correct() {
-                    return false;
-                }
-            }
         }
 
         if self.is_stable() {
@@ -307,13 +307,6 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
         }
     }
 }
-
-
-// #[derive(Encode, Decode, Clone, PartialEq, RuntimeDebug)]
-// pub enum CarbonCreditsInclude {
-//     Not,
-//     Included,
-// }
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
