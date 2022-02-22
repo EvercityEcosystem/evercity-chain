@@ -257,6 +257,15 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
             return false;
         }
 
+        match &self.carbon_metadata {
+            None => (),
+            Some(cm) => {
+                if !cm.carbon_distribution.is_correct() {
+                    return false;
+                }
+            }
+        }
+
         if self.is_stable() {
             // in case of the stable bond, because the below parameters are optional,
             // they must be None
