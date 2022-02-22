@@ -231,7 +231,14 @@
   "CarbonCreditsId": "AssetId",
   "CarbonCreditsBalance": "Balance",
   "CarbonUnitsMetadata": {
-    "count": "u128"
+    "count": "u128",
+    "carbon_distribution": "CarbonDistribution"
+  },
+  "CarbonDistribution": {
+    "investors": "i32",
+    "issuer": "i32",
+    "evercity": "Option<(AccountId, i32)>",
+    "project_developer": "Option<(AccountId, i32)>"
   },
   "CarbonCreditsBondRelease": {
     "amount": "Balance",
