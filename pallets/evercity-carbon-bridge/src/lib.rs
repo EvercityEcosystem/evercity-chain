@@ -48,7 +48,7 @@ pub mod pallet {
 	/// The module configuration trait.
 	pub trait Config: 
 		frame_system::Config +
-		pallet_assets::Config + 
+		// pallet_assets::Config + 
 		pallet_evercity_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config + 
