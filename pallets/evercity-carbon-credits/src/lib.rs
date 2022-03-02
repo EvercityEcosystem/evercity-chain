@@ -901,7 +901,7 @@ impl<T: Config> Module<T> {
         match &mut project.get_standard() {
             // Project Owner submits PDD (changing status to Registration) => 
             // => Auditor Approves PDD => Standard Certifies PDD => Registry Registers PDD (changing status to Issuance)
-            Standard::GOLD_STANDARD  => {
+            Standard::GOLD_STANDARD => {
                 match project.state {
                     project::PROJECT_OWNER_SIGN_PENDING => {
                         ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
@@ -934,6 +934,15 @@ impl<T: Config> Module<T> {
                         project.state = project::REGISTERED;
                         project.status = project::ProjectStatus::ISSUANCE;
                         *event = Some(RawEvent::ProjectSignedByRegistry(caller, project.id));
+                    },
+                    _ => return Err(Error::<T>::InvalidState.into())
+                }
+                Ok(())
+            },
+            Standard::EVERCITY_BOND => {
+                match project.state {
+                    project::EVERCITY_SIGN_PENDING => {
+                        todo!()
                     },
                     _ => return Err(Error::<T>::InvalidState.into())
                 }
@@ -988,6 +997,14 @@ impl<T: Config> Module<T> {
                 }
                 Ok(())
             },
+            Standard::EVERCITY_BOND => {
+                match report.state {
+                    annual_report::REPORT_EVERCITY_SIGN_PENDING => {
+                        todo!()
+                    },
+                    _ => Err(Error::<T>::InvalidState.into())
+                }
+            }
         }
     }
 

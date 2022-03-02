@@ -6,6 +6,7 @@ use frame_support::{
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum Standard {
+    EVERCITY_BOND,
     GOLD_STANDARD,
 }
 

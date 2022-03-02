@@ -20,6 +20,9 @@ pub const INVESTOR_SIGN_PENDING: ProjectStateMask = 8;
 pub const REGISTRY_SIGN_PENDING: ProjectStateMask = 16;
 pub const REGISTERED: ProjectStateMask = 32;
 
+// Evercity Bond Special Masks
+pub const EVERCITY_SIGN_PENDING: ProjectStateMask = 64;
+
 pub type ProjectId = u32;
 
 /// Main struct for projects

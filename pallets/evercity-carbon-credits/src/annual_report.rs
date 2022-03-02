@@ -14,6 +14,9 @@ pub const REPORT_INVESTOR_SIGN_PENDING: AnnualReportStateMask = 8;
 pub const REPORT_REGISTRY_SIGN_PENDING: AnnualReportStateMask = 16;
 pub const REPORT_ISSUED: AnnualReportStateMask = 32;
 
+// Evercity Bond Special Masks
+pub const REPORT_EVERCITY_SIGN_PENDING: AnnualReportStateMask = 64;
+
 /// Generic annual report implementation
 pub type AnnualReportStruct<AccountId, T, Balance> = AnnualReportStructT<AccountId, <T as pallet_timestamp::Config>::Moment, Balance>;
 
