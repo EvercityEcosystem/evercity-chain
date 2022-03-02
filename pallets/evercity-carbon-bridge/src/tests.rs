@@ -1,16 +1,27 @@
-// use frame_support::assert_noop;
-// use frame_support::assert_ok;
+use frame_support::assert_noop;
+use frame_support::assert_ok;
 
 // use helpers::*;
 
-// pub const TEST_CARBON_CREDITS_COUNT: u64 = 15000;
-// pub const TEST_CARBON_CREDITS_DECIMAL: u8 = 0;
+pub const TEST_CARBON_CREDITS_COUNT: u64 = 15000;
+pub const TEST_CARBON_CREDITS_DECIMAL: u8 = 0;
 
-// use crate::Error;
-// use crate::mock::*;
+use crate::Error;
+use crate::mock::*;
 // use crate::trade_request::HolderType;
 
-// type RuntimeError = Error<TestRuntime>;
+type RuntimeError = Error<TestRuntime>;
+
+#[test]
+fn it_works_send_all_cc() {
+    new_test_ext().execute_with(|| {
+        let investor0 = 500;
+        let investor1 = 501;
+        let investor2 = 502;
+        let investor3 = 503;
+        let investor4 = 504;
+    })
+}
 
 // #[test]
 // fn it_works_create_exhange_cc_holder() {

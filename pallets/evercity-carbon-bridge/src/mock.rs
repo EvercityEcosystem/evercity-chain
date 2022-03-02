@@ -35,9 +35,6 @@ frame_support::construct_runtime!(
 	}
 );
 
-// impl pallet_evercity_exchange::Config for TestRuntime {
-//     type Event = Event;
-// }
 impl pallet_evercity_carbon_bridge::Config for TestRuntime {
     type Event = Event;
 }
