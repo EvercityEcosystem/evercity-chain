@@ -36,6 +36,7 @@ pub struct ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq 
     pub annual_reports: Vec<AnnualReportStruct<AccountId, Moment, Balance>>,
     required_signers: Vec<RequiredSigner<AccountId>>,
     standard: Standard,
+    bond_id: Option<[u8; 16]>,
 }
 
 impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq + Clone, Moment: pallet_timestamp::Config, Balance: Clone {
@@ -50,6 +51,21 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
             state: PROJECT_OWNER_SIGN_PENDING,
             annual_reports: Vec::new(),
             required_signers: Vec::new(),
+            bond_id: None
+        }
+    }
+
+    pub fn new_with_bond(owner: AccountId, id: u32, standard: Standard, file_id: Option<FileId>, bond_id: [u8; 16]) -> Self {
+        ProjectStruct{
+            file_id, 
+            owner,
+            id,
+            standard,
+            status: ProjectStatus::default(), 
+            state: PROJECT_OWNER_SIGN_PENDING,
+            annual_reports: Vec::new(),
+            required_signers: Vec::new(),
+            bond_id: Some(bond_id),
         }
     }
 
@@ -88,6 +104,10 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
 
     pub fn is_ready_for_signing(&self) -> bool {
         self.file_id.is_some()
+    }
+
+    pub fn get_bond_id(&self) -> Option<[u8; 16]> {
+        self.bond_id
     }
 }
 
