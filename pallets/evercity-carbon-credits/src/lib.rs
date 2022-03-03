@@ -652,7 +652,12 @@ decl_module! {
         /// 
         /// </pre>
         #[weight = 10_000 + T::DbWeight::get().reads_writes(3, 2)]
-        pub fn remove_last_annual_report_signer(origin, signer: T::AccountId, role: RoleMask, project_id: ProjectId) -> DispatchResult {
+        pub fn remove_last_annual_report_signer(
+            origin, 
+            signer: T::AccountId, 
+            role: RoleMask, 
+            project_id: ProjectId
+        ) -> DispatchResult {
             let caller = ensure_signed(origin.clone())?;
             ensure!(pallet_evercity_accounts::Module::<T>::account_is_selected_role(&signer, role), Error::<T>::AccountIncorrectRole);
             ProjectById::<T>::try_mutate(
@@ -869,7 +874,6 @@ decl_module! {
             ensure!(pallet_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) >= amount,
                 Error::<T>::InsufficientCarbonCredits
             );
-
             BurnCertificates::<T>::try_mutate(
                 credits_holder.clone(), |certificates| -> DispatchResult {
                     match certificates.iter_mut().find(|x| x.asset_id == asset_id) {
@@ -888,7 +892,6 @@ decl_module! {
                 }
 
             )?;
-
             Self::deposit_event(RawEvent::CarbonCreditsAssetBurned(credits_holder, asset_id));
             Ok(())
         }
@@ -897,7 +900,11 @@ decl_module! {
 
 impl<T: Config> Module<T> {
     /// Changes state of a project by signing
-    fn change_project_state(project: &mut ProjectStruct<T::AccountId, T, T::Balance>, caller: T::AccountId, event: &mut Option<Event<T>>) -> DispatchResult {
+    fn change_project_state(
+        project: &mut ProjectStruct<T::AccountId, T, T::Balance>, 
+        caller: T::AccountId, 
+        event: &mut Option<Event<T>>
+    ) -> DispatchResult {
         match &mut project.get_standard() {
             // Project Owner submits PDD (changing status to Registration) => 
             // => Auditor Approves PDD => Standard Certifies PDD => Registry Registers PDD (changing status to Issuance)
@@ -952,7 +959,11 @@ impl<T: Config> Module<T> {
     }
 
     /// Changes state of an annual report by signing
-    fn change_project_annual_report_state(project: &mut ProjectStruct<T::AccountId, T, T::Balance>, caller: T::AccountId, event: &mut Option<Event<T>>) -> DispatchResult {
+    fn change_project_annual_report_state(
+        project: &mut ProjectStruct<T::AccountId, T, T::Balance>, 
+        caller: T::AccountId, 
+        event: &mut Option<Event<T>>
+    ) -> DispatchResult {
         let standard = project.get_standard().clone();
         let report = match project.annual_reports.last_mut(){
             None => return Err(Error::<T>::NoAnnualReports.into()),
@@ -1038,7 +1049,12 @@ impl<T: Config> Module<T> {
     }
 
     #[cfg(test)]
-    pub fn create_test_carbon_credits(account_id: T::AccountId, cc_amount: T::Balance, asset_id: T::AssetId, fake_project_id: ProjectId) -> DispatchResult {
+    pub fn create_test_carbon_credits(
+        account_id: T::AccountId, 
+        cc_amount: T::Balance, 
+        asset_id: T::AssetId, 
+        fake_project_id: ProjectId
+    ) -> DispatchResult {
         let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
         let mint_call = pallet_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
         let origin = frame_system::RawOrigin::Signed(account_id).into();
@@ -1049,14 +1065,18 @@ impl<T: Config> Module<T> {
 }
 
 impl<T: Config> Module<T> where T::Balance: From<u128> { 
-    pub fn create_bond_carbon_credits(account: T::AccountId, bond_id: [u8; 16], asset_id: T::AssetId, amount: T::Balance, ) -> DispatchResult {
+    pub fn create_bond_carbon_credits(
+        account: T::AccountId, 
+        bond_id: [u8; 16], 
+        asset_id: T::AssetId, 
+        amount: T::Balance
+    ) -> DispatchResult {
         let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account.clone());
         let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
         let min_bal = Self::u64_to_balance(1);
         let create_asset_call = pallet_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source.clone(), 0, min_bal);
         let create_asset_result = create_asset_call.dispatch_bypass_filter(cc_holder_origin);
         ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
-
         let mint_call = pallet_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, amount);
         let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
         let result = mint_call.dispatch_bypass_filter(cc_holder_origin);
@@ -1065,13 +1085,14 @@ impl<T: Config> Module<T> where T::Balance: From<u128> {
             let _ = pallet_assets::Call::<T>::destroy(asset_id, 0);
             Error::<T>::ErrorMintingAsset
         });
-
         // Create passport
         <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new_from_bond(asset_id, bond_id));
         Ok(())
     }
 
-    fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> {
+    fn u64_to_balance(
+        num: u128
+    ) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> {
         num.into()
     }
 }
