@@ -230,8 +230,10 @@ decl_error! {
         IncorrectAnnualReportSigner,
 
         // File errors
-
         IncorrectFileId,
+
+        // Bond Validation Errors
+        ProjectIsBond,
     }
 }
 
@@ -755,6 +757,7 @@ decl_module! {
                         Some(project) => {
                             ensure!(project.owner == project_owner, Error::<T>::AccountNotOwner);
                             ensure!(project.state == project::REGISTERED, Error::<T>::ProjectNotRegistered);
+                            ensure!(project.get_bond_id().is_none(), Error::<T>::ProjectIsBond);
         
                             // Check that there is at least one annual report
                             let reports_len = project.annual_reports.len();
