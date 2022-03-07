@@ -81,6 +81,60 @@ pub mod pallet {
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
 		// BondCarbonCreditsReleased(BondId, CarbonCreditsId<T>)
+                // Project Events:
+
+        /// \[ProjectOwner, ProjectId\]
+        ProjectCreated(T::AccountId, ProjectId),
+        /// \[ProjectOwner, ProjectId, FileId\]
+        ProjectFileIdChanged(T::AccountId, ProjectId, FileId),
+        /// \[ProjectOwner, ProjectId, OldStandard, NewStandard\]
+        ProjectStandardChanged(T::AccountId, ProjectId, Standard, Standard),
+        /// \[ProjectOwner, ProjectId\]
+        ProjectSubmited(T::AccountId, ProjectId),
+        /// \[Auditor, ProjectId\]
+        ProjectSignedByAduitor(T::AccountId, ProjectId),
+        /// \[StandardRoleAccount, ProjectId\]
+        ProjectSignedByStandard(T::AccountId, ProjectId),
+        /// \[Registry, ProjectId\]
+        ProjectSignedByRegistry(T::AccountId, ProjectId),
+        /// \[ProjectOwner, Signer, Role, ProjectId\]
+        ProjectSignerAdded(T::AccountId, T::AccountId, RoleMask, ProjectId),
+        /// \[ProjectOwner, Signer, Role, ProjectId\]
+        ProjectSignerRemoved(T::AccountId, T::AccountId, RoleMask, ProjectId),
+
+        // Annual Report Events:
+
+        /// \[ProjectOwner, ProjectId\]
+        AnnualReportCreated(T::AccountId, ProjectId),
+        /// \[ProjectOwner, ProjectId\]
+        AnnualReportDeleted(T::AccountId, ProjectId),
+        // \[ProjectOwner, ProjectId, NewCount\]
+        AnnualReportCreditsCountChanged(T::AccountId, ProjectId, T::Balance),
+        /// \[ProjectOwner, ProjectId\]
+        AnnualReportSubmited(T::AccountId, ProjectId), 
+        /// \[Auditor, ProjectId\]
+        AnnualReportSignedByAuditor(T::AccountId, ProjectId),
+        /// \[StandardRoleAccount, ProjectId\]
+        AnnualReportSignedByStandard(T::AccountId, ProjectId),
+        /// \[Registry, ProjectId\]
+        AnnualReportSignedByRegistry(T::AccountId, ProjectId),
+        /// \[ProjectOwner, Signer, Role, ProjectId\]
+        AnnualReportSignerAdded(T::AccountId, T::AccountId, RoleMask, ProjectId),
+        /// \[ProjectOwner, Signer, Role, ProjectId\]
+        AnnualReportSignerRemoved(T::AccountId, T::AccountId, RoleMask, ProjectId),
+
+        // Carbon Credits Events:
+
+        /// \[ProjectOwner, ProjectId, AssetId\]
+        CarbonCreditsAssetCreated(T::AccountId, ProjectId, T::AssetId),
+        /// \[ProjectOwner, AssetId\]
+        CarbonCreditsMetadataChanged(T::AccountId, T::AssetId),
+        /// \[ProjectOwner, ProjectId, AssetId\]
+        CarbonCreditsMinted(T::AccountId, ProjectId, T::AssetId),
+        /// \[CarbonCreditsHolder, AccountToTransfer, AssetId\]
+        CarbonCreditsTransfered(T::AccountId, T::AccountId, T::AccountId),
+        /// \[ProjectOwner, AssetId\]
+        CarbonCreditsAssetBurned(T::AccountId, T::AssetId),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -88,14 +142,87 @@ pub mod pallet {
 
     #[pallet::error]
 	pub enum Error<T> {
-		BondNotFinished,
-		CreateCCError,
-		TransferCCError,
-		BalanceIsZero,
-		InvestmentIsZero,
-		AlreadyReleased,
-		NotAnIssuer,
-		CarbonMetadataNotValid
+        // Project errors:
+
+        /// Separate Error for project validation
+        InvalidProjectState,
+
+        // Account errors:
+
+        /// Account does not have an auditor role in Accounts Pallet
+        AccountNotAuditor,
+        /// Account is not owner of the project or doenst have auditor role in Accounts Pallet
+        AccountNotOwner,
+        /// Account doesnt have Standard role in Accounts Pallet
+        AccountNotStandard,
+        /// Account doesnt have Registry role in Accounts Pallet 
+        AccountNotRegistry,
+        /// Account doesnt have Investor role in Accounts Pallet 
+        AccountNotInvestor,
+        /// Role if the account is incorrect
+        AccountIncorrectRole,
+        /// Account is not assigned as signer in given role
+        AccountNotGivenRoleSigner,
+        /// Account not owner of file
+        AccountNotFileOwner,
+        /// Account has already signed a project or annual report
+        AccountAlreadySigned,
+
+        // State machine errors
+
+        /// Invalid State of the state machine
+        InvalidState,
+        /// Project does not exits in the storage
+        ProjectNotExist,
+        /// Project doesnt have Registered state
+        ProjectNotRegistered,
+        /// Annual reports of the project do not exist
+        NoAnnualReports,
+        /// State of an annual report doesnt equal to Issued
+        NotIssuedAnnualReportsExist,
+
+        // Asset error
+
+        /// Error has occured when tried to create asset
+        ErrorCreatingAsset,
+        /// Error minting asset
+        ErrorMintingAsset,
+        /// Carbon credits are already created error
+        CCAlreadyCreated,
+        /// Carbon credits transfer failed
+        TransferFailed,
+        /// Carbon Credits asset burn failed
+        BurnFailed,
+        /// Bad parameters of metadata
+        BadMetadataParameters,
+        /// Set metadata parameters failed
+        SetMetadataFailed,
+        /// Annual report is not ready
+        AnnualReportNotReady,
+        /// Carbon Credits Ballance too low
+        InsufficientCarbonCredits,
+
+        // Passport Errors:
+
+        /// There is no carbon credits passport in storage
+        PassportNotExist,
+        /// Project referenced by passport is equal to given
+        BadPassportProject,
+        /// Given Annual report index is bad 
+        BadPassportAnnualReport,
+
+        // Signer errors:
+
+        /// Signer does not exist in Project required signers
+        IncorrectProjectSigner,
+        /// Signer does not exist in annual report required signers
+        IncorrectAnnualReportSigner,
+
+        // File errors
+        IncorrectFileId,
+
+        // Bond Validation Errors
+        ProjectIsBond,
     }
 
     #[pallet::call]
