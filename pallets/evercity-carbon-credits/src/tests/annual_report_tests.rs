@@ -1,10 +1,8 @@
 use crate::Error;
 use crate::tests::mock::*;
 use frame_support::{assert_ok, assert_noop, dispatch::{
-    DispatchResult,
     Vec, DispatchResultWithPostInfo,
 }};
-use sp_runtime::DispatchResultWithInfo;
 use crate::standard::Standard;
 use crate::annual_report::*;
 use pallet_evercity_accounts::accounts::*;
@@ -939,7 +937,7 @@ fn it_works_for_create_new_annual_report_deposit_event_gold_standard() {
             get_test_carbon_credits_name() , get_test_carbon_credits_symbol(), TEST_CARBON_CREDITS_DECIMAL
         );
         let last_event = last_event().unwrap();
-        let check_event = Event::pallet_carbon_credits(crate::RawEvent::AnnualReportCreated(owner, project_id));
+        let check_event = Event::pallet_carbon_credits(crate::Event::AnnualReportCreated(owner, project_id));
 
         assert_eq!(check_event, last_event);
     });
@@ -961,10 +959,10 @@ fn it_works_sign_annual_report_deposit_events_gold_standard() {
         crate::tests::helpers::assign_annual_report_mock_users_required_signers_gold_standard(project_id);
 
         let tuple_vec = vec![
-            (owner, Event::pallet_carbon_credits(crate::RawEvent::AnnualReportSubmited(owner, 1))),
-            (auditor, Event::pallet_carbon_credits(crate::RawEvent::AnnualReportSignedByAuditor(auditor, 1))),
-            (standard_acc, Event::pallet_carbon_credits(crate::RawEvent::AnnualReportSignedByStandard(standard_acc, 1))),
-            (registry, Event::pallet_carbon_credits(crate::RawEvent::AnnualReportSignedByRegistry(registry, 1))),
+            (owner, Event::pallet_carbon_credits(crate::Event::AnnualReportSubmited(owner, 1))),
+            (auditor, Event::pallet_carbon_credits(crate::Event::AnnualReportSignedByAuditor(auditor, 1))),
+            (standard_acc, Event::pallet_carbon_credits(crate::Event::AnnualReportSignedByStandard(standard_acc, 1))),
+            (registry, Event::pallet_carbon_credits(crate::Event::AnnualReportSignedByRegistry(registry, 1))),
         ];
 
         tuple_vec.iter()

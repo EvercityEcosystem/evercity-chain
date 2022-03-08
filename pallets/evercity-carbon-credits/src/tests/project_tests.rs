@@ -1,6 +1,6 @@
 use crate::tests::mock::*;
 use frame_support::{assert_ok, assert_noop, dispatch::{
-    DispatchResult,DispatchErrorWithPostInfo, DispatchResultWithPostInfo
+    DispatchResultWithPostInfo
 }};
 use crate::standard::Standard;
 use pallet_evercity_accounts::accounts::*;
@@ -647,10 +647,10 @@ fn it_works_sign_project_deposit_events_gold_standard() {
         crate::tests::helpers::assign_project_mock_users_required_signers_gold_standard(1);
 
         let tuple_vec = vec![
-            (owner, Event::pallet_carbon_credits(crate::RawEvent::ProjectSubmited(owner, 1))),
-            (auditor, Event::pallet_carbon_credits(crate::RawEvent::ProjectSignedByAduitor(auditor, 1))),
-            (standard_acc, Event::pallet_carbon_credits(crate::RawEvent::ProjectSignedByStandard(standard_acc, 1))),
-            (registry, Event::pallet_carbon_credits(crate::RawEvent::ProjectSignedByRegistry(registry, 1)))
+            (owner, Event::pallet_carbon_credits(crate::Event::ProjectSubmited(owner, 1))),
+            (auditor, Event::pallet_carbon_credits(crate::Event::ProjectSignedByAduitor(auditor, 1))),
+            (standard_acc, Event::pallet_carbon_credits(crate::Event::ProjectSignedByStandard(standard_acc, 1))),
+            (registry, Event::pallet_carbon_credits(crate::Event::ProjectSignedByRegistry(registry, 1)))
         ];
 
         // sign here:

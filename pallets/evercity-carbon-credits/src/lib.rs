@@ -11,34 +11,14 @@ pub mod burn_certificate;
 pub mod tests;
 
 use sp_std::{prelude::*};
-// use pallet_evercity_bonds::bond::{BondId, BondState};
-
 use frame_support::{
-    codec::{Decode, Encode},
-    sp_runtime::RuntimeDebug,
-};
-// use crate::sp_api_hidden_includes_decl_storage::hidden_include::traits::Get;
-use frame_support::{
-    ensure,
-    decl_error, 
-    decl_module, 
-    decl_storage,
-    decl_event,
     dispatch::{
         DispatchResult,
         Vec,
     },
     traits::UnfilteredDispatchable,
 };
-use frame_system::{
-    ensure_signed,
-};
 use sp_runtime::traits::StaticLookup;
-use frame_support::sp_std::{
-    cmp::{
-        Eq, 
-        PartialEq}, 
-};
 use project::{ProjectStruct, ProjectId};
 use standard::Standard;
 use pallet_evercity_filesign::file::{FileId};
