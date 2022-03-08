@@ -134,10 +134,10 @@ pub mod pallet {
 									})
 									.collect::<Vec<(T::AccountId, CarbonCreditsBalance<T>)>>();
 
-			let create_cc_call = 
-				pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
+			// let create_cc_call = 
+			// 	pallet_evercity_carbon_credits::Module::<T>::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
 
-			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
+			// ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
 
 			// sends the part of balance
 			let proceed_send = |account: T::AccountId, part: i32| {
