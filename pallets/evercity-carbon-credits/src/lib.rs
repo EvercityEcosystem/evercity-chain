@@ -44,7 +44,7 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
-use pallet_evercity_bonds::{bond::BondState, BondId};
+    use pallet_evercity_bonds::{bond::BondState, BondId};
 	use crate::bond_carbon_release::CarbonCreditsBondRelease;
 
 use super::*;
@@ -131,7 +131,7 @@ use super::*;
 
 
 
-        // BondCarbonCreditsReleased(BondId, CarbonCreditsId<T>)
+        BondCarbonCreditsReleased(BondId, <T as pallet_evercity_assets::Config>::AssetId)
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -306,7 +306,7 @@ use super::*;
             Ok(().into())
         }
 
-                /// <pre>
+        /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
         ///            standard: Standard - Carbon Credits Standard
@@ -316,14 +316,20 @@ use super::*;
         /// Creates new project with relation to PDD file in filesign
         /// </pre>
         #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
-        pub fn create_bond_project(origin: OriginFor<T>, standard: Standard, file_id: Option<FileId>, bond_id: BondId) -> DispatchResultWithPostInfo {
+        pub fn create_bond_project(
+            origin: OriginFor<T>, 
+            standard: Standard, 
+            file_id: Option<FileId>, 
+            bond_id: BondId
+        ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
             if let Some(id) = file_id {
                 ensure!(pallet_evercity_filesign::Module::<T>::address_is_owner_for_file(id, &caller), Error::<T>::AccountNotFileOwner);
             }
             let new_id = LastID::<T>::get() + 1;
-            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, T, T::Balance>::new(caller.clone(), new_id, standard, file_id);
+            let new_project = 
+                ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, *bond_id);
             <ProjectById<T>>::insert(new_id, new_project);
             LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
 
@@ -942,7 +948,7 @@ use super::*;
         }
 
 
-                /// <pre>
+        /// <pre>
         /// Method: burn_carbon_credits(
         ///    asset_id: <T as pallet_assets::Config>::AssetId, 
         ///    amount: T::Balance
@@ -985,7 +991,6 @@ use super::*;
                     ensure!(!result.is_err(), Error::<T>::BurnFailed);
                     Ok(())
                 }
-
             )?;
             Self::deposit_event(Event::CarbonCreditsAssetBurned(credits_holder, asset_id));
             Ok(().into())
@@ -1034,8 +1039,8 @@ use super::*;
 									})
 									.collect::<Vec<(T::AccountId, T::Balance)>>();
 
-			let create_cc_call = 
-				Self::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
+			// let create_cc_call = 
+			// 	Self::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
 
 			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
 
@@ -1076,7 +1081,7 @@ use super::*;
 
 			let release = CarbonCreditsBondRelease {amount: carbon_credits_count};
 			BondCarbonReleaseRegistry::<T>::insert(bond_id, release);
-			// Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, carbon_credits_id));
+			Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, carbon_credits_id));
 			Ok(().into())
 		}
     }
@@ -1251,30 +1256,30 @@ use super::*;
     }
 
     impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> { 
-        pub fn create_bond_carbon_credits(
-            account: T::AccountId, 
-            bond_id: [u8; 16], 
-            asset_id: T::AssetId, 
-            amount: T::Balance
-        ) -> DispatchResult {
-            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account.clone());
-            let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
-            let min_bal = Self::u64_to_balance(1);
-            let create_asset_call = pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source.clone(), 0, min_bal);
-            let create_asset_result = create_asset_call.dispatch_bypass_filter(cc_holder_origin);
-            ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
-            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, amount);
-            let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
-            let result = mint_call.dispatch_bypass_filter(cc_holder_origin);
-            ensure!(!result.is_err(), {
-                // destroy if failed
-                let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
-                Error::<T>::ErrorMintingAsset
-            });
-            // Create passport
-            <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new_from_bond(asset_id, bond_id));
-            Ok(())
-        }
+        // pub fn create_bond_carbon_credits(
+        //     account: T::AccountId, 
+        //     bond_id: [u8; 16], 
+        //     asset_id: T::AssetId, 
+        //     amount: T::Balance
+        // ) -> DispatchResult {
+        //     let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account.clone());
+        //     let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
+        //     let min_bal = Self::u64_to_balance(1);
+        //     let create_asset_call = pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source.clone(), 0, min_bal);
+        //     let create_asset_result = create_asset_call.dispatch_bypass_filter(cc_holder_origin);
+        //     ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
+        //     let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, amount);
+        //     let cc_holder_origin = frame_system::RawOrigin::Signed(account.clone()).into();
+        //     let result = mint_call.dispatch_bypass_filter(cc_holder_origin);
+        //     ensure!(!result.is_err(), {
+        //         // destroy if failed
+        //         let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
+        //         Error::<T>::ErrorMintingAsset
+        //     });
+        //     // Create passport
+        //     <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new_from_bond(asset_id, bond_id));
+        //     Ok(())
+        // }
 
         pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
 			num.into()
@@ -1293,10 +1298,3 @@ use super::*;
 		}
     }
 }
-
-
-// #[derive(codec::Encode, codec::Decode, Clone, Default, frame_support::RuntimeDebug, PartialEq)]
-// pub struct CarbonCreditsBondRelease<Balance> {
-//     pub amount: Balance,
-//     pub period: u32,
-// }
