@@ -2,8 +2,9 @@ use crate::Error;
 use crate::tests::mock::*;
 use frame_support::{assert_ok, assert_noop, dispatch::{
     DispatchResult,
-    Vec,
+    Vec, DispatchResultWithPostInfo,
 }};
+use sp_runtime::DispatchResultWithInfo;
 use crate::standard::Standard;
 use crate::annual_report::*;
 use pallet_evercity_accounts::accounts::*;
@@ -32,7 +33,7 @@ fn it_works_for_create_new_annual_report_with_file() {
 
         assert_eq!(project.annual_reports.len() + 1, project_with_report.annual_reports.len());
         assert_eq!(REPORT_PROJECT_OWNER_SIGN_PENDING, project_with_report.annual_reports.last().unwrap().state);
-        assert_ok!(create_report_result, ());
+        assert_ok!(create_report_result, ().into());
     });
 }
 
@@ -124,7 +125,7 @@ fn it_works_for_create_new_annual_report_gold_standard() {
 
         assert_eq!(project.annual_reports.len() + 1, project_with_report.annual_reports.len());
         assert_eq!(REPORT_PROJECT_OWNER_SIGN_PENDING, project_with_report.annual_reports.last().unwrap().state);
-        assert_ok!(create_report_result, ());
+        assert_ok!(create_report_result, ().into());
     });
 }
 
@@ -144,7 +145,7 @@ fn it_works_for_create_new_annual_report_multiple_annual_reports_gold_standard()
         );
         let project_with_report = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
-        assert_ne!(create_second_report_result, DispatchResult::Ok(()));
+        assert_ne!(create_second_report_result, DispatchResultWithPostInfo::Ok(().into()));
         assert_eq!(project.annual_reports.len() + 1, project_with_report.annual_reports.len());
     });
 }
@@ -261,7 +262,7 @@ fn it_fails_for_create_new_annual_report_gold_standard_not_registered() {
 
         // assertion after all steps
         report_results.iter().for_each(|res|{
-            assert_ne!(*res, DispatchResult::Ok(()));
+            assert_ne!(*res, DispatchResultWithPostInfo::Ok(().into()));
         });
         projects.iter().for_each(|proj|{
             assert_eq!(0, proj.annual_reports.len());
@@ -286,7 +287,7 @@ fn it_fails_for_create_new_annual_report_not_an_owner_role_gold_standard() {
                 let project_with_report = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
                 assert_eq!(project.annual_reports.len(), project_with_report.annual_reports.len());
-                assert_ne!(create_report_result, DispatchResult::Ok(()));
+                assert_ne!(create_report_result, DispatchResultWithPostInfo::Ok(().into()));
                 assert_noop!(
                     create_report_result,
                     RuntimeError::AccountNotOwner
@@ -314,7 +315,7 @@ fn it_fails_for_create_new_annual_report_not_an_owner_of_the_project_gold_standa
 
         assert!(is_owner);
         assert_eq!(project.annual_reports.len(), project_with_report.annual_reports.len());
-        assert_ne!(create_report_result, DispatchResult::Ok(()));
+        assert_ne!(create_report_result, DispatchResultWithPostInfo::Ok(().into()));
         assert_noop!(
             create_report_result,
             RuntimeError::AccountNotOwner
@@ -344,7 +345,7 @@ fn it_works_annual_report_assign_signer() {
         let project_with_report = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
         assign_results.iter().for_each(|result| {
-                assert_ok!(*result, ());
+                assert_ok!(*result, ().into());
             }
         );
         assert!(project_with_report.annual_reports.last().unwrap().is_required_signer((ROLES[1].0, ROLES[1].1)));
@@ -373,7 +374,7 @@ fn it_works_annual_report_remove_signer() {
         let delete_result = CarbonCredits::remove_last_annual_report_signer(Origin::signed(owner), ROLES[5].0, ROLES[5].1, project_id);
         let project_with_report = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
-        assert_ok!(delete_result, ());
+        assert_ok!(delete_result, ().into());
         assert!(!project_with_report.annual_reports.last().unwrap().is_required_signer((ROLES[5].0, ROLES[5].1)));
 
         // Assert that others are not deleted:
@@ -480,7 +481,7 @@ fn it_works_for_full_cycle_sign_annual_report_gold_standard() {
                 let project = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
                 assert!(EvercityFilesign::address_has_signed_the_file(report_id, &acc));
-                assert_ok!(result, ());
+                assert_ok!(result, ().into());
                 assert_eq!(state, project.annual_reports.last().unwrap().state);
             })
     });
@@ -503,7 +504,7 @@ fn it_fails_sign_annual_report_not_an_owner_of_project_gold_standard() {
         let owner_sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(new_owner_id), 1);
 
         assert!(is_owner);
-        assert_ne!(owner_sign_result, DispatchResult::Ok(()));
+        assert_ne!(owner_sign_result, DispatchResultWithPostInfo::Ok(().into()));
     });
 }
 
@@ -522,7 +523,7 @@ fn it_fails_sign_annual_report_not_an_owner_role_gold_standard() {
         .map(|x| x.0)
         .for_each(|x| {
             let owner_sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(x), 1);
-            assert_ne!(owner_sign_result, DispatchResult::Ok(()));
+            assert_ne!(owner_sign_result, DispatchResultWithPostInfo::Ok(().into()));
         });
     });
 }
@@ -645,7 +646,7 @@ fn it_fails_sign_annual_report_not_an_auditor_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let auditor_sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(x), project_id);
-                assert_ne!(auditor_sign_result, DispatchResult::Ok(()));
+                assert_ne!(auditor_sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
 
         let signatures_len = EvercityFilesign::get_file_by_id(report_id)
@@ -678,7 +679,7 @@ fn it_fails_sign_annual_report_not_a_standard_role_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let standard_sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(x), project_id);
-                assert_ne!(standard_sign_result, DispatchResult::Ok(()));
+                assert_ne!(standard_sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
 
         let signatures_len = EvercityFilesign::get_file_by_id(report_id)
@@ -719,7 +720,7 @@ fn it_fails_sign_annual_report_not_an_registry_role_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(x), project_id);
-                assert_ne!(sign_result, DispatchResult::Ok(()));
+                assert_ne!(sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
 
         let signatures_len = EvercityFilesign::get_file_by_id(report_id)
@@ -766,7 +767,7 @@ fn it_fails_sign_annual_report_already_issued_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let sign_result = CarbonCredits::sign_last_annual_report(Origin::signed(x), project_id);
-                assert_ne!(sign_result, DispatchResult::Ok(()));
+                assert_ne!(sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
     });
 }
@@ -787,7 +788,7 @@ fn it_works_change_report_carbon_credits_count() {
         let project_with_report = CarbonCredits::get_proj_by_id(project_id).unwrap();
 
         assert_eq!(project_with_report.annual_reports.last().unwrap().carbon_credits_count(), new_carbon_credits_count);
-        assert_ok!(change_count_result, ());
+        assert_ok!(change_count_result, ().into());
     });
 }
 
@@ -876,7 +877,7 @@ fn it_works_delete_last_annual_report() {
         let _ = CarbonCredits::sign_last_annual_report(Origin::signed(owner), project_id);
         let result = CarbonCredits::delete_last_annual_report(Origin::signed(owner), project_id);
 
-        assert_ok!(result, ());
+        assert_ok!(result, ().into());
     });
 }
 

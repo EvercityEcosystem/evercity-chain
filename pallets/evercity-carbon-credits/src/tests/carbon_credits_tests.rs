@@ -18,7 +18,7 @@ fn it_works_for_relase_new_cc_gold_standard() {
         let project = CarbonCredits::get_proj_by_id(project_id).unwrap();
         let balance = Assets::balance(asset_id, owner);
 
-        assert_ok!(release_call, ());
+        assert_ok!(release_call, ().into());
         assert_eq!(passport.get_project_id(), project_id);
         assert_eq!(TEST_CARBON_CREDITS_COUNT, balance);
         assert_eq!(*passport.get_asset_id_ref(), asset_id);
@@ -90,7 +90,7 @@ fn it_works_for_ransfer_cc() {
         let balance = Assets::balance(asset_id, investor);
 
         assert_eq!(tranfer_amount, balance);
-        assert_ok!(transfer_result, ());
+        assert_ok!(transfer_result, ().into());
     });
 }
 
@@ -107,7 +107,7 @@ fn it_works_for_burn_cc() {
 
         let burn_cert_value = CarbonCredits::get_certificates_by_account(owner)[0].burn_amount;
 
-        assert_ok!(burn_result, ());
+        assert_ok!(burn_result, ().into());
         assert_eq!(Assets::balance(asset_id, owner), TEST_CARBON_CREDITS_COUNT - burn_amount);
         assert_eq!(burn_amount, burn_cert_value);
     });
@@ -132,8 +132,8 @@ fn it_works_for_burn_cc_after_transfer() {
         let second_burn_result = CarbonCredits::burn_carbon_credits(Origin::signed(investor), asset_id, second_burn_amount);
         let second_burn_cert_value = CarbonCredits::get_certificates_by_account(investor)[0].burn_amount;
 
-        assert_ok!(first_burn_result, ());
-        assert_ok!(second_burn_result, ());
+        assert_ok!(first_burn_result, ().into());
+        assert_ok!(second_burn_result, ().into());
         assert_eq!(first_burn_amount, first_burn_cert_value);
         assert_eq!(second_burn_amount + first_burn_amount, second_burn_cert_value);
         assert_eq!(Assets::balance(asset_id, investor), transfer_amount - first_burn_amount - second_burn_amount);

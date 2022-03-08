@@ -7,6 +7,8 @@ pub mod annual_report;
 pub mod required_signers;
 pub mod carbon_credits_passport;
 pub mod burn_certificate;
+#[cfg(test)]    
+pub mod tests;
 
 use sp_std::{prelude::*};
 // use pallet_evercity_bonds::bond::{BondId, BondState};

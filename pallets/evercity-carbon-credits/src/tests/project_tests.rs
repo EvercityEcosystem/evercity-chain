@@ -1,6 +1,6 @@
 use crate::tests::mock::*;
 use frame_support::{assert_ok, assert_noop, dispatch::{
-    DispatchResult,
+    DispatchResult,DispatchErrorWithPostInfo, DispatchResultWithPostInfo
 }};
 use crate::standard::Standard;
 use pallet_evercity_accounts::accounts::*;
@@ -33,7 +33,7 @@ fn it_works_for_create_new_project_gold_standard() {
         assert_eq!(owner, project.owner);
         assert_eq!(standard, *project.get_standard());
         assert_eq!(1, project.id);
-        assert_ok!(create_project_result, ());
+        assert_ok!(create_project_result, ().into());
     });
 }
 
@@ -49,7 +49,7 @@ fn it_works_for_create_new_project_file_not_specified_gold_standard() {
         assert_eq!(standard, *project.get_standard());
         assert_eq!(1, project.id);
         assert_eq!(None, project.file_id);
-        assert_ok!(create_project_result, ());
+        assert_ok!(create_project_result, ().into());
     });
 }
 
@@ -79,7 +79,7 @@ fn it_fails_for_create_new_project_no_file_gold_standard() {
         let create_project_result = CarbonCredits::create_project(Origin::signed(owner), standard, other_owner_file_id);
         let project_opt = CarbonCredits::get_proj_by_id(1);
 
-        assert_ne!(create_project_result, DispatchResult::Ok(()));
+        assert_ne!(create_project_result, DispatchResultWithPostInfo::Ok(().into()));
         assert!(project_opt.is_none());
         assert_noop!(
             create_project_result,
@@ -97,12 +97,12 @@ fn it_fails_for_create_new_project_other_owner_file_gold_standard() {
         let create_project_result = CarbonCredits::create_project(Origin::signed(owner), standard, not_existing_file_id);
         let project_opt = CarbonCredits::get_proj_by_id(1);
 
-        assert_ne!(create_project_result, DispatchResult::Ok(()));
+        assert_ne!(create_project_result, DispatchResultWithPostInfo::Ok(().into()));
         assert!(project_opt.is_none());
         assert_noop!(
             create_project_result,
             RuntimeError::AccountNotFileOwner
-        );
+        );  
     });
 }
 
@@ -118,8 +118,8 @@ fn it_works_for_change_file_id() {
         let change_id_result = CarbonCredits::change_project_file_id(Origin::signed(owner), 1, file_id.unwrap());
         let project_after_change = CarbonCredits::get_proj_by_id(1);
 
-        assert_ok!(create_project_result, ());
-        assert_ok!(change_id_result, ());
+        assert_ok!(create_project_result, ().into());
+        assert_ok!(change_id_result, ().into());
         assert_eq!(None, project_before_change.unwrap().file_id);
         assert_eq!(file_id, project_after_change.unwrap().file_id);
     });
@@ -181,7 +181,7 @@ fn it_works_project_assign_signer() {
         let project = CarbonCredits::get_proj_by_id(1).unwrap();
 
         assign_results.iter().for_each(|result| {
-                assert_ok!(*result, ());
+                assert_ok!(*result, ().into());
             }
         );
         assert!(project.is_required_signer((ROLES[1].0, ROLES[1].1)));
@@ -207,7 +207,7 @@ fn it_works_remove_signer() {
         let delete_result = CarbonCredits::remove_project_signer(Origin::signed(owner), ROLES[5].0, ROLES[5].1, project_id);
         let project = CarbonCredits::get_proj_by_id(1).unwrap();
 
-        assert_ok!(delete_result, ());
+        assert_ok!(delete_result, ().into());
 
         // assert that deleted:
         assert!(!project.is_required_signer((ROLES[5].0, ROLES[5].1)));
@@ -323,7 +323,7 @@ fn it_works_for_full_cycle_sign_project_gold_standard() {
                 let change_id_result = account_state_result_status_tuple.4;
                 let project = CarbonCredits::get_proj_by_id(1).unwrap();
 
-                assert_ok!(result, ());
+                assert_ok!(result, ().into());
                 assert_eq!(state, project.state);
                 assert!(EvercityFilesign::address_has_signed_the_file(project_doc_id.unwrap(), &acc));
                 assert_eq!(status, project.status);
@@ -505,7 +505,7 @@ fn it_fails_sign_project_not_an_auditor_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let auditor_sign_result = CarbonCredits::sign_project(Origin::signed(x), 1);
-                assert_ne!(auditor_sign_result, DispatchResult::Ok(()));
+                assert_ne!(auditor_sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
 
         let signatures_len = EvercityFilesign::get_file_by_id(proj_file_id.unwrap())
@@ -536,7 +536,7 @@ fn it_fails_sign_project_not_a_standard_acc_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let standard_sign_result = CarbonCredits::sign_project(Origin::signed(x), 1);
-                assert_ne!(standard_sign_result, DispatchResult::Ok(()));
+                assert_ne!(standard_sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
 
         let signatures_len = EvercityFilesign::get_file_by_id(proj_file_id.unwrap())
@@ -570,7 +570,7 @@ fn it_fails_sign_project_not_a_registry_gold_standard() {
             .map(|x| x.0)
             .for_each(|x| {
                 let registry_sign_result = CarbonCredits::sign_project(Origin::signed(x), 1);
-                assert_ne!(registry_sign_result, DispatchResult::Ok(()));
+                assert_ne!(registry_sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });
         
         let signatures_len = EvercityFilesign::get_file_by_id(proj_file_id.unwrap())
@@ -606,14 +606,14 @@ fn it_fails_sign_project_already_registered_project_gold_standard() {
 
         // check that acc with any role cant sign it
         let some_new_acc_sign_result = CarbonCredits::sign_project(Origin::signed(some_new_acc), 1);
-        assert_ne!(some_new_acc_sign_result, DispatchResult::Ok(()));
+        assert_ne!(some_new_acc_sign_result, DispatchResultWithPostInfo::Ok(().into()));
 
         // check all separate existing roles
         ROLES.iter()
             .map(|x| x.0)
             .for_each(|x| {
                 let sign_result = CarbonCredits::sign_project(Origin::signed(x), 1);
-                assert_ne!(sign_result, DispatchResult::Ok(()));
+                assert_ne!(sign_result, DispatchResultWithPostInfo::Ok(().into()));
             });        
     });
 }
@@ -627,7 +627,7 @@ fn it_works_for_create_new_project_deposit_event_gold_standard() {
         let last_event = last_event().unwrap();
         crate::tests::helpers::assign_project_mock_users_required_signers_gold_standard(1);
 
-        let check_event = Event::pallet_carbon_credits(crate::RawEvent::ProjectCreated(owner, 1));
+        let check_event = Event::pallet_carbon_credits(crate::Event::ProjectCreated(owner, 1));
 
         assert_eq!(check_event, last_event);
     });
