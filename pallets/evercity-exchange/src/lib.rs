@@ -88,7 +88,7 @@ pub mod pallet {
 	pub type RawEvent<T> = Event<T>;
 
     #[pallet::call]
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u128> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
 		#[pallet::weight(10_000)]
 		pub fn create_trade_request(
 			origin: OriginFor<T>,
@@ -163,13 +163,13 @@ pub mod pallet {
 						}
 
 						// transfer carbon credits
-						let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
-						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
-								cc_holder_origin, 
-								trade_request.carbon_credits_id, 
-								trade_request.asset_holder.clone(), 
-								trade_request.carbon_credits_count
-						)?;
+						// let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
+						// pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
+						// 		cc_holder_origin, 
+						// 		trade_request.carbon_credits_id, 
+						// 		trade_request.asset_holder.clone(), 
+						// 		trade_request.carbon_credits_count
+						// )?;
 						let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(trade_request.carbon_credits_holder.clone());
 						let asset_transfer_call = pallet_assets::Call::<T>::transfer(trade_request.asset_id, carbon_credits_holder_source, trade_request.asset_count);
 						let asset_holder_origin = frame_system::RawOrigin::Signed(trade_request.asset_holder.clone()).into();

@@ -52,7 +52,7 @@ impl frame_system::Config for TestRuntime {
 	type BlockHashCount = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -86,7 +86,7 @@ parameter_types! {
 }
 
 impl pallet_balances::Config for TestRuntime {
-    type Balance = u64;
+    type Balance = Balance;
     type Event = Event;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
@@ -96,7 +96,7 @@ impl pallet_balances::Config for TestRuntime {
 }
 
 // Asset Pallet Configs
-pub type Balance = u64;
+pub type Balance = u128;
 
 parameter_types! {
     pub const AssetDeposit: Balance = 1; 

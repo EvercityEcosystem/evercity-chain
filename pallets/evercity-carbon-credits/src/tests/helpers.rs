@@ -5,7 +5,7 @@ use crate::project::{ProjectId, ProjectStruct};
 use crate::annual_report::*;
 use sp_std::vec;
 
-pub const TEST_CARBON_CREDITS_COUNT: u64 = 15000;
+pub const TEST_CARBON_CREDITS_COUNT: u128 = 15000;
 pub const TEST_CARBON_CREDITS_DECIMAL: u8 = 0;
 
 

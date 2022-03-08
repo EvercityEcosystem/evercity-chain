@@ -248,9 +248,9 @@ pub mod pallet {
 	>;
 
 
-
+    // EXTRINSICS:
     #[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
         /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
