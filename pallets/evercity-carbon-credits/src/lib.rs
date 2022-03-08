@@ -7,6 +7,7 @@ pub mod annual_report;
 pub mod required_signers;
 pub mod carbon_credits_passport;
 pub mod burn_certificate;
+pub mod bond_carbon_release;
 #[cfg(test)]    
 pub mod tests;
 
@@ -43,7 +44,10 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
-	use super::*;
+use pallet_evercity_bonds::{bond::BondState, BondId};
+	use crate::bond_carbon_release::CarbonCreditsBondRelease;
+
+use super::*;
 
     #[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -56,7 +60,8 @@ pub mod pallet {
         pallet_evercity_accounts::Config + 
         pallet_timestamp::Config + 
         pallet_evercity_assets::Config + 
-        pallet_evercity_filesign::Config 
+        pallet_evercity_filesign::Config +
+        pallet_evercity_bonds::Config
     {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     }
@@ -123,6 +128,10 @@ pub mod pallet {
         CarbonCreditsTransfered(T::AccountId, T::AccountId, T::AssetId),
         /// \[ProjectOwner, AssetId\]
         CarbonCreditsAssetBurned(T::AccountId, T::AssetId),
+
+
+
+        // BondCarbonCreditsReleased(BondId, CarbonCreditsId<T>)
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -211,6 +220,16 @@ pub mod pallet {
 
         // Bond Validation Errors
         ProjectIsBond,
+
+
+        BondNotFinished,
+		CreateCCError,
+		TransferCCError,
+		BalanceIsZero,
+		InvestmentIsZero,
+		AlreadyReleased,
+		NotAnIssuer,
+		CarbonMetadataNotValid
     }
 
     #[pallet::storage]
@@ -248,6 +267,16 @@ pub mod pallet {
 	>;
 
 
+	#[pallet::storage]
+	pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		BondId,
+		CarbonCreditsBondRelease<T::Balance>,
+		OptionQuery
+	>;
+
+
     // EXTRINSICS:
     #[pallet::call]
 	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
@@ -262,6 +291,32 @@ pub mod pallet {
         /// </pre>
         #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
         pub fn create_project(origin: OriginFor<T>, standard: Standard, file_id: Option<FileId>) -> DispatchResultWithPostInfo {
+            let caller = ensure_signed(origin)?;
+            ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
+            if let Some(id) = file_id {
+                ensure!(pallet_evercity_filesign::Module::<T>::address_is_owner_for_file(id, &caller), Error::<T>::AccountNotFileOwner);
+            }
+            let new_id = LastID::<T>::get() + 1;
+            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, T, T::Balance>::new(caller.clone(), new_id, standard, file_id);
+            <ProjectById<T>>::insert(new_id, new_project);
+            LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
+
+            // SendEvent
+            Self::deposit_event(Event::ProjectCreated(caller, new_id));
+            Ok(().into())
+        }
+
+                /// <pre>
+        /// Method: create_project(standard: Standard, file_id: FileId)
+        /// Arguments: origin: AccountId - Transaction caller
+        ///            standard: Standard - Carbon Credits Standard
+        ///            file_id: FileId - id of file in filesign pallet
+        /// Access: Project Owner Role
+        ///
+        /// Creates new project with relation to PDD file in filesign
+        /// </pre>
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1, 2))]
+        pub fn create_bond_project(origin: OriginFor<T>, standard: Standard, file_id: Option<FileId>, bond_id: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
             if let Some(id) = file_id {
@@ -935,6 +990,95 @@ pub mod pallet {
             Self::deposit_event(Event::CarbonCreditsAssetBurned(credits_holder, asset_id));
             Ok(().into())
         }
+
+
+        #[pallet::weight(10_000)]
+		pub fn release_bond_carbon_credits(
+			origin: OriginFor<T>, 
+			carbon_credits_id: <T as pallet_evercity_assets::Config>::AssetId, 
+			carbon_credits_count: T::Balance, 
+			bond_id: pallet_evercity_bonds::bond::BondId
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin.clone())?;
+			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
+			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
+			ensure!(bond.state == BondState::ACTIVE || bond.state == BondState::BANKRUPT || bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+
+			let carbon_metadata = match bond.inner.carbon_metadata {
+				Some(c) => c,
+				None => return Err(Error::<T>::CarbonMetadataNotValid.into())
+			};
+
+			let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
+			ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
+
+			let bond_investment_tuples = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
+			ensure!(bond_investment_tuples.len() != 0, Error::<T>::InvestmentIsZero);
+
+			let total_packages = bond_investment_tuples.iter()
+											.map(|(_, everusd)| everusd)
+											.fold(0, |a, b| {a + b});
+
+			ensure!(total_packages != 0, Error::<T>::BalanceIsZero);
+
+			let all_investors_percent = (carbon_metadata.carbon_distribution.investors as f64)/(100_000 as f64);
+
+			let investor_parts = bond_investment_tuples
+									.into_iter()
+									.map(|(acc, everusd)| {
+										(acc, ((everusd as f64)/(total_packages as f64))*all_investors_percent )
+									})
+									.filter(|(_, part)| *part != 0.0)
+									.map(|(acc, everusd)| {
+										(acc, Self::divide_balance(everusd, carbon_credits_count))
+									})
+									.collect::<Vec<(T::AccountId, T::Balance)>>();
+
+			let create_cc_call = 
+				Self::create_bond_carbon_credits(caller, *bond_id, carbon_credits_id, carbon_credits_count);
+
+			ensure!(create_cc_call.is_ok(), Error::<T>::CreateCCError);
+
+			// sends the part of balance
+			let proceed_send = |account: T::AccountId, part: i32| {
+				let perc = (part as f64)/(100_000 as f64);
+				if perc != 0.0 {
+					let balance_to_send = Self::divide_balance(perc, carbon_credits_count);
+					let _ = 
+						Self::transfer_carbon_credits(
+							origin.clone(), carbon_credits_id, account, balance_to_send);
+				}
+			};
+
+			// send to issuer
+			proceed_send(bond.issuer, carbon_metadata.carbon_distribution.issuer);
+			// send to evercity
+			match carbon_metadata.carbon_distribution.evercity {
+				None => {},
+				Some((acc, perc)) => {
+					proceed_send(acc, perc);
+				}
+			}
+			// send to project developer
+			match carbon_metadata.carbon_distribution.project_developer {
+				None => {},
+				Some((acc, perc)) => {
+					proceed_send(acc, perc);
+				}
+			}
+
+			// send to investors
+			for (acc, bal) in investor_parts {
+				let _ = 
+					Self::transfer_carbon_credits(
+						origin.clone(), carbon_credits_id, acc, bal);
+			}
+
+			let release = CarbonCreditsBondRelease {amount: carbon_credits_count};
+			BondCarbonReleaseRegistry::<T>::insert(bond_id, release);
+			// Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, carbon_credits_id));
+			Ok(().into())
+		}
     }
 
 
@@ -1106,7 +1250,7 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> Pallet<T> where T::Balance: From<u128> { 
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> { 
         pub fn create_bond_carbon_credits(
             account: T::AccountId, 
             bond_id: [u8; 16], 
@@ -1131,11 +1275,28 @@ pub mod pallet {
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new_from_bond(asset_id, bond_id));
             Ok(())
         }
-    
-        fn u64_to_balance(
-            num: u128
-        ) -> <T as pallet_evercity_assets::pallet::Config>::Balance where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> {
-            num.into()
-        }
+
+        pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
+			num.into()
+		}
+
+		pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 {
+			bal.into()
+		}
+
+		pub fn divide_balance(
+			percent: f64, 
+			bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
+		) -> <T as pallet_evercity_assets::pallet::Config>::Balance  {
+			let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
+			Self::u64_to_balance(temp_u64)
+		}
     }
 }
+
+
+// #[derive(codec::Encode, codec::Decode, Clone, Default, frame_support::RuntimeDebug, PartialEq)]
+// pub struct CarbonCreditsBondRelease<Balance> {
+//     pub amount: Balance,
+//     pub period: u32,
+// }

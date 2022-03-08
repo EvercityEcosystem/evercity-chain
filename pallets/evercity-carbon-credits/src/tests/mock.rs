@@ -29,8 +29,29 @@ frame_support::construct_runtime!(
         Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+        EvercityBonds: pallet_evercity_bonds::{Module, Call, Storage, Event<T>},
 	}
 );
+
+const DEFAULT_DAY_DURATION: u32 = 60; // 86400; seconds in 1 DAY
+
+parameter_types! {
+    pub const BurnRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MintRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MaxMintAmount: pallet_evercity_bonds::EverUSDBalance = 60_000_000_000_000_000;
+    pub const TimeStep: pallet_evercity_bonds::BondPeriod = DEFAULT_DAY_DURATION;
+}
+
+impl pallet_evercity_bonds::Config for TestRuntime {
+    type Event = Event;
+    type BurnRequestTtl = BurnRequestTtl;
+    type MintRequestTtl = MintRequestTtl;
+    type MaxMintAmount = MaxMintAmount;
+    type TimeStep = TimeStep;
+    type WeightInfo = ();
+    type OnAddAccount = ();
+    type OnAddBond = ();
+}
 
 type AccountId = u64;
 
