@@ -327,6 +327,9 @@ use super::*;
             if let Some(id) = file_id {
                 ensure!(pallet_evercity_filesign::Module::<T>::address_is_owner_for_file(id, &caller), Error::<T>::AccountNotFileOwner);
             }
+            let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
+			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
+			ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
             let new_id = LastID::<T>::get() + 1;
             let new_project = 
                 ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, *bond_id);

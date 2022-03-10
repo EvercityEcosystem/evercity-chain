@@ -152,7 +152,8 @@
     "file_id": "Option<FileId>",
     "annual_reports": "Vec<AnnualReportStruct<AccountId, Moment, Balance>>",
     "required_signers": "Vec<RequiredSigner<AccountId>>",
-    "standard": "Standard"
+    "standard": "Standard",
+    "bond_id": "Option<[u8; 16]>"
   },
   "AnnualReportStateMask": "u16",
   "CarbonCreditsMeta": {
