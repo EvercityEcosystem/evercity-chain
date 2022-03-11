@@ -950,7 +950,7 @@ use super::*;
                             let new_carbon_credits_holder_source = 
                                 <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
                             let create_asset_call = 
-                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, 0, Self::u64_to_balance(1));
+                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, 0, Self::u128_to_balance(1));
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
         
@@ -1361,7 +1361,7 @@ use super::*;
     }
 
     impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> { 
-        pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
+        pub fn u128_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
 			num.into()
 		}
 
@@ -1374,7 +1374,7 @@ use super::*;
 			bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
 		) -> <T as pallet_evercity_assets::pallet::Config>::Balance  {
 			let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
-			Self::u64_to_balance(temp_u64)
+			Self::u128_to_balance(temp_u64)
 		}
     }
 }
