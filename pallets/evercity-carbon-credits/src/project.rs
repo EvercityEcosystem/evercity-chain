@@ -3,6 +3,7 @@ use frame_support::{
     sp_runtime::RuntimeDebug,
     dispatch::Vec,
 };
+use pallet_evercity_bonds::BondId;
 use crate::standard::Standard;
 use crate::annual_report::*;
 use pallet_evercity_filesign::file::FileId;
@@ -36,7 +37,7 @@ pub struct ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq 
     pub annual_reports: Vec<AnnualReportStruct<AccountId, Moment, Balance>>,
     required_signers: Vec<RequiredSigner<AccountId>>,
     standard: Standard,
-    bond_id: Option<[u8; 16]>,
+    bond_id: Option<BondId>,
 }
 
 impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq + Clone, Moment: pallet_timestamp::Config, Balance: Clone {
@@ -55,7 +56,7 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
         }
     }
 
-    pub fn new_with_bond(owner: AccountId, id: u32, standard: Standard, file_id: Option<FileId>, bond_id: [u8; 16]) -> Self {
+    pub fn new_with_bond(owner: AccountId, id: u32, standard: Standard, file_id: Option<FileId>, bond_id: BondId) -> Self {
         ProjectStruct{
             file_id, 
             owner,
@@ -106,7 +107,7 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
         self.file_id.is_some()
     }
 
-    pub fn get_bond_id(&self) -> Option<[u8; 16]> {
+    pub fn get_bond_id(&self) -> Option<BondId> {
         self.bond_id
     }
 }

@@ -332,7 +332,7 @@ use super::*;
 			ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
             let new_id = LastID::<T>::get() + 1;
             let new_project = 
-                ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, *bond_id);
+                ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, bond_id);
             <ProjectById<T>>::insert(new_id, new_project);
             LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
 
@@ -917,14 +917,18 @@ use super::*;
 		pub fn release_bond_carbon_credits(
 			origin: OriginFor<T>,
             project_id: ProjectId,
-			asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
-			carbon_credits_count: T::Balance, 
-			bond_id: pallet_evercity_bonds::bond::BondId
+			asset_id: <T as pallet_evercity_assets::Config>::AssetId,
+            // project_id: ProjectId,
+			// carbon_credits_count: T::Balance, 
+			// bond_id: pallet_evercity_bonds::bond::BondId
 		) -> DispatchResultWithPostInfo {
 			let project_owner = ensure_signed(origin.clone())?;
-			let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
-			ensure!(bond.issuer == project_owner, Error::<T>::NotAnIssuer);
-			ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+            // let project = ProjectById::<T>::get(project_id);
+            // let bond_id = match project.bond_id {
+
+            // };
+
+
 
             ProjectById::<T>::try_mutate(
                 project_id, |project_option| -> DispatchResult {
@@ -934,6 +938,16 @@ use super::*;
                             ensure!(project.owner == project_owner, Error::<T>::AccountNotOwner);
                             ensure!(project.state == project::REGISTERED, Error::<T>::ProjectNotRegistered);
                             ensure!(project.get_bond_id().is_some(), Error::<T>::ProjectIsNotBond);
+
+                            let bond_id = match project.get_bond_id() {
+                                None => todo!(),
+                                Some(b) => b
+                            };
+                            let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
+                            ensure!(bond.issuer == project_owner, Error::<T>::NotAnIssuer);
+                            ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+
+                            
         
                             // Check that there is at least one annual report
                             let reports_len = project.annual_reports.len();
@@ -1013,7 +1027,7 @@ use super::*;
                                                     })
                                                     .filter(|(_, part)| *part != 0.0)
                                                     .map(|(acc, everusd)| {
-                                                        (acc, Self::divide_balance(everusd, carbon_credits_count))
+                                                        (acc, Self::divide_balance(everusd, cc_amount))
                                                     })
                                                     .collect::<Vec<(T::AccountId, T::Balance)>>();
 
@@ -1021,7 +1035,7 @@ use super::*;
                             let proceed_send = |account: T::AccountId, part: i32| {
                                 let perc = (part as f64)/(100_000 as f64);
                                 if perc != 0.0 {
-                                    let balance_to_send = Self::divide_balance(perc, carbon_credits_count);
+                                    let balance_to_send = Self::divide_balance(perc, cc_amount);
                                     let _ = 
                                         Self::transfer_carbon_credits(
                                             origin.clone(), asset_id, account, balance_to_send);
@@ -1052,13 +1066,14 @@ use super::*;
                                         origin.clone(), asset_id, acc, bal);
                             }
 
-                            let release = CarbonCreditsBondRelease {amount: carbon_credits_count};
+                            let release = CarbonCreditsBondRelease {amount: cc_amount};
                             BondCarbonReleaseRegistry::<T>::insert(bond_id, release);
+                            Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, asset_id));
                             Ok(())
                         }
                     }
              })?;
-			Self::deposit_event(Event::BondCarbonCreditsReleased(bond_id, asset_id));
+
 			Ok(().into())
 		}
 
