@@ -1215,7 +1215,7 @@ use super::*;
                             ensure!(accounts::Module::<T>::account_is_cc_auditor(&caller), Error::<T>::AccountNotAuditor);
                             ensure!(Self::is_correct_project_signer(project, caller.clone(), accounts::accounts::CC_AUDITOR_ROLE_MASK), 
                                 Error::<T>::IncorrectProjectSigner);
-                            project.state = project::STANDARD_SIGN_PENDING;
+                            project.state = project::REGISTRY_SIGN_PENDING;
                             *event = Some(Event::ProjectSignedByAduitor(caller, project.id));
                         },
                         project::REGISTRY_SIGN_PENDING => {
@@ -1298,7 +1298,7 @@ use super::*;
                             ensure!(accounts::Module::<T>::account_is_cc_auditor(&caller), Error::<T>::AccountNotAuditor);
                             ensure!(Self::is_correct_annual_report_signer(report, caller.clone(), accounts::accounts::CC_AUDITOR_ROLE_MASK),
                                 Error::<T>::IncorrectProjectSigner);
-                            report.state = annual_report::REPORT_STANDARD_SIGN_PENDING;
+                            report.state = annual_report::REPORT_REGISTRY_SIGN_PENDING;
                             *event = Some(Event::AnnualReportSignedByAuditor(caller, project.id));
                         },
                         annual_report::REPORT_REGISTRY_SIGN_PENDING => {
