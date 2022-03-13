@@ -23,7 +23,7 @@ pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
-		dispatch::DispatchResultWithPostInfo,
+		dispatch::{DispatchResultWithPostInfo, DispatchResult},
 		pallet_prelude::*, traits::UnfilteredDispatchable,
 	};
 	use frame_system::pallet_prelude::*;
@@ -88,9 +88,12 @@ pub mod pallet {
 	pub enum Error<T> {
         InsufficientAssetBalance,
         InsufficientCarbonCreditsBalance,
+		InsufficientEverUSDBalance,
 		ExchangeIdOwerflow,
 		InvalidTradeRequestState,
-		BadHolder
+		BadHolder,
+		ExchangeNotFound,
+		BadApprove,
     }
 
 	#[pallet::event]
@@ -126,9 +129,92 @@ pub mod pallet {
 				}
 			};
 
+			let current_everusd_balance = pallet_evercity_bonds::Module::<T>::get_balance(&ever_usd_holder);
+			if ever_usd_count > current_everusd_balance {
+				return Err(Error::<T>::InsufficientEverUSDBalance.into());
+			}
 			
+			let current_carbon_credits_balace = 
+				pallet_evercity_assets::Module::<T>::balance(carbon_credits_asset_id, carbon_credits_holder.clone());
+			if carbon_credits_count > current_carbon_credits_balace {
+				return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
+			}
+
+			let trade_request = 
+				EverUSDTradeRequest::new(
+					ever_usd_holder, 
+					carbon_credits_holder, 
+					ever_usd_count, 
+					carbon_credits_asset_id, 
+					carbon_credits_count, 
+					approve_mask
+				);
+			
+			let new_id = match LastEverUSDTradeRequestId::<T>::get().checked_add(1) {
+				Some(id) => id,
+				None => return Err(Error::<T>::ExchangeIdOwerflow.into()),
+			};
+			EverUSDTradeRequestById::<T>::insert(new_id, trade_request);
+			LastEverUSDTradeRequestId::<T>::mutate(|x| *x = new_id);
 
             Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn accept_everusd_trade_request(
+			origin: OriginFor<T>, 
+			trade_request_id: TradeRequestId, 
+			holder_type: EverUSDTradeHolderType
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+			EverUSDTradeRequestById::<T>::try_mutate(
+                trade_request_id, |project_to_mutate| -> DispatchResultWithPostInfo {
+                    match project_to_mutate  {
+                        None => return Err(Error::<T>::ExchangeNotFound.into()),
+                        Some(exchange) => {
+                            match holder_type {
+                                EverUSDTradeHolderType::EverUSDHolder => {
+                                    ensure!(exchange.approved == CARBON_CREDITS_HOLDER_APPROVED, Error::<T>::BadApprove);
+                                    ensure!(caller == exchange.ever_usd_holder, Error::<T>::BadHolder);
+
+                                },
+                                EverUSDTradeHolderType::CarbonCreditsHolder => {
+                                    ensure!(exchange.approved == EVERUSD_HOLDER_APPROVED, Error::<T>::BadApprove);
+                                    ensure!(caller == exchange.carbon_credits_holder, Error::<T>::BadHolder);
+                                },
+                            }
+
+                            let current_everusd_balance = pallet_evercity_bonds::Module::<T>::get_balance(&exchange.ever_usd_holder);
+                            let carbon_credits_balance = pallet_evercity_assets::Module::<T>::balance(exchange.carbon_credits_asset_id, exchange.carbon_credits_holder.clone());
+
+                            if exchange.ever_usd_count > current_everusd_balance {
+                                return Err(Error::<T>::InsufficientEverUSDBalance.into());
+                            }
+                            if exchange.carbon_credits_count > carbon_credits_balance  {
+                                return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
+                            }
+
+                            let cc_holder_origin = frame_system::RawOrigin::Signed(exchange.carbon_credits_holder.clone()).into();
+                            pallet_evercity_carbon_credits::Pallet::<T>::transfer_carbon_credits(
+                                    cc_holder_origin, 
+                                    exchange.carbon_credits_asset_id, 
+                                    exchange.ever_usd_holder.clone(), 
+                                    exchange.carbon_credits_count
+                            )?;
+
+                            // transfer everusd then
+							pallet_evercity_bonds::Module::<T>::transfer_everusd(
+								&exchange.ever_usd_holder, 
+								&exchange.carbon_credits_holder, 
+								exchange.ever_usd_count
+							)?;
+
+                        }
+                    }
+                    Ok(().into())
+                })?;
+
+			Ok(().into())
 		}
 
 
