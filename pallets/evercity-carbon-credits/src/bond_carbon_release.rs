@@ -6,5 +6,4 @@ use frame_support::{
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct CarbonCreditsBondRelease<Balance> {
     pub amount: Balance,
-    // pub period: u32,
 }
