@@ -346,10 +346,10 @@ impl pallet_evercity_exchange::Config for Runtime {
     type Event = Event;
 }
 
-use pallet_evercity_carbon_bridge;
-impl pallet_evercity_carbon_bridge::Config for Runtime {
-    type Event = Event;
-}
+// use pallet_evercity_carbon_bridge;
+// impl pallet_evercity_carbon_bridge::Config for Runtime {
+//     type Event = Event;
+// }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 
@@ -378,7 +378,7 @@ construct_runtime!(
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
         EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
-        EvercityCarbonBridge: pallet_evercity_carbon_bridge::{ Module, Call, Storage, Event<T> },
+        // EvercityCarbonBridge: pallet_evercity_carbon_bridge::{ Module, Call, Storage, Event<T> },
     }
 );
 
