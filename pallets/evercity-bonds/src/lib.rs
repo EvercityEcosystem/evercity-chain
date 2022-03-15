@@ -2286,14 +2286,6 @@ impl<T: Config> Module<T> {
     }
 
     #[cfg(debug_assertions)]
-    // #[cfg(not(debug_assertions))]
-    pub fn aaa() {
-
-    }
-
-    // #[cfg(debug)]
-    #[cfg(debug_assertions)]
-    // #[cfg(not(debug_assertions))]
     pub fn add_test_bond_unit_packages(bond_id: BondId, units: Vec<(T::AccountId, BondUnitAmount)>) {
         for (acc, unit_amount) in units {
             BondUnitPackageRegistry::<T>::mutate(&bond_id, &acc, |packages|{
