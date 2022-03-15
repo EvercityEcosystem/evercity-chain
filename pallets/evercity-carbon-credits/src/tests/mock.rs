@@ -289,7 +289,7 @@ pub fn get_test_bond() -> BondStruct {
         booking_start_date: Default::default(),
         active_start_date: Default::default(),
         creation_date: Default::default(),
-        state: Default::default(),
+        state: pallet_evercity_bonds::bond::BondState::FINISHED,
 
         bond_debit: 0,
         bond_credit: 0,

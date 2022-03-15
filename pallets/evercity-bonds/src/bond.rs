@@ -64,6 +64,13 @@ impl From<&str> for BondId {
     }
 }
 
+#[cfg(debug_assertions)]
+impl From<[u8; 16]> for BondId {
+    fn from(arr: [u8; 16]) -> Self {
+        BondId(arr)
+    }
+}
+
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 #[allow(non_camel_case_types)]

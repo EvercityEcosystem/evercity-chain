@@ -175,8 +175,10 @@ use super::*;
         ProjectNotRegistered,
         /// Annual reports of the project do not exist
         NoAnnualReports,
-        /// State of an annual report doesnt equal to Issued
+        /// There is a not issued annual report
         NotIssuedAnnualReportsExist,
+        /// State of an annual report doesnt equal to Issued
+        ReportNotIssued,
 
         // Asset error
 
@@ -864,6 +866,7 @@ use super::*;
         
                             // ensure that carbon credits not released, and then set it to released state
                             let last_annual_report = &mut project.annual_reports[reports_len - 1];
+                            ensure!(last_annual_report.state == annual_report::REPORT_ISSUED, Error::<T>::ReportNotIssued);
                             ensure!(!last_annual_report.is_carbon_credits_released(), Error::<T>::CCAlreadyCreated);
                             last_annual_report.set_carbon_credits_released();
             
@@ -957,6 +960,7 @@ use super::*;
         
                             // ensure that carbon credits not released, and then set it to released state
                             let last_annual_report = &mut project.annual_reports[reports_len - 1];
+                            ensure!(last_annual_report.state == annual_report::REPORT_ISSUED, Error::<T>::ReportNotIssued);
                             ensure!(!last_annual_report.is_carbon_credits_released(), Error::<T>::CCAlreadyCreated);
                             last_annual_report.set_carbon_credits_released();
             
@@ -1372,6 +1376,16 @@ use super::*;
             let _ = mint_call.dispatch_bypass_filter(origin);
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
             Ok(())
+        }
+
+        #[cfg(test)]
+        pub fn create_test_bond_project(issuer: T::AccountId, bond_id: BondId, cc_count: T::Balance, standard: Standard) {
+            let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
+            let new_id = LastID::<T>::get() + 1;
+            let new_project = 
+                ProjectStruct::new_with_bond(issuer, new_id, standard, None, bond_id);
+            <ProjectById<T>>::insert(new_id, new_project);
+            LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
         }
     }
 
