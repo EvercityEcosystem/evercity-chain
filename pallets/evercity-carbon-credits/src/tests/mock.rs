@@ -247,7 +247,7 @@ fn events() -> Vec<Event> {
 type BondInnerStruct = BondInnerStructOf<TestRuntime>;
 type BondStruct = BondStructOf<TestRuntime>;
 
-pub fn get_test_bond() -> BondStruct {
+pub fn get_test_bond(carbon_metadata: pallet_evercity_bonds::bond::CarbonUnitsMetadata<AccountId>) -> BondStruct {
     const PERIODS: usize = 12;
     BondStruct {
         inner: BondInnerStruct {
@@ -277,7 +277,7 @@ pub fn get_test_bond() -> BondStruct {
             bond_units_mincap_amount: 1000,
             bond_units_maxcap_amount: 1800,
             bond_units_base_price: 4_000_000_000_000,
-            carbon_metadata: Default::default(),
+            carbon_metadata: Some(carbon_metadata),
         },
 
         issuer: 0,
