@@ -24,7 +24,6 @@ pub fn it_works_create_bond_project() {
         let _ = EvercityBonds::create_test_finished_bond(issuer, bond_id, bond.inner);
         let standard = Standard::GOLD_STANDARD_BOND;
         let units = vec![(investor1, 50), (investor2, 30), (investor3, 20)];
-
         EvercityBonds::add_test_bond_unit_packages(&bond_id, units);
 
         let create_project_result = 
@@ -91,5 +90,27 @@ pub fn it_fails_create_bond_project_bond_not_finished() {
             );
 
         assert_noop!(create_project_result, RuntimeError::BondNotFinished);
+    });
+}
+
+#[test]
+pub fn it_works_release_bond_carbon_credits1() {
+    new_test_ext().execute_with(|| {
+        let issuer = ROLES[1].0;
+        let investor1 = 3;
+        let investor2 = 4;
+        let investor3 = 5;
+        let bond_id: BondId = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1].into();
+        let bond = get_test_bond();
+        let _ = EvercityBonds::create_test_finished_bond(issuer, bond_id, bond.inner);
+        let standard = Standard::GOLD_STANDARD_BOND;
+        let units = vec![(investor1, 50), (investor2, 30), (investor3, 20)];
+        EvercityBonds::add_test_bond_unit_packages(&bond_id, units);
+        let cc_count = 1_000_000;
+        let proj_id = 666;
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id);
+
+        let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, 1);
+        assert_ok!(release_result, ().into());
     });
 }

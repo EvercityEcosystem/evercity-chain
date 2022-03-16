@@ -58,6 +58,7 @@ std = [
     'pallet-timestamp/std',
     'pallet-evercity-accounts/std',
     'pallet-evercity-filesign/std',
+    'pallet-evercity-bonds/std'
 ]
 
 [dependencies.fixed-hash]

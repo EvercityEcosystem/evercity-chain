@@ -1379,13 +1379,28 @@ use super::*;
         }
 
         #[cfg(test)]
-        pub fn create_test_bond_project(issuer: T::AccountId, bond_id: BondId, cc_count: T::Balance, standard: Standard) {
-            let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
-            let new_id = LastID::<T>::get() + 1;
-            let new_project = 
-                ProjectStruct::new_with_bond(issuer, new_id, standard, None, bond_id);
-            <ProjectById<T>>::insert(new_id, new_project);
-            LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
+        pub fn create_test_bond_project(
+            issuer: T::AccountId, 
+            bond_id: BondId, 
+            cc_count: T::Balance, 
+            standard: Standard, 
+            project_id: ProjectId
+        ) {
+            let mut new_project = 
+                ProjectStruct::new_with_bond(issuer, project_id, standard, None, bond_id);
+            let meta = annual_report::CarbonCreditsMeta::new(Vec::new(), Vec::new(), 0);
+            new_project.state = project::REGISTERED;
+
+            let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T, T::Balance>::new(
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+                cc_count, 
+                Timestamp::<T>::get(),
+                meta);
+            annual_report.state = annual_report::REPORT_ISSUED;
+
+            new_project.annual_reports
+                .push(annual_report);
+            <ProjectById<T>>::insert(project_id, new_project);
         }
     }
 
