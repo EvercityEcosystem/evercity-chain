@@ -1384,19 +1384,21 @@ use super::*;
             bond_id: BondId, 
             cc_count: T::Balance, 
             standard: Standard, 
-            project_id: ProjectId
+            project_id: ProjectId,
+            project_state: project::ProjectStateMask,
+            report_state: annual_report::AnnualReportStateMask,
         ) {
             let mut new_project = 
                 ProjectStruct::new_with_bond(issuer, project_id, standard, None, bond_id);
             let meta = annual_report::CarbonCreditsMeta::new(Vec::new(), Vec::new(), 0);
-            new_project.state = project::REGISTERED;
+            new_project.state = project_state;//project::REGISTERED;
 
             let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T, T::Balance>::new(
                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
                 cc_count, 
                 Timestamp::<T>::get(),
                 meta);
-            annual_report.state = annual_report::REPORT_ISSUED;
+            annual_report.state = report_state;//annual_report::REPORT_ISSUED;
 
             new_project.annual_reports
                 .push(annual_report);

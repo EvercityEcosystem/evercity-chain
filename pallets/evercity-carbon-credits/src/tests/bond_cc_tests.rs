@@ -150,7 +150,7 @@ pub fn it_works_release_bond_carbon_credits1() {
         let cc_count = 1_000_000;
         let proj_id = 666;
         let asset_id = 1;
-        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id);
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id, crate::project::REGISTERED, crate::annual_report::REPORT_ISSUED);
         let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, asset_id);
         let balance_investor1 = Assets::balance(asset_id, investor1);
         let balance_investor2 = Assets::balance(asset_id, investor2);
@@ -191,7 +191,7 @@ pub fn it_works_release_bond_carbon_credits2() {
         let cc_count = 1_000_000;
         let proj_id = 666;
         let asset_id = 1;
-        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id);
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id, crate::project::REGISTERED, crate::annual_report::REPORT_ISSUED);
         let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, asset_id);
         let balance_investor1 = Assets::balance(asset_id, investor1);
         let balance_investor2 = Assets::balance(asset_id, investor2);
@@ -210,8 +210,6 @@ pub fn it_works_release_bond_carbon_credits3() {
     new_test_ext().execute_with(|| {
         let issuer = ROLES[1].0;
         let investor1 = 3;
-        let investor2 = 4;
-        let investor3 = 5;
         let bond_id: BondId = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1].into();
         let carbon_distribution = CarbonDistribution{
             investors: 100_000,
@@ -231,7 +229,7 @@ pub fn it_works_release_bond_carbon_credits3() {
         let cc_count = 1_000_000;
         let proj_id = 666;
         let asset_id = 1;
-        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id);
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id, crate::project::REGISTERED, crate::annual_report::REPORT_ISSUED);
         let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, asset_id);
         let balance_investor1 = Assets::balance(asset_id, investor1);
         let balance_issuer = Assets::balance(asset_id, issuer);
