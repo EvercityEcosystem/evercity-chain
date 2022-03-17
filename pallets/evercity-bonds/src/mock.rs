@@ -263,7 +263,7 @@ pub fn get_test_bond_incorrect(payment_period: u32, bond_duration: u32, bond_uni
     bond
 }
 
-pub fn get_test_bond_carbon_metadata(carbon_metadata: bond::CarbonUnitsMetadata<u64>) -> BondStruct {
+pub fn get_test_bond_with_carbon_metadata(carbon_metadata: bond::CarbonUnitsMetadata<u64>) -> BondStruct {
     let mut bond = get_test_bond_stable();
     bond.inner.carbon_metadata = Some(carbon_metadata);
     bond

@@ -623,6 +623,126 @@ fn incorrect_bond_validation() {
     process_test(true);
 }
 
+#[test]
+fn bond_with_carbon_is_valid() {
+    let carbon_metadata1 = crate::bond::CarbonUnitsMetadata{
+        count: 100_000,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 100_000,
+            issuer: 0,
+            evercity: None,
+            project_developer: None,
+        }
+    };
+    let carbon_metadata2 = crate::bond::CarbonUnitsMetadata{
+        count: 100_000,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 70_000,
+            issuer: 30_000,
+            evercity: None,
+            project_developer: None,
+        }
+    };
+    let carbon_metadata3 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 70_000,
+            issuer: 20_000,
+            evercity: Some((1, 10_000)),
+            project_developer: None,
+        }
+    };
+    let carbon_metadata4 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 70_000,
+            issuer: 20_000,
+            evercity: None,
+            project_developer: Some((1, 10_000)),
+        }
+    };
+    let carbon_metadata5 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 50_000,
+            issuer: 20_000,
+            evercity: Some((1, 20_000)),
+            project_developer: Some((2, 10_000)),
+        }
+    };
+    let carbon_metadata6 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 0,
+            issuer: 0,
+            evercity: Some((1, 50_000)),
+            project_developer: Some((2, 50_000)),
+        }
+    };
+
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata1).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata2).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata3).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata4).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata5).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(get_test_bond_with_carbon_metadata(carbon_metadata6).inner.is_valid(DEFAULT_DAY_DURATION));
+}
+
+#[test]
+fn bond_with_carbon_is_not_valid() {
+    let carbon_metadata1 = crate::bond::CarbonUnitsMetadata{
+        count: 100_000,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 100_000,
+            issuer: 100_000,
+            evercity: None,
+            project_developer: None,
+        }
+    };
+    let carbon_metadata2 = crate::bond::CarbonUnitsMetadata{
+        count: 100_000,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 0,
+            issuer: 30_000,
+            evercity: None,
+            project_developer: None,
+        }
+    };
+    let carbon_metadata3 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 70_000,
+            issuer: 20_000,
+            evercity: Some((1, 50_000)),
+            project_developer: None,
+        }
+    };
+    let carbon_metadata4 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 70_000,
+            issuer: 20_000,
+            evercity: None,
+            project_developer: Some((1, 30_000)),
+        }
+    };
+    let carbon_metadata5 = crate::bond::CarbonUnitsMetadata{
+        count: 0,
+        carbon_distribution: crate::bond::CarbonDistribution{
+            investors: 50_000,
+            issuer: 20_000,
+            evercity: Some((1, 20_000)),
+            project_developer: Some((2, 20_000)),
+        }
+    };
+
+    assert!(!get_test_bond_with_carbon_metadata(carbon_metadata1).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(!get_test_bond_with_carbon_metadata(carbon_metadata2).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(!get_test_bond_with_carbon_metadata(carbon_metadata3).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(!get_test_bond_with_carbon_metadata(carbon_metadata4).inner.is_valid(DEFAULT_DAY_DURATION));
+    assert!(!get_test_bond_with_carbon_metadata(carbon_metadata5).inner.is_valid(DEFAULT_DAY_DURATION));
+}
+
 
 #[test]
 fn bond_check_equation() {
