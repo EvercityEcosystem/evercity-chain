@@ -206,6 +206,7 @@ pub fn it_works_release_bond_carbon_credits2() {
     });
 }
 
+#[test]
 pub fn it_works_release_bond_carbon_credits3() {
     new_test_ext().execute_with(|| {
         let issuer = ROLES[1].0;
@@ -237,5 +238,79 @@ pub fn it_works_release_bond_carbon_credits3() {
         assert_eq!(balance_investor1, 1_000_000);
         assert_eq!(balance_issuer, 0);
         assert_ok!(release_result, ().into());
+    });
+}
+
+#[test]
+pub fn it_fails_release_bond_carbon_credits_project_not_registered() {
+    new_test_ext().execute_with(|| {
+        let issuer = ROLES[1].0;
+        let investor2 = 4;
+        let investor3 = 5;
+        let investor1 = 3;
+        let bond_id: BondId = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1].into();
+        let carbon_distribution = CarbonDistribution{
+            investors: 100_000,
+            issuer: 0,
+            evercity: None,
+            project_developer: None,
+        };
+        let carbon_metadata = CarbonUnitsMetadata{
+            count: 100_000,
+            carbon_distribution
+        };
+        let bond = get_test_bond(carbon_metadata);
+        let _ = EvercityBonds::create_test_finished_bond(issuer, bond_id, bond.inner);
+        let standard = Standard::GOLD_STANDARD_BOND;
+        let units = vec![(investor1, 50), (investor2, 30), (investor3, 20)];
+        EvercityBonds::add_test_bond_unit_packages(&bond_id, units);
+        let cc_count = 1_000_000;
+        let proj_id = 666;
+        let asset_id = 1;
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id, 0, crate::annual_report::REPORT_ISSUED);
+        let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, asset_id);
+
+        assert_eq!(0, Assets::balance(asset_id, investor1));
+        assert_eq!(0, Assets::balance(asset_id, investor2));
+        assert_eq!(0, Assets::balance(asset_id, investor3));
+        assert_eq!(0, Assets::balance(asset_id, issuer));
+        assert_noop!(release_result, RuntimeError::ProjectNotRegistered);
+    });
+}
+
+#[test]
+pub fn it_fails_release_bond_carbon_credits_report_not_issued() {
+    new_test_ext().execute_with(|| {
+        let issuer = ROLES[1].0;
+        let investor2 = 4;
+        let investor3 = 5;
+        let investor1 = 3;
+        let bond_id: BondId = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1].into();
+        let carbon_distribution = CarbonDistribution{
+            investors: 100_000,
+            issuer: 0,
+            evercity: None,
+            project_developer: None,
+        };
+        let carbon_metadata = CarbonUnitsMetadata{
+            count: 100_000,
+            carbon_distribution
+        };
+        let bond = get_test_bond(carbon_metadata);
+        let _ = EvercityBonds::create_test_finished_bond(issuer, bond_id, bond.inner);
+        let standard = Standard::GOLD_STANDARD_BOND;
+        let units = vec![(investor1, 50), (investor2, 30), (investor3, 20)];
+        EvercityBonds::add_test_bond_unit_packages(&bond_id, units);
+        let cc_count = 1_000_000;
+        let proj_id = 666;
+        let asset_id = 1;
+        CarbonCredits::create_test_bond_project(issuer, bond_id, cc_count, standard, proj_id, crate::project::REGISTERED, 0);
+        let release_result = CarbonCredits::release_bond_carbon_credits(Origin::signed(issuer), proj_id, asset_id);
+
+        assert_eq!(0, Assets::balance(asset_id, investor1));
+        assert_eq!(0, Assets::balance(asset_id, investor2));
+        assert_eq!(0, Assets::balance(asset_id, investor3));
+        assert_eq!(0, Assets::balance(asset_id, issuer));
+        assert_noop!(release_result, RuntimeError::ReportNotIssued);
     });
 }
