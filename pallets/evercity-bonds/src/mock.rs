@@ -255,11 +255,16 @@ pub fn get_test_bond_stable() -> BondStruct {
     }
 }
 
-
 pub fn get_test_bond_incorrect(payment_period: u32, bond_duration: u32, bond_units_base_price: u64, is_stable: bool) -> BondStruct {
     let mut bond = if is_stable {get_test_bond_stable()} else {get_test_bond()};
     bond.inner.payment_period = payment_period;
     bond.inner.bond_duration = bond_duration;
     bond.inner.bond_units_base_price = bond_units_base_price;
+    bond
+}
+
+pub fn get_test_bond_carbon_metadata(carbon_metadata: bond::CarbonUnitsMetadata<u64>) -> BondStruct {
+    let mut bond = get_test_bond_stable();
+    bond.inner.carbon_metadata = Some(carbon_metadata);
     bond
 }
