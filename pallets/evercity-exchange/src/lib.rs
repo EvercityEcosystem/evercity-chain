@@ -92,7 +92,7 @@ pub mod pallet {
 		ExchangeIdOwerflow,
 		InvalidTradeRequestState,
 		BadHolder,
-		ExchangeNotFound,
+		TradeRequestNotFound,
 		BadApprove,
     }
 
@@ -170,7 +170,7 @@ pub mod pallet {
 			EverUSDTradeRequestById::<T>::try_mutate(
                 trade_request_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate  {
-                        None => return Err(Error::<T>::ExchangeNotFound.into()),
+                        None => return Err(Error::<T>::TradeRequestNotFound.into()),
                         Some(exchange) => {
                             match holder_type {
                                 EverUSDTradeHolderType::EverUSDHolder => {

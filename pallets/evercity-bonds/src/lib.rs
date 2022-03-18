@@ -2234,8 +2234,8 @@ impl<T: Config> Module<T> {
             .unwrap_or(true)
     }
 
-    #[cfg(test)]
-    fn set_balance(who: &T::AccountId, amount: EverUSDBalance) {
+    #[cfg(debug_assertions)]
+    pub fn set_balance(who: &T::AccountId, amount: EverUSDBalance) {
         BalanceEverUSD::<T>::insert(who, amount)
     }
 

@@ -36,6 +36,8 @@ type Timestamp<T> = pallet_timestamp::Module<T>;
 pub type AssetId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 pub type Balance<T> = <T as pallet_evercity_assets::Config>::Balance;
 
+const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5000000;
+
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -872,7 +874,8 @@ use super::*;
             
                             // Create Asset:
                             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder);
-                            let create_asset_call = pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, 0, min_balance);
+                            let create_asset_call = 
+                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, min_balance);
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
         
@@ -968,7 +971,7 @@ use super::*;
                             let new_carbon_credits_holder_source = 
                                 <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
                             let create_asset_call = 
-                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, 0, Self::u128_to_balance(1));
+                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, Self::u128_to_balance(1));
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
         
@@ -1110,8 +1113,7 @@ use super::*;
 
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
             let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
-            let result = transfer_call.dispatch_bypass_filter(origin);
-            ensure!(!result.is_err(), Error::<T>::TransferFailed);
+            transfer_call.dispatch_bypass_filter(origin)?;
 
             Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
             Ok(().into())
