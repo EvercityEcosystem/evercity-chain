@@ -1781,12 +1781,16 @@ impl<T: Config> Module<T> {
         })
     }
 
+    /// Transfers everusd to an account
+    #[inline]
     pub fn transfer_everusd(from: &T::AccountId, to: &T::AccountId, amount: EverUSDBalance) -> DispatchResult { 
         Self::balance_sub(from, amount)?;
         Self::balance_add(to, amount)?;
         Ok(())
     }
 
+    /// Gets bon unit investmets per account
+    #[inline]
     pub fn get_bond_account_investment(bond_id: &BondId) -> Vec<(T::AccountId, u32)> {
         BondUnitPackageRegistry::<T>::iter()
                                     .filter(|(x, _, _)|{ x == bond_id })
@@ -1855,12 +1859,12 @@ impl<T: Config> Module<T> {
     }
 
     /// <pre>
+    /// Gets account everusd balance
     /// </pre>
+    #[inline]
     pub fn get_balance(acc: &T::AccountId) -> EverUSDBalance {
-        // AccountRegistry::<T>::get(acc).roles & MASTER_ROLE_MASK != 0
         BalanceEverUSD::<T>::get(acc)
     }
-
 
     /// <pre>
     /// Calculates bond coupon yield and store accrued values in BondCouponYield map.
