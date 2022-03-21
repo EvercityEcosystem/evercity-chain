@@ -306,7 +306,6 @@ mod helpers {
                 let _ = account_state_result_tuple.0;
                 let _ = account_state_result_tuple.1;
                 let _ = account_state_result_tuple.2;
-                // let _ = CarbonCredits::get_proj_by_id(proj_id).unwrap();
             });
     
         (1, owner)

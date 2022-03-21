@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-mod asset_trade_request;
 mod everusd_trade_request;
 mod approve_mask;
 
@@ -23,13 +22,12 @@ pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
-		dispatch::{DispatchResultWithPostInfo, DispatchResult},
+		dispatch::{DispatchResultWithPostInfo},
 		pallet_prelude::*, traits::UnfilteredDispatchable,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_evercity_bonds::EverUSDBalance;
-	use crate::{asset_trade_request::{
-		AssetTradeRequest, AssetTradeHolderType}, 
+	use crate::{
 		everusd_trade_request::{EverUSDTradeRequest, EverUSDTradeHolderType}, approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED, ASSET_HOLDER_APPROVED}
 	};
 	use super::*;
@@ -44,7 +42,6 @@ pub mod pallet {
 	pub trait Config: 
 		frame_system::Config +
 		pallet_assets::Config + 
-		// pallet_evercity_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config +
 	{
@@ -57,16 +54,6 @@ pub mod pallet {
 	// pallet storages:
 
 	#[pallet::storage]
-	/// Details of a asset-carbon crdits trade request
-	pub(super) type AssetTradeRequestById<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		TradeRequestId,
-		AssetTradeRequest<T::AccountId, AssetId<T>, CarbonCreditsId<T>, <T as pallet_assets::Config>::Balance, CarbonCreditsBalance<T>>, 
-		OptionQuery
-	>;
-
-	#[pallet::storage]
 	/// Details of a evrusd-carbon crdits trade request
 	pub(super) type EverUSDTradeRequestById<T: Config> = StorageMap<
 		_,
@@ -75,10 +62,6 @@ pub mod pallet {
 		EverUSDTradeRequest<T::AccountId, CarbonCreditsId<T>, CarbonCreditsBalance<T>, EverUSDBalance>, 
 		OptionQuery
 	>;
-
-	#[pallet::storage]
-	/// Id of last trade asset request
-	pub(super) type LastAssetTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
 
 	#[pallet::storage]
 	/// Id of last trade everud request
@@ -104,6 +87,11 @@ pub mod pallet {
         AssetCarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, CarbonCreditsId<T>),
 		/// \[TradeRequestId\]
         AssetCarbonCreditsTradeRequestAccepted(TradeRequestId),
+
+		/// \[TradeRequestId, EverUsdHolder, CarbonCreditsHolder\]
+		EverUSDTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId),
+		/// \[TradeRequestId\]
+		EverUSDTradeRequestAccepted(TradeRequestId),
     }
 	
 	#[deprecated(note = "use `Event` instead")]
@@ -142,8 +130,8 @@ pub mod pallet {
 
 			let trade_request = 
 				EverUSDTradeRequest::new(
-					ever_usd_holder, 
-					carbon_credits_holder, 
+					ever_usd_holder.clone(), 
+					carbon_credits_holder.clone(), 
 					ever_usd_count, 
 					carbon_credits_asset_id, 
 					carbon_credits_count, 
@@ -157,6 +145,7 @@ pub mod pallet {
 			EverUSDTradeRequestById::<T>::insert(new_id, trade_request);
 			LastEverUSDTradeRequestId::<T>::mutate(|x| *x = new_id);
 
+			Self::deposit_event(Event::EverUSDTradeRequestCreated(new_id, ever_usd_holder, carbon_credits_holder));
             Ok(().into())
 		}
 
@@ -213,105 +202,7 @@ pub mod pallet {
                     }
                     Ok(().into())
                 })?;
-
-			Ok(().into())
-		}
-
-
-		#[pallet::weight(10_000)]
-		pub fn create_asset_trade_request(
-			origin: OriginFor<T>,
-			partner_trader: T::AccountId, 
-			asset_id: AssetId<T>,
-			carbon_credits_id: CarbonCreditsId<T>,
-			asset_count: <T as pallet_assets::Config>::Balance,
-			carbon_credits_count: CarbonCreditsBalance<T>,
-			holder_type: AssetTradeHolderType,
-		) -> DispatchResultWithPostInfo {
-			let (asset_holder, carbon_credits_holder, approve_mask) = match holder_type {
-				AssetTradeHolderType::CarbonCreditsHolder => {
-					(partner_trader, ensure_signed(origin)?, CARBON_CREDITS_HOLDER_APPROVED)
-				},
-				AssetTradeHolderType::AssetHolder => {
-					(ensure_signed(origin)?, partner_trader, ASSET_HOLDER_APPROVED)
-				}
-			};
-
-            let asset_balance = pallet_assets::Module::<T>::balance(asset_id, asset_holder.clone());
-			ensure!(asset_balance >= asset_count, Error::<T>::InsufficientAssetBalance);
-			let carbon_credits_balance = pallet_evercity_carbon_credits::Module::<T>::balance(carbon_credits_id, carbon_credits_holder.clone());
-			ensure!(carbon_credits_balance >= carbon_credits_count, Error::<T>::InsufficientCarbonCreditsBalance);
-
-			let trate_request = 
-				AssetTradeRequest::new(
-					asset_holder.clone(), 
-					carbon_credits_holder.clone(), 
-					asset_count, 
-					asset_id, 
-					carbon_credits_count, 
-					carbon_credits_id,
-					approve_mask
-			);
-			let new_id = match LastAssetTradeRequestId::<T>::get().checked_add(1) {
-                Some(id) => id,
-                None => return Err(Error::<T>::ExchangeIdOwerflow.into()),
-            };
-			AssetTradeRequestById::<T>::insert(new_id, trate_request);
-			Self::deposit_event(Event::AssetCarbonCreditsTradeRequestCreated(new_id, asset_holder, carbon_credits_holder, asset_id, carbon_credits_id));
-			Ok(().into())
-		}
-
-		#[pallet::weight(10_000)]
-		pub fn accept_asset_trade_request(
-			origin: OriginFor<T>, 
-			trade_request_id: TradeRequestId, 
-			holder_type: AssetTradeHolderType
-		) -> DispatchResultWithPostInfo { 
-			let caller = ensure_signed(origin)?;
-			AssetTradeRequestById::<T>::try_mutate(trade_request_id, |trade_request_opt| -> DispatchResultWithPostInfo {
-				match trade_request_opt {
-					None => todo!(),
-					Some(trade_request) => {
-						match holder_type {
-							AssetTradeHolderType::AssetHolder => {
-								ensure!(trade_request.approved == CARBON_CREDITS_HOLDER_APPROVED, Error::<T>::InvalidTradeRequestState);
-								ensure!(caller == trade_request.asset_holder, Error::<T>::BadHolder);
-
-							},
-							AssetTradeHolderType::CarbonCreditsHolder => {
-								ensure!(trade_request.approved == ASSET_HOLDER_APPROVED, Error::<T>::InvalidTradeRequestState);
-								ensure!(caller == trade_request.carbon_credits_holder, Error::<T>::BadHolder);
-							},
-						}
-
-						let current_asset_balance = pallet_assets::Module::<T>::balance(trade_request.asset_id, trade_request.asset_holder.clone());
-						let carbon_credits_balance = 
-							pallet_evercity_carbon_credits::Module::<T>::balance(trade_request.carbon_credits_id, trade_request.carbon_credits_holder.clone());
-
-						if trade_request.asset_count > current_asset_balance {
-							return Err(Error::<T>::InsufficientAssetBalance.into());
-						}
-						if trade_request.carbon_credits_count > carbon_credits_balance  {
-							return Err(Error::<T>::InsufficientCarbonCreditsBalance.into());
-						}
-
-						// transfer carbon credits
-						let cc_holder_origin = frame_system::RawOrigin::Signed(trade_request.carbon_credits_holder.clone()).into();
-						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
-								cc_holder_origin, 
-								trade_request.carbon_credits_id, 
-								trade_request.asset_holder.clone(), 
-								trade_request.carbon_credits_count
-						)?;
-						let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(trade_request.carbon_credits_holder.clone());
-						let asset_transfer_call = pallet_assets::Call::<T>::transfer(trade_request.asset_id, carbon_credits_holder_source, trade_request.asset_count);
-						let asset_holder_origin = frame_system::RawOrigin::Signed(trade_request.asset_holder.clone()).into();
-						asset_transfer_call.dispatch_bypass_filter(asset_holder_origin)?;
-						Self::deposit_event(Event::AssetCarbonCreditsTradeRequestAccepted(trade_request_id));
-					}
-				}
-				Ok(().into())
-			})?;
+			Self::deposit_event(Event::EverUSDTradeRequestAccepted(trade_request_id));
 			Ok(().into())
 		}
     }
