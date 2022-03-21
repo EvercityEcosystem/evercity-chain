@@ -194,50 +194,6 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
     t.into()
 }
 
-// Build genesis storage for event testing
-pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default()
-        .build_storage::<TestRuntime>()
-        .unwrap();
-
-    pallet_balances::GenesisConfig::<TestRuntime> {
-        // Provide some initial balances
-        balances: ROLES.iter().map(|x| (x.0, 10000000)).collect(),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
-	pallet_evercity_accounts::GenesisConfig::<TestRuntime> {
-        // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct {
-                        roles: *role
-                    },
-                )
-            })
-            .collect(),
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
-
-	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
-	ext
-}
-
-// get and cut last event
-#[allow(clippy::result_unit_err)] 
-pub fn last_event() -> Result<Event, ()> {
-	match System::events().pop() {
-		Some(ev) => Ok(ev.event),
-		None => Err(())
-	}
-}
-
 // Get events list
 #[allow(dead_code)]
 fn events() -> Vec<Event> {

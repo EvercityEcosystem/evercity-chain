@@ -85,7 +85,6 @@ fn it_fails_exhange_no_everusd_create() {
     new_test_ext().execute_with(|| {
         let everusd_holder = 1;
         let carbon_credits_id = 666;
-        let everusd_balance = 10000;
         let (project_id, cc_holder) = full_sign_annual_report_gold_standard();
         let _ = CarbonCredits::release_carbon_credits(
             Origin::signed(cc_holder), project_id, carbon_credits_id, cc_holder, 1);
