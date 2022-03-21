@@ -9,13 +9,9 @@ mod mock;
 mod tests;
 
 use sp_std::{prelude::*};
-use sp_runtime::{traits::{StaticLookup}
-};
-
 pub use pallet::*;
 
 pub type TradeRequestId = u128;
-pub type AssetId<T> = <T as pallet_assets::Config>::AssetId;
 pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
 pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 
@@ -23,12 +19,13 @@ pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 pub mod pallet {
     use frame_support::{
 		dispatch::{DispatchResultWithPostInfo},
-		pallet_prelude::*, traits::UnfilteredDispatchable,
+		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_evercity_bonds::EverUSDBalance;
 	use crate::{
-		everusd_trade_request::{EverUSDTradeRequest, EverUSDTradeHolderType}, approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED, ASSET_HOLDER_APPROVED}
+		everusd_trade_request::{EverUSDTradeRequest, EverUSDTradeHolderType}, 
+		approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED}
 	};
 	use super::*;
 
@@ -41,7 +38,6 @@ pub mod pallet {
 	/// The module configuration trait.
 	pub trait Config: 
 		frame_system::Config +
-		pallet_assets::Config + 
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config +
 	{
@@ -52,7 +48,6 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	// pallet storages:
-
 	#[pallet::storage]
 	/// Details of a evrusd-carbon crdits trade request
 	pub(super) type EverUSDTradeRequestById<T: Config> = StorageMap<
@@ -69,7 +64,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-        InsufficientAssetBalance,
         InsufficientCarbonCreditsBalance,
 		InsufficientEverUSDBalance,
 		ExchangeIdOwerflow,
@@ -83,11 +77,6 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
-        /// \[TradeRequestId, AssetHolder, CarbonCreditsHolder, AssetId, CarbonCreditsId\]
-        AssetCarbonCreditsTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId, <T as pallet_assets::Config>::AssetId, CarbonCreditsId<T>),
-		/// \[TradeRequestId\]
-        AssetCarbonCreditsTradeRequestAccepted(TradeRequestId),
-
 		/// \[TradeRequestId, EverUsdHolder, CarbonCreditsHolder\]
 		EverUSDTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId),
 		/// \[TradeRequestId\]
@@ -206,22 +195,4 @@ pub mod pallet {
 			Ok(().into())
 		}
     }
-
-	impl<T: Config> Pallet<T> {
-		#[cfg(test)]
-		pub fn create_and_mint_test_asset(
-			account_id: T::AccountId, 
-			asset_id: AssetId<T>, 
-			min_balance: <T as pallet_assets::Config>::Balance, 
-			balance: <T as pallet_assets::Config>::Balance
-		) {
-			let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
-			let carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
-			let create_call = pallet_assets::Call::<T>::create(asset_id, carbon_credits_holder_source.clone(), 0, min_balance);
-			let _ = create_call.dispatch_bypass_filter(cc_holder_origin);
-			let cc_holder_origin = frame_system::RawOrigin::Signed(account_id.clone()).into();
-			let mint_call = pallet_assets::Call::<T>::mint(asset_id, carbon_credits_holder_source, balance);
-			let _ = mint_call.dispatch_bypass_filter(cc_holder_origin);
-		}
-	}
 }

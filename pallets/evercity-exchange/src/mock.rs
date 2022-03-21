@@ -26,7 +26,6 @@ frame_support::construct_runtime!(
 		EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Event<T> },
 		Timestamp: pallet_timestamp::{ Module, Call, Storage, Inherent},
         EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
-        Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
         EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
@@ -132,20 +131,6 @@ parameter_types! {
     /// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
     pub const MetadataDepositBase: Balance = 1;
     pub const MetadataDepositPerByte: Balance = 1;
-}
-
-impl pallet_assets::Config for TestRuntime {
-    type Event = Event;
-    type Balance = Balance;
-    type AssetId = u32;
-    type Currency = Balances;
-    type ForceOrigin = frame_system::EnsureSigned<AccountId>;
-    type AssetDepositBase = AssetDeposit;
-    type MetadataDepositBase = MetadataDepositBase;
-    type MetadataDepositPerByte = MetadataDepositPerByte;
-    type AssetDepositPerZombie = AssetDeposit;
-    type StringLimit = StringLimit;
-    type WeightInfo = ();
 }
 
 impl pallet_evercity_assets::Config for TestRuntime {
