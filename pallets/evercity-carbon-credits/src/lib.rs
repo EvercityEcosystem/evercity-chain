@@ -26,18 +26,15 @@ use pallet_evercity_filesign::file::{FileId};
 use pallet_evercity_accounts::accounts::RoleMask;
 use carbon_credits_passport::CarbonCreditsPassport;
 use burn_certificate::CarbonCreditsBurnCertificate;
-
-// use pallet_evercity_assets as pallet_assets;
 use pallet_evercity_accounts as accounts;
 
 pub use crate::pallet::*;
 
-type Timestamp<T> = pallet_timestamp::Module<T>;
+pub type Timestamp<T> = pallet_timestamp::Module<T>;
 pub type AssetId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 pub type Balance<T> = <T as pallet_evercity_assets::Config>::Balance;
 
-const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5000000;
-
+const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5_000_000;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -48,8 +45,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
     use pallet_evercity_bonds::{bond::BondState, BondId};
 	use crate::bond_carbon_release::CarbonCreditsBondRelease;
-
-use super::*;
+    use super::*;
 
     #[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -75,9 +71,6 @@ use super::*;
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
 	pub enum Event<T: Config> {
-		// BondCarbonCreditsReleased(BondId, CarbonCreditsId<T>)
-                // Project Events:
-
         /// \[ProjectOwner, ProjectId\]
         ProjectCreated(T::AccountId, ProjectId),
         /// \[ProjectOwner, ProjectId, FileId\]
@@ -131,9 +124,8 @@ use super::*;
         /// \[ProjectOwner, AssetId\]
         CarbonCreditsAssetBurned(T::AccountId, T::AssetId),
 
-
-
-        BondCarbonCreditsReleased(BondId, <T as pallet_evercity_assets::Config>::AssetId)
+        /// \[BondId, AssetId\]
+        BondCarbonCreditsReleased(BondId, T::AssetId)
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -223,16 +215,22 @@ use super::*;
         IncorrectFileId,
 
         // Bond Validation Errors
+        /// Project is a Bond project
         ProjectIsBond,
-        ProjectIsNotBond,
 
+        /// Project is not a Bond project
+        ProjectIsNotBond,
+        /// Bond is not finished error
         BondNotFinished,
-		CreateCCError,
-		TransferCCError,
+        /// Bond unit package registry balance is zero
 		BalanceIsZero,
+        /// Zero investment on bond
 		InvestmentIsZero,
+        /// Bond Carbon Credits already released
 		AlreadyReleased,
+        /// Account is not an issuer
 		NotAnIssuer,
+        /// Carbon metadata is not valid
 		CarbonMetadataNotValid
     }
 
@@ -919,23 +917,26 @@ use super::*;
             Ok(().into())
         }
 
-        #[pallet::weight(10_000)]
+        /// <pre>
+        /// Method: release_bond_carbon_credits
+        /// 
+        /// Arguments: origin:  OriginFor<T> - Transaction caller
+        ///            project_id: ProjectId Id of the bond project
+        ///            asset_id: <T as pallet_assets::Config>::AssetId - Asset Id in assets pallet
+        ///
+        /// Access: Project owner
+        ///
+        /// Creates assets in assets pallet, creates carbon credits passport and calls mint in assets pallet
+        /// Then transfers carbon credits to all bond accounts
+        /// 
+        /// </pre>
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(5, 6))]
 		pub fn release_bond_carbon_credits(
 			origin: OriginFor<T>,
             project_id: ProjectId,
 			asset_id: <T as pallet_evercity_assets::Config>::AssetId,
-            // project_id: ProjectId,
-			// carbon_credits_count: T::Balance, 
-			// bond_id: pallet_evercity_bonds::bond::BondId
 		) -> DispatchResultWithPostInfo {
 			let project_owner = ensure_signed(origin.clone())?;
-            // let project = ProjectById::<T>::get(project_id);
-            // let bond_id = match project.bond_id {
-
-            // };
-
-
-
             ProjectById::<T>::try_mutate(
                 project_id, |project_option| -> DispatchResult {
                     match project_option {
@@ -944,7 +945,6 @@ use super::*;
                             ensure!(project.owner == project_owner, Error::<T>::AccountNotOwner);
                             ensure!(project.state == project::REGISTERED, Error::<T>::ProjectNotRegistered);
                             ensure!(project.get_bond_id().is_some(), Error::<T>::ProjectIsNotBond);
-
                             let bond_id = match project.get_bond_id() {
                                 None => todo!(),
                                 Some(b) => b
@@ -952,8 +952,6 @@ use super::*;
                             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
                             ensure!(bond.issuer == project_owner, Error::<T>::NotAnIssuer);
                             ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
-
-                            
         
                             // Check that there is at least one annual report
                             let reports_len = project.annual_reports.len();
@@ -974,7 +972,6 @@ use super::*;
                                 pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, Self::u128_to_balance(1));
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
-        
           
                             // Set metadata from annual report
                             // Changing metadata of annual report to empty struct
@@ -1080,11 +1077,8 @@ use super::*;
                         }
                     }
              })?;
-
 			Ok(().into())
 		}
-
-
 
         /// <pre>
         /// Method: transfer_carbon_credits(
