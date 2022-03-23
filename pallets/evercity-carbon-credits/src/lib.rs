@@ -48,8 +48,8 @@ pub mod pallet {
     use super::*;
 
     #[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
-	pub struct Pallet<T> (_);
+    #[pallet::generate_store(pub(super) trait Store)]
+    pub struct Pallet<T> (_);
 
     #[pallet::config]
 	/// The module configuration trait.
@@ -65,12 +65,12 @@ pub mod pallet {
     }
 
     #[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>{}
+    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>{}
 
     #[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
-	pub enum Event<T: Config> {
+    pub enum Event<T: Config> {
         /// \[ProjectOwner, ProjectId\]
         ProjectCreated(T::AccountId, ProjectId),
         /// \[ProjectOwner, ProjectId, FileId\]
@@ -129,10 +129,10 @@ pub mod pallet {
     }
 
     #[deprecated(note = "use `Event` instead")]
-	pub type RawEvent<T> = Event<T>;
+    pub type RawEvent<T> = Event<T>;
 
     #[pallet::error]
-	pub enum Error<T> {
+    pub enum Error<T> {
         // Project errors:
 
         /// Separate Error for project validation
@@ -235,48 +235,48 @@ pub mod pallet {
     }
 
     #[pallet::storage]
-	pub(super) type ProjectById<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		u32,
-		ProjectStruct<T::AccountId, T, T::Balance>,
-		OptionQuery
-	>;
+    pub(super) type ProjectById<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        u32,
+        ProjectStruct<T::AccountId, T, T::Balance>,
+        OptionQuery
+    >;
 
     #[pallet::storage]
-	pub(super) type LastID<T: Config> = StorageValue<
+    pub(super) type LastID<T: Config> = StorageValue<
         _, 
-		ProjectId,
+        ProjectId,
         ValueQuery
-	>;
+    >;
 
     #[pallet::storage]
-	pub(super) type CarbonCreditPassportRegistry<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		AssetId<T>,
-		CarbonCreditsPassport<AssetId<T>>,
-		OptionQuery
-	>;
+    pub(super) type CarbonCreditPassportRegistry<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        AssetId<T>,
+        CarbonCreditsPassport<AssetId<T>>,
+        OptionQuery
+    >;
 
     #[pallet::storage]
-	pub(super) type BurnCertificates<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::Balance>>,
-		ValueQuery
-	>;
+    pub(super) type BurnCertificates<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        T::AccountId,
+        Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::Balance>>,
+        ValueQuery
+    >;
 
 
 	#[pallet::storage]
-	pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
-		_,
-		Blake2_128Concat,
-		BondId,
-		CarbonCreditsBondRelease<T::Balance>,
-		OptionQuery
-	>;
+    pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat,
+        BondId,
+        CarbonCreditsBondRelease<T::Balance>,
+        OptionQuery
+    >;
 
 
     // EXTRINSICS:
