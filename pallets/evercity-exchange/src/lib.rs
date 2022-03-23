@@ -35,7 +35,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 
-    #[pallet::config]
+	#[pallet::config]
 	/// The module configuration trait.
 	pub trait Config: 
 		frame_system::Config +
@@ -45,7 +45,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
 
-    #[pallet::hooks]
+	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
 
 	// pallet storages:
@@ -79,7 +79,7 @@ pub mod pallet {
 		TradeRequestNotFound,
 		/// Invalid approve state
 		BadApprove,
-    }
+	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -89,13 +89,13 @@ pub mod pallet {
 		EverUSDTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId),
 		/// \[TradeRequestId\]
 		EverUSDTradeRequestAccepted(TradeRequestId),
-    }
+	}
 	
 	#[deprecated(note = "use `Event` instead")]
 	pub type RawEvent<T> = Event<T>;
 
 	/// Calls:
-    #[pallet::call]
+	#[pallet::call]
 	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
 		/// <pre>
         /// Method: create_everusd_trade_request(
@@ -120,11 +120,11 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(2, 2))]
 		pub fn create_everusd_trade_request(
 			origin: OriginFor<T>, 
-            partner_trader: T::AccountId,
-            ever_usd_count: EverUSDBalance,
-            carbon_credits_asset_id: CarbonCreditsId<T>,
-            carbon_credits_count: CarbonCreditsBalance<T>,
-            holder_type: EverUSDTradeHolderType,
+			partner_trader: T::AccountId,
+			ever_usd_count: EverUSDBalance,
+			carbon_credits_asset_id: CarbonCreditsId<T>,
+			carbon_credits_count: CarbonCreditsBalance<T>,
+			holder_type: EverUSDTradeHolderType,
 		) -> DispatchResultWithPostInfo {
 			let (ever_usd_holder, carbon_credits_holder, approve_mask) = match holder_type {
 				EverUSDTradeHolderType::CarbonCreditsHolder => {
@@ -164,7 +164,7 @@ pub mod pallet {
 			LastEverUSDTradeRequestId::<T>::mutate(|x| *x = new_id);
 
 			Self::deposit_event(Event::EverUSDTradeRequestCreated(new_id, ever_usd_holder, carbon_credits_holder));
-            Ok(().into())
+			Ok(().into())
 		}
 
 		/// <pre>
@@ -186,7 +186,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 			EverUSDTradeRequestById::<T>::try_mutate(
-                trade_request_id, |trade_request_opt| -> DispatchResultWithPostInfo {
+				trade_request_id, |trade_request_opt| -> DispatchResultWithPostInfo {
                     match trade_request_opt  {
                         None => return Err(Error::<T>::TradeRequestNotFound.into()),
                         Some(trade_request) => {
