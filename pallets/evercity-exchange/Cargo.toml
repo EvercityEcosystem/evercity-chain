@@ -1,7 +1,14 @@
 [package]
-name = "pallet-evercity-exchange"
-version = "0.1.0"
-edition = "2018"
+authors = ["Dima Bushuev diman1ghtly@gmail.com"]
+description = 'Pallet for Evercity EverUSD and Carbon Credits exchange'
+edition = '2018'
+homepage = 'https://evercity.io'
+license = 'Apache-2.0'
+name = 'pallet-evercity-exchange'
+readme = '../README.md'
+repository = 'https://github.com/EvercityEcosystem/evercity-substrate'
+version = '0.1.0'
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies.serde]

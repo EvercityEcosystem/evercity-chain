@@ -1163,8 +1163,6 @@ pub mod pallet {
         }
     }
 
-
-
     // IMPL PALLET
     impl<T: Config> Pallet<T> {
         /// Changes state of a project by signing
