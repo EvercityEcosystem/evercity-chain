@@ -4,11 +4,11 @@
 FROM paritytech/ci-linux:production as source
 
 LABEL org.label-schema.vendor="Evercity" \
-      org.label-schema.name="Smart Sustainable Bond" \
-      org.label-schema.description="Blockchain node, which is a main part of Evercity's Smart Sustainable Bond project" \
+      org.label-schema.name="Evercity Chain" \
+      org.label-schema.description="Blockchain node, which is a main part of Evercity's sustainable finance protocol" \
       org.label-schema.url="https://evercity.io" \
       org.label-schema.schema-version="1.0" \
-      org.opencontainers.image.source="https://github.com/EvercityEcosystem/smart-sustainable-bond"
+      org.opencontainers.image.source="https://github.com/EvercityEcosystem/evercity-chain.git"
 
 WORKDIR /home/source
 COPY . .
@@ -21,11 +21,11 @@ RUN cargo build --release
 FROM ubuntu:20.04 as runtime
 
 LABEL org.label-schema.vendor="Evercity" \
-      org.label-schema.name="Smart Sustainable Bond" \
-      org.label-schema.description="Blockchain node, which is a main part of Evercity's Smart Sustainable Bond project" \
+      org.label-schema.name="Evercity Chain" \
+      org.label-schema.description="Blockchain node, which is a main part of Evercity's sustainable finance protocol" \
       org.label-schema.url="https://evercity.io" \
       org.label-schema.schema-version="1.0" \
-      org.opencontainers.image.source="https://github.com/EvercityEcosystem/smart-sustainable-bond"
+      org.opencontainers.image.source="https://github.com/EvercityEcosystem/evercity-chain.git"
 
 ENV USER="node"
 

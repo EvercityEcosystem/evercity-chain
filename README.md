@@ -1,5 +1,5 @@
 ![Compilation and Testing Suite](https://github.com/EvercityEcosystem/evercity-substrate/workflows/Compilation%20and%20Testing%20Suite/badge.svg?branch=master)
-# 1. Evercity Substrate Node
+# 1. Evercity Chain Substrate Node
 
 This repositary contains source code of blockchain node, which is a main part of Evercity's Smart Sustainable Bond project.
 
@@ -11,11 +11,28 @@ The market of green and sustainability-linked bonds is expected to reach a new r
 
 Evercity aims to solve these problems by building an open-source blockchain-based Smart Sustainable Bond protocol - digital infrastructure which will enable end to end lifecycle of sustainability-linked bonds with adjustable floating impact-linked coupon rate as well as traditional green bonds. The protocol is supported by Web3 Foundation which nurtures and stewards technologies and applications in the fields of decentralized web software protocols.
 
+Evercity Carbon Credits Pallet allows to issue and monitor carbon credits - green financial instruments. The main goal of carbon credits is to increase investment in activities that reduce greenhouse gas emissions or remove carbon from the atmosphere. Each carbon credit represents one ton of CO2 (reduced or removed), which was verified by internationally accepted standards using robust methodologies. Main demand for carbon credits is now driven by investors and corporations who want to achieve net zero goals, as well as by blockchain projects that want to offset their carbon emissions.
+
+The value of the global carbon market increased by 20% in 2020 to $272 billion and is expected to grow further. However, there are currently several challenges that prevent market development: low transparency and fraud risk; low liquidity; double accounting, etc. Representatives of UNFCCC state that blockchain technology could help solve many of these problems, namely:
+
+    strengthen monitoring, reporting and verification of the impacts of climate action
+    improve transparency, traceability and cost-effectiveness of climate action
+    build trust among climate actors
+    make incentive mechanisms for climate action accessible to the poorest
+    support mobilization of green finance
+
+(https://unfccc.int/news/un-supports-blockchain-technology-for-climate-action)
+
+At the same time, a challenge preventing rapid blockchain adoption in climate finance still lies in the high carbon footprint of main PoW blockchains including Ethereum. Parity Substrate blockchain has many advantages having a low carbon footprint, as well as enabling interoperability and scalability.
+
 # 3. Overview
 
 Powered by Parity Substrate blockchain engine, Smart Sustainable Bond Protocol is an open-source software which allows participants to issue and monitor innovative sustainability-linked bonds with adjustable floating impact-linked coupon rate. The main idea of the project is to increase accuracy of impact monitoring and reporting eliminating the risk of greenwashing, as well as to enable fair and transparent impact allocation between different stakeholders engaged in sustainability-related projects. 
 The main operations performed are confirmed by blockchain digital signatures and can be traced publicly. The platform stablecoin EVERUSD can only be used in the operations with bonds, which eliminates the risks of money laundering.
 
+Evercity Carbon Credits pallet allows issuing carbon credits according to any standard (or even creating own standard using customizable frameworks) as a result of interaction between various stakeholders: project owners, standard representatives, auditors and registries. We are replicating the globally accepted life cycle of carbon credits on blockchain making it more transparent, efficient and accessible. Key target audience of our product are project owners who issue carbon credits, companies who want to offset their emissions as well as blockchain projects who want to offset the carbon footprint of their transactions.
+
+Evercity Exchange pallet allows trading bond pallet everusd to carbon credits and vice versa.
 
 # 4. Evercity project main entities
 
@@ -48,7 +65,16 @@ With this scheme on the platform, any transaction with the EVERUSD token has a s
 
 ### 4.3 Bonds
 
-Bonds are the main essence of the project. The logic of the work of Evercity bonds copies the logic of the traditional issuance of bonds in the financial markets, but links the impact data on the use of proceeds with the financial parameters of the bond. The data on the environmental impact of the project uploaded to the blockchain changes the coupon rate. The parameters for these changes are configured at the stage of bond structuring. This mechanism is described in more detail in the platform operation scenario.
+Bonds are the one of main essences of the project. The logic of the work of Evercity bonds copies the logic of the traditional issuance of bonds in the financial markets, but links the impact data on the use of proceeds with the financial parameters of the bond. The data on the environmental impact of the project uploaded to the blockchain changes the coupon rate. The parameters for these changes are configured at the stage of bond structuring. This mechanism is described in more detail in the platform operation scenario.
+
+### 4.4 Carbon Credits
+
+Carbon Credits pallet has several main entities:
+Project - Entity for signing carbon credits project documentation and creating annual reports
+Carbon Standard - Algebraic type which determines the order of signature among three roles: CC_AUDITOR, CC_STANDARD, CC_REGISTRY
+Annual Report - Entity for confirming annual volume of carbon credit issuance
+Carbon Credit Passport - Entity for registering carbon credits as assets
+Carbon Offset Certificate - Entity for granting certificates for carbon emissions offsetting using carbon credits
 
 # 5. Evercity project scenario
 
@@ -91,8 +117,8 @@ Methods of pallet-evercity are described in Rust documentation [here](http://51.
 ### 6.2 Build
 
 ```bash
-git clone https://github.com/EvercityEcosystem/smart-sustainable-bond.git
-cd evercity-substrate
+git clone https://github.com/EvercityEcosystem/evercity-chain.git
+cd evercity-chain
 cargo build --release
 ```
 
