@@ -1416,5 +1416,21 @@ pub mod pallet {
             let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
             Self::u128_to_balance(temp_u64)
         }
+
+        pub fn proceed_send(
+            origin: OriginFor<T>,
+            account: T::AccountId,
+            part: i32,
+            asset_id: T::AssetId,
+            cc_amount: T::Balance
+        ) {
+            let perc = (part as f64)/(100_000 as f64);
+            if perc != 0.0 {
+                let balance_to_send = Self::divide_balance(perc, cc_amount);
+                let _ = 
+                    Self::transfer_carbon_credits(
+                        origin.clone(), asset_id, account, balance_to_send);
+            }
+        }
     }
 }
