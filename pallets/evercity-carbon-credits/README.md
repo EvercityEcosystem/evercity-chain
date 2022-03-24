@@ -65,6 +65,8 @@ Any account can access this extrinsic.
 
 - Project owner creates a Project in Carbon Credits pallet, choosing a Carbon Standard(extrinsic - create_project())
 
+- Issuer can create bond-based project - also choosing a Carbon Standard (extrinsic - create_bond_project())
+
 - Project owner can change project file id in a Project in Carbon Credits pallet to a new one. Available before signing starts(extrinsic - change_project_file_id()).
 Only project owner account with CC_PROJECT_OWNER role mask can run this step. Also it must be the project owner and file owner in blockchain storage.
 
@@ -84,6 +86,8 @@ The role, which can access this step id defined by carbon credits standard. For 
 Also signers must be holed in blockchain storage.
 
 - Then report is signed by different stakeholders, the order depends on Carbon Standard. (extrinsic - sign_last_annual_report())
+
+- Then project owner can release carbon credits (extrinsic - release_carbon_credits() - if this project without bond, release_bond_carbon_credits() - if project is based on a bond)
 
 - User can transfer carbon credits (extrinsic - transfer_carbon_credits()).
 Any carbon credits holder can access this function.
