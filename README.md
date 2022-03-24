@@ -76,13 +76,13 @@ Carbon Credits pallet has several main entities:
 - Carbon Credit Passport - Entity for registering carbon credits as assets
 - Carbon Offset Certificate - Entity for granting certificates for carbon emissions offsetting using carbon credits
 
-- You can find more info about carbon credits flow in this [docimentation](https://github.com/EvercityEcosystem/evercity-chain/blob/master/pallets/evercity-carbon-credits/README.md)
+You can find more info about carbon credits flow in this [documentation](https://github.com/EvercityEcosystem/evercity-chain/blob/master/pallets/evercity-carbon-credits/README.md)
 
 # 5. Evercity project scenario
 
-Here is the basic scenario on of Smart Sustainable Bond Protocol:
+Here is the basic scenario of Smart Sustainable Bond Protocol with Carbon Credits:
 
- - Issuer, having registered on the platform, creates a description of the future project, posts all financial and technical documentation and estimates the minimum and maximum amount of investment that it requires. For these investments, Issuer configures a sustainability-linked bond, the Bond Units of which will be bought by Investors. Documents and data about the project are checked and certified by participants with the role of Auditors, who publicly confirm the accuracy of the information provided by Issuer. After the final approvals, the bond becomes available for study by Investors
+ - Issuer, having registered on the platform, creates a description of the future project, posts all financial and technical documentation and estimates the minimum and maximum amount of investment that it requires. If issuer wants to create carbon credits according to the project performance he can provide metadata which describes distribution parts for investors and other roles. For these investments, Issuer configures a sustainability-linked bond, the Bond Units of which will be bought by Investors. Documents and data about the project are checked and certified by participants with the role of Auditors, who publicly confirm the accuracy of the information provided by Issuer. After the final approvals, the bond becomes available for study by Investors
 
  - Investor, having studied the project, decides to invest. To record the fact of buying bonds and transferring funds to Issuer, the Investor needs to exchange fiat funds for a platform token with the help of a custodian bank. In order to do so, he creates an application for the issue of a certain amount of EVERUSD token, which will be sent to its balance as soon as the custodian bank receives all documents confirming the payment
 
@@ -94,15 +94,17 @@ Here is the basic scenario on of Smart Sustainable Bond Protocol:
 
  - In the end of bond duration period Issuer returns full debt to bond's balance, and Investors can receive their funds back
 
- - If bond has a carbon credits metadata then the issuer is able to create carbon credits project in carbon credits pallet
+ - If bond has a carbon credits metadata then Issuer is able to create carbon credits project in carbon credits [pallet](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-carbon-credits)
 
- - Carbon Credits project must be approved and signed by different roles(CC_AUDITOR, CC_REGISTRY) according to its standard
+ - Carbon Credits project must be approved and signed by different roles (CC_AUDITOR, CC_REGISTRY) according to its standard
 
- - Approved Carbon Credits project provides possibility to create a report based on project impact which also must be approved and signed
+ - Approved Carbon Credits project provides possibility to create a report based on project impact 
+ 
+ - Created report must be also approved and signed by the same roles (CC_AUDITOR, CC_REGISTRY)
 
  - Approved report provides possibility to release Carbon Credits units with custom id
 
- - Released carbon credits are sent to different addresses according to the distribution metadata in the bond
+ - Released carbon credits are sent to different addresses according to the distribution metadata in the bond. These carbon credits can be transferred, retired and sold for EVERUSD in [pallet-evercity-exchange](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-exchange)
 
 
 An illustration of how the coupon rate changes depending on the data on the environmental impact of the project is shown in the [figure](./docs/interest_rate_periods.png):
