@@ -162,8 +162,7 @@ rm -rf $HOME/.local/share/evercity-node/chains/*
 ### 6.4 Build docker image
 ```bash
 cargo build --release
-mv ./target/release/evercity-node ./docker
-docker build --tag evercity-node:1.0 ./docker/
+docker build --tag evercity-node:1.0
 ```
 
 ### 6.5 Configure Node as a service
