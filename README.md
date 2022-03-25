@@ -208,3 +208,16 @@ cargo test
 ```bash
 cargo doc
 ```
+
+### 6.8 Run evercity-chain node via makefile 
+
+### 6.8.1 Using in-memory storage
+
+```bash
+make run
+```
+### 6.8.2 Using persistent storage
+
+```bash
+make run-local
+```
