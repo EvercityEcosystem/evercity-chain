@@ -32,7 +32,6 @@ Evercity pallet implements actions for three types of entities:
     2) token balances,
     3) operations with bonds and carbon credits.
 
-
 ### 4.1 Accounts and roles
 
 Each Evercity account can accommodate one or more roles from the bond and carbon credit pallets. The account only has access to the functions available to its role(s). The approximate functions of each role in the project are as follows:
@@ -80,23 +79,23 @@ Carbon credits pallet has several main entities:
 - Annual Report - Entity for confirming annual volume of carbon credit issuance
 - Carbon Credit Passport - Entity for registering carbon credits as assets
 - Carbon Offset Certificate - Entity for granting certificates for carbon emissions offsetting using carbon credits
-- 
+
 You can find more info about carbon credits flow in this [documentation](https://github.com/EvercityEcosystem/evercity-chain/blob/master/pallets/evercity-carbon-credits/README.md)
 
 # 5. Evercity project scenario
 
-(1) Issuer starts structuring a green or sustainability-linked bond (flow description [here](https://github.com/EvercityEcosystem/smart-sustainable-bond)). In case the issuer also wants to issue carbon credits based on the project performance, there is an additional optional field, where he can describe allocation of future carbon credits to different roles and accounts: 
+1. Issuer starts structuring a green or sustainability-linked bond (flow description [here](https://github.com/EvercityEcosystem/smart-sustainable-bond)). In case the issuer also wants to issue carbon credits based on the project performance, there is an additional optional field, where he can describe allocation of future carbon credits to different roles and accounts: 
 - Issuer’s account
 - Evercity account (commission fee), 
 - Project developer’s account,
 - Investors’ accounts (exact addresses are not known yet).
-(2) The bond undergoes its standard flow as described [here](https://github.com/EvercityEcosystem/smart-sustainable-bond). 
-(3) After the bond reaches FINISHED state, carbon project can be structured based on the flow described [here](https://github.com/EvercityEcosystem/carbon-credits). During the structuring, a corresponding bond ticker is also indicated. 
-(4) Carbon project is approved by CC_AUDITOR and CC_REGISTRY. 
-(5) The issuer creates a report where he indicates a number of issued carbon credits (based on the bond project impact), as well as their unique ticker. The report is also approved by CC_AUDITOR and CC_REGISTRY. 
-(6) Approved report enables issuance of Carbon Credit units. 
-(7) Issued Carbon Credit units are automatically distributed among the accounts and roles indicated at step 1. 
-(8) Distributed Carbon Credit units can be transferred, retired and sold for EVERUSD in [pallet-evercity-exchange](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-exchange).
+2. The bond undergoes its standard flow as described [here](https://github.com/EvercityEcosystem/smart-sustainable-bond). 
+3. After the bond reaches FINISHED state, carbon project can be structured based on the flow described [here](https://github.com/EvercityEcosystem/carbon-credits). During the structuring, a corresponding bond ticker is also indicated. 
+4. Carbon project is approved by CC_AUDITOR and CC_REGISTRY. 
+5. The issuer creates a report where he indicates a number of issued carbon credits (based on the bond project impact), as well as their unique ticker. The report is also approved by CC_AUDITOR and CC_REGISTRY. 
+6. Approved report enables issuance of Carbon Credit units. 
+7. Issued Carbon Credit units are automatically distributed among the accounts and roles indicated at step 1. 
+8. Distributed Carbon Credit units can be transferred, retired and sold for EVERUSD in [pallet-evercity-exchange](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-exchange).
 
 
 # 6. Evercity documentation
