@@ -47,7 +47,7 @@ MANAGER: the task of accounts with this role is to help Issuers work with projec
 
 Carbon credit roles
 - CC_PROJECT_OWNER: the role which can create carbon projects, annual reports and issue carbon credits.
-- CC_STANDARD; CC_AUDITOR; CC_REGISTRY: the roles which sign project documentation and annual reports (the order of signatures is determined by Carbon Standard entity).
+- CC_AUDITOR; CC_REGISTRY: the roles which sign project documentation and annual reports (the order of signatures is determined by Carbon Standard entity).
 
 
 ### 4.2 Account balances and operations 
@@ -75,7 +75,7 @@ Carbon credits
 Carbon credits pallet has several main entities:
 
 - Project - Entity for signing carbon credits project documentation and creating annual reports
-- Carbon Standard - Algebraic type which determines the order of signature among three roles: CC_AUDITOR, CC_STANDARD, CC_REGISTRY
+- Carbon Standard - Algebraic type which determines the order of signature among two roles: CC_AUDITOR, CC_REGISTRY
 - Annual Report - Entity for confirming annual volume of carbon credit issuance
 - Carbon Credit Passport - Entity for registering carbon credits as assets
 - Carbon Offset Certificate - Entity for granting certificates for carbon emissions offsetting using carbon credits
