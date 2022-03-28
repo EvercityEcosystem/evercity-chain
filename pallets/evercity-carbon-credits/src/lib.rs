@@ -578,6 +578,7 @@ pub mod pallet {
         /// Create annual report entity with link to annual report file
         /// 
         /// </pre> 
+        #[allow(clippy::too_many_arguments)]
         #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3, 1))]
         pub fn create_annual_report_with_file(
             origin: OriginFor<T>, 
@@ -1014,7 +1015,7 @@ pub mod pallet {
                             ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
 
                             let bond_investment_tuples = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
-                            ensure!(bond_investment_tuples.len() != 0, Error::<T>::InvestmentIsZero);
+                            ensure!(!bond_investment_tuples.is_empty(), Error::<T>::InvestmentIsZero);
 
                             let total_packages = bond_investment_tuples.iter()
                                                             .map(|(_, everusd)| everusd)
@@ -1022,7 +1023,7 @@ pub mod pallet {
 
                             ensure!(total_packages != 0, Error::<T>::BalanceIsZero);
 
-                            let all_investors_percent = (carbon_metadata.carbon_distribution.investors as f64)/(100_000 as f64);
+                            let all_investors_percent = (carbon_metadata.carbon_distribution.investors as f64)/(100_000_f64);
 
                             let investor_parts = bond_investment_tuples
                                                     .into_iter()
@@ -1037,7 +1038,7 @@ pub mod pallet {
 
                             // sends the part of balance
                             let proceed_send = |account: T::AccountId, part: i32| {
-                                let perc = (part as f64)/(100_000 as f64);
+                                let perc = (part as f64)/(100_000_f64);
                                 if perc != 0.0 {
                                     let balance_to_send = Self::divide_balance(perc, cc_amount);
                                     let _ = 
@@ -1424,12 +1425,12 @@ pub mod pallet {
             asset_id: T::AssetId,
             cc_amount: T::Balance
         ) {
-            let perc = (part as f64)/(100_000 as f64);
+            let perc = (part as f64)/(100_000_f64);
             if perc != 0.0 {
                 let balance_to_send = Self::divide_balance(perc, cc_amount);
                 let _ = 
                     Self::transfer_carbon_credits(
-                        origin.clone(), asset_id, account, balance_to_send);
+                        origin, asset_id, account, balance_to_send);
             }
         }
     }

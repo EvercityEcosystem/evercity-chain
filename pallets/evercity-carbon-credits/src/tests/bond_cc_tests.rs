@@ -1,12 +1,8 @@
 use crate::Error;
 use crate::tests::mock::*;
-use frame_support::{assert_ok, assert_noop, dispatch::{
-    Vec, DispatchResultWithPostInfo,
-}};
-use pallet_evercity_bonds::{bond::{BondInnerStruct, CarbonUnitsMetadata, CarbonDistribution}, BondStruct, BondId};
+use frame_support::{assert_ok, assert_noop,};
+use pallet_evercity_bonds::{bond::{CarbonUnitsMetadata, CarbonDistribution}, BondId};
 use crate::standard::Standard;
-use crate::annual_report::*;
-use pallet_evercity_accounts::accounts::*;
 use crate::tests::helpers::*;
 use sp_std::vec;
 
@@ -40,7 +36,7 @@ pub fn it_works_create_bond_project() {
         let create_project_result = 
             CarbonCredits::create_bond_project(
                 Origin::signed(issuer), 
-                standard.clone(), 
+                standard, 
                 create_project_documentation_file(issuer), 
                 bond_id
             );
@@ -78,7 +74,7 @@ pub fn it_fails_create_bond_project_not_bond_issuer() {
         let create_project_result = 
             CarbonCredits::create_bond_project(
                 Origin::signed(not_issuer), 
-                standard.clone(), 
+                standard, 
                 create_project_documentation_file(not_issuer), 
                 bond_id
             );
@@ -115,7 +111,7 @@ pub fn it_fails_create_bond_project_bond_not_finished() {
         let create_project_result = 
             CarbonCredits::create_bond_project(
                 Origin::signed(issuer), 
-                standard.clone(), 
+                standard, 
                 create_project_documentation_file(issuer), 
                 bond_id
             );
