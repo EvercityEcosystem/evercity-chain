@@ -110,61 +110,15 @@ cd evercity-chain
 make build
 ```
 
-### 6.1.2 Run Node using in-memory storage
+### 6.1.2 Other makefile Commands:
 
-```bash
-make run
-```
-
-### 6.1.3 Run Node using persistent storage
-
-```bash
-make run-local
-```
-
-### 6.1.4 Run tests
-
-```bash
-make test
-```
-
-### 6.1.5 Run clippy linter check
-
-```bash
-make lint
-```
-
-### 6.1.6 Build node
-
-```bash
-make build
-```
-
-### 6.1.7 Purge node
-
-```bash
-make purge
-```
-
-### 6.1.8 Purge node
-
-```bash
-make purge
-```
-
-### 6.1.9 Build and open documentation
-
-Build:
-
-```bash
-make doc
-```
-
-Open:
-
-```bash
-make doc-open
-```
+1. `make run`: Run node with in-memory storage
+2. `make run-local`: Run Node using persistent storage
+3. `make test`: Run tests
+4. `make lint`: Run clippy linter check
+5. `make purge`: Purge node
+6. `make doc` Build Documentation:
+7. `make doc-open`: Open Documentation
 
 ### 6.2 Build docker image
 
