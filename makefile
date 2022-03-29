@@ -18,3 +18,9 @@ lint:
 
 purge:
 	cargo run --release -- purge-chain --dev
+
+doc:
+	cargo doc
+
+doc-open:
+	cargo doc --open
