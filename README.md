@@ -102,17 +102,15 @@ You can find more info about carbon credits flow in this [documentation](https:/
 
 You can manage evercity node via makefile or build a docker image
 
-### 6.1 Commands using makefile
-
-### 6.1.1 Build node
+## 6.1 Start via makefile
 
 ```bash
 git clone https://github.com/EvercityEcosystem/evercity-chain.git
 cd evercity-chain
-make build
+make run
 ```
 
-### 6.1.2 Other makefile Commands:
+### Makefile commands overview:
 
 1. `make run`: Run node with in-memory storage
 2. `make run-local`: Run Node using persistent storage
@@ -122,9 +120,9 @@ make build
 6. `make doc` Build Documentation:
 7. `make doc-open`: Open Documentation
 
-### 6.2 Build docker image
+## 6.2 Start via docker image
 
 ```bash
-cargo build --release
-docker build --tag evercity-node:1.0
+docker build --tag evercity-chain:latest ./
+docker run --rm -d -p 30300:30300/tcp -p 9615:9615/tcp -p 9933:9933/tcp -p 9944:9944/tcp evercity-chain:latest
 ```
