@@ -98,7 +98,9 @@ You can find more info about carbon credits flow in this [documentation](https:/
 8. Distributed Carbon Credit units can be transferred, retired and sold for EVERUSD in [pallet-evercity-exchange](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-exchange).
 
 
-# 6. Evercity documentation
+# 6. How to start
+
+You can manage evercity node via makefile or build a docker image
 
 ### 6.1 Commands using makefile
 
