@@ -269,36 +269,36 @@ pub mod pallet {
 		/// Emits `ForceCreated` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::force_create())]
-		pub(super) fn force_create(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			owner: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] max_zombies: u32,
-			#[pallet::compact] min_balance: T::Balance,
-		) -> DispatchResultWithPostInfo {
-			T::ForceOrigin::ensure_origin(origin)?;
-			let owner = T::Lookup::lookup(owner)?;
+		// #[pallet::weight(T::WeightInfo::force_create())]
+		// pub(super) fn force_create(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	owner: <T::Lookup as StaticLookup>::Source,
+		// 	#[pallet::compact] max_zombies: u32,
+		// 	#[pallet::compact] min_balance: T::Balance,
+		// ) -> DispatchResultWithPostInfo {
+		// 	T::ForceOrigin::ensure_origin(origin)?;
+		// 	let owner = T::Lookup::lookup(owner)?;
 
-			ensure!(!Asset::<T>::contains_key(id), Error::<T>::InUse);
-			ensure!(!min_balance.is_zero(), Error::<T>::MinBalanceZero);
+		// 	ensure!(!Asset::<T>::contains_key(id), Error::<T>::InUse);
+		// 	ensure!(!min_balance.is_zero(), Error::<T>::MinBalanceZero);
 
-			Asset::<T>::insert(id, AssetDetails {
-				owner: owner.clone(),
-				issuer: owner.clone(),
-				admin: owner.clone(),
-				freezer: owner.clone(),
-				supply: Zero::zero(),
-				deposit: Zero::zero(),
-				max_zombies,
-				min_balance,
-				zombies: Zero::zero(),
-				accounts: Zero::zero(),
-				is_frozen: false,
-			});
-			Self::deposit_event(Event::ForceCreated(id, owner));
-			Ok(().into())
-		}
+		// 	Asset::<T>::insert(id, AssetDetails {
+		// 		owner: owner.clone(),
+		// 		issuer: owner.clone(),
+		// 		admin: owner.clone(),
+		// 		freezer: owner.clone(),
+		// 		supply: Zero::zero(),
+		// 		deposit: Zero::zero(),
+		// 		max_zombies,
+		// 		min_balance,
+		// 		zombies: Zero::zero(),
+		// 		accounts: Zero::zero(),
+		// 		is_frozen: false,
+		// 	});
+		// 	Self::deposit_event(Event::ForceCreated(id, owner));
+		// 	Ok(().into())
+		// }
 
 		/// Destroy a class of fungible assets owned by the sender.
 		///
@@ -344,28 +344,28 @@ pub mod pallet {
 		/// Emits `Destroyed` event when successful.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::force_destroy(*zombies_witness))]
-		pub(super) fn force_destroy(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			#[pallet::compact] zombies_witness: u32,
-		) -> DispatchResultWithPostInfo {
-			T::ForceOrigin::ensure_origin(origin)?;
+		// #[pallet::weight(T::WeightInfo::force_destroy(*zombies_witness))]
+		// pub(super) fn force_destroy(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	#[pallet::compact] zombies_witness: u32,
+		// ) -> DispatchResultWithPostInfo {
+		// 	T::ForceOrigin::ensure_origin(origin)?;
 
-			Asset::<T>::try_mutate_exists(id, |maybe_details| {
-				let details = maybe_details.take().ok_or(Error::<T>::Unknown)?;
-				ensure!(details.accounts == details.zombies, Error::<T>::RefsLeft);
-				ensure!(details.zombies <= zombies_witness, Error::<T>::BadWitness);
+		// 	Asset::<T>::try_mutate_exists(id, |maybe_details| {
+		// 		let details = maybe_details.take().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(details.accounts == details.zombies, Error::<T>::RefsLeft);
+		// 		ensure!(details.zombies <= zombies_witness, Error::<T>::BadWitness);
 
-				let metadata = Metadata::<T>::take(&id);
-				T::Currency::unreserve(&details.owner, details.deposit.saturating_add(metadata.deposit));
+		// 		let metadata = Metadata::<T>::take(&id);
+		// 		T::Currency::unreserve(&details.owner, details.deposit.saturating_add(metadata.deposit));
 
-				*maybe_details = None;
-				Account::<T>::remove_prefix(&id);
-				Self::deposit_event(Event::Destroyed(id));
-				Ok(().into())
-			})
-		}
+		// 		*maybe_details = None;
+		// 		Account::<T>::remove_prefix(&id);
+		// 		Self::deposit_event(Event::Destroyed(id));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Mint assets of a particular class.
 		///
@@ -554,61 +554,61 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		/// Modes: Pre-existence of `dest`; Post-existence of `source`; Prior & post zombie-status
 		/// of `source`; Account pre-existence of `dest`.
-		#[pallet::weight(T::WeightInfo::force_transfer())]
-		pub(super) fn force_transfer(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			source: <T::Lookup as StaticLookup>::Source,
-			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance,
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::force_transfer())]
+		// pub(super) fn force_transfer(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	source: <T::Lookup as StaticLookup>::Source,
+		// 	dest: <T::Lookup as StaticLookup>::Source,
+		// 	#[pallet::compact] amount: T::Balance,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			let source = T::Lookup::lookup(source)?;
-			let mut source_account = Account::<T>::get(id, &source);
-			let mut amount = amount.min(source_account.balance);
-			ensure!(!amount.is_zero(), Error::<T>::AmountZero);
+		// 	let source = T::Lookup::lookup(source)?;
+		// 	let mut source_account = Account::<T>::get(id, &source);
+		// 	let mut amount = amount.min(source_account.balance);
+		// 	ensure!(!amount.is_zero(), Error::<T>::AmountZero);
 
-			let dest = T::Lookup::lookup(dest)?;
-			if dest == source {
-				return Ok(().into())
-			}
+		// 	let dest = T::Lookup::lookup(dest)?;
+		// 	if dest == source {
+		// 		return Ok(().into())
+		// 	}
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &details.admin, Error::<T>::NoPermission);
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &details.admin, Error::<T>::NoPermission);
 
-				source_account.balance -= amount;
-				if source_account.balance < details.min_balance {
-					amount += source_account.balance;
-					source_account.balance = Zero::zero();
-				}
+		// 		source_account.balance -= amount;
+		// 		if source_account.balance < details.min_balance {
+		// 			amount += source_account.balance;
+		// 			source_account.balance = Zero::zero();
+		// 		}
 
-				Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
-					let new_balance = a.balance.saturating_add(amount);
-					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
-					if a.balance.is_zero() {
-						a.is_zombie = Self::new_account(&dest, details)?;
-					}
-					a.balance = new_balance;
-					Ok(().into())
-				})?;
+		// 		Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
+		// 			let new_balance = a.balance.saturating_add(amount);
+		// 			ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
+		// 			if a.balance.is_zero() {
+		// 				a.is_zombie = Self::new_account(&dest, details)?;
+		// 			}
+		// 			a.balance = new_balance;
+		// 			Ok(().into())
+		// 		})?;
 
-				match source_account.balance.is_zero() {
-					false => {
-						Self::dezombify(&source, details, &mut source_account.is_zombie);
-						Account::<T>::insert(id, &source, &source_account)
-					}
-					true => {
-						Self::dead_account(&source, details, source_account.is_zombie);
-						Account::<T>::remove(id, &source);
-					}
-				}
+		// 		match source_account.balance.is_zero() {
+		// 			false => {
+		// 				Self::dezombify(&source, details, &mut source_account.is_zombie);
+		// 				Account::<T>::insert(id, &source, &source_account)
+		// 			}
+		// 			true => {
+		// 				Self::dead_account(&source, details, source_account.is_zombie);
+		// 				Account::<T>::remove(id, &source);
+		// 			}
+		// 		}
 
-				Self::deposit_event(Event::ForceTransferred(id, source, dest, amount));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::ForceTransferred(id, source, dest, amount));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Disallow further unprivileged transfers from an account.
 		///
@@ -620,24 +620,24 @@ pub mod pallet {
 		/// Emits `Frozen`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::freeze())]
-		pub(super) fn freeze(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			who: <T::Lookup as StaticLookup>::Source
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::freeze())]
+		// pub(super) fn freeze(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	who: <T::Lookup as StaticLookup>::Source
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			let d = Asset::<T>::get(id).ok_or(Error::<T>::Unknown)?;
-			ensure!(&origin == &d.freezer, Error::<T>::NoPermission);
-			let who = T::Lookup::lookup(who)?;
-			ensure!(Account::<T>::contains_key(id, &who), Error::<T>::BalanceZero);
+		// 	let d = Asset::<T>::get(id).ok_or(Error::<T>::Unknown)?;
+		// 	ensure!(&origin == &d.freezer, Error::<T>::NoPermission);
+		// 	let who = T::Lookup::lookup(who)?;
+		// 	ensure!(Account::<T>::contains_key(id, &who), Error::<T>::BalanceZero);
 
-			Account::<T>::mutate(id, &who, |a| a.is_frozen = true);
+		// 	Account::<T>::mutate(id, &who, |a| a.is_frozen = true);
 
-			Self::deposit_event(Event::<T>::Frozen(id, who));
-			Ok(().into())
-		}
+		// 	Self::deposit_event(Event::<T>::Frozen(id, who));
+		// 	Ok(().into())
+		// }
 
 		/// Allow unprivileged transfers from an account again.
 		///
@@ -649,25 +649,25 @@ pub mod pallet {
 		/// Emits `Thawed`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::thaw())]
-		pub(super) fn thaw(
-			origin: OriginFor<T>,
-			#[pallet::compact]
-			id: T::AssetId,
-			who: <T::Lookup as StaticLookup>::Source
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::thaw())]
+		// pub(super) fn thaw(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact]
+		// 	id: T::AssetId,
+		// 	who: <T::Lookup as StaticLookup>::Source
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			let details = Asset::<T>::get(id).ok_or(Error::<T>::Unknown)?;
-			ensure!(&origin == &details.admin, Error::<T>::NoPermission);
-			let who = T::Lookup::lookup(who)?;
-			ensure!(Account::<T>::contains_key(id, &who), Error::<T>::BalanceZero);
+		// 	let details = Asset::<T>::get(id).ok_or(Error::<T>::Unknown)?;
+		// 	ensure!(&origin == &details.admin, Error::<T>::NoPermission);
+		// 	let who = T::Lookup::lookup(who)?;
+		// 	ensure!(Account::<T>::contains_key(id, &who), Error::<T>::BalanceZero);
 
-			Account::<T>::mutate(id, &who, |a| a.is_frozen = false);
+		// 	Account::<T>::mutate(id, &who, |a| a.is_frozen = false);
 
-			Self::deposit_event(Event::<T>::Thawed(id, who));
-			Ok(().into())
-		}
+		// 	Self::deposit_event(Event::<T>::Thawed(id, who));
+		// 	Ok(().into())
+		// }
 
 		/// Disallow further unprivileged transfers for the asset class.
 		///
@@ -678,23 +678,23 @@ pub mod pallet {
 		/// Emits `Frozen`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::freeze_asset())]
-		pub(super) fn freeze_asset(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::freeze_asset())]
+		// pub(super) fn freeze_asset(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &d.freezer, Error::<T>::NoPermission);
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &d.freezer, Error::<T>::NoPermission);
 
-				d.is_frozen = true;
+		// 		d.is_frozen = true;
 
-				Self::deposit_event(Event::<T>::AssetFrozen(id));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::<T>::AssetFrozen(id));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Allow unprivileged transfers for the asset again.
 		///
@@ -705,23 +705,23 @@ pub mod pallet {
 		/// Emits `Thawed`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::thaw_asset())]
-		pub(super) fn thaw_asset(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::thaw_asset())]
+		// pub(super) fn thaw_asset(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &d.admin, Error::<T>::NoPermission);
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &d.admin, Error::<T>::NoPermission);
 
-				d.is_frozen = false;
+		// 		d.is_frozen = false;
 
-				Self::deposit_event(Event::<T>::AssetThawed(id));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::<T>::AssetThawed(id));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Change the Owner of an asset.
 		///
@@ -733,29 +733,29 @@ pub mod pallet {
 		/// Emits `OwnerChanged`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::transfer_ownership())]
-		pub(super) fn transfer_ownership(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			owner: <T::Lookup as StaticLookup>::Source,
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
-			let owner = T::Lookup::lookup(owner)?;
+		// #[pallet::weight(T::WeightInfo::transfer_ownership())]
+		// pub(super) fn transfer_ownership(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	owner: <T::Lookup as StaticLookup>::Source,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
+		// 	let owner = T::Lookup::lookup(owner)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &details.owner, Error::<T>::NoPermission);
-				if details.owner == owner { return Ok(().into()) }
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &details.owner, Error::<T>::NoPermission);
+		// 		if details.owner == owner { return Ok(().into()) }
 
-				// Move the deposit to the new owner.
-				T::Currency::repatriate_reserved(&details.owner, &owner, details.deposit, Reserved)?;
+		// 		// Move the deposit to the new owner.
+		// 		T::Currency::repatriate_reserved(&details.owner, &owner, details.deposit, Reserved)?;
 
-				details.owner = owner.clone();
+		// 		details.owner = owner.clone();
 
-				Self::deposit_event(Event::OwnerChanged(id, owner));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::OwnerChanged(id, owner));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Change the Issuer, Admin and Freezer of an asset.
 		///
@@ -769,31 +769,31 @@ pub mod pallet {
 		/// Emits `TeamChanged`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::set_team())]
-		pub(super) fn set_team(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			issuer: <T::Lookup as StaticLookup>::Source,
-			admin: <T::Lookup as StaticLookup>::Source,
-			freezer: <T::Lookup as StaticLookup>::Source,
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
-			let issuer = T::Lookup::lookup(issuer)?;
-			let admin = T::Lookup::lookup(admin)?;
-			let freezer = T::Lookup::lookup(freezer)?;
+		// #[pallet::weight(T::WeightInfo::set_team())]
+		// pub(super) fn set_team(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	issuer: <T::Lookup as StaticLookup>::Source,
+		// 	admin: <T::Lookup as StaticLookup>::Source,
+		// 	freezer: <T::Lookup as StaticLookup>::Source,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
+		// 	let issuer = T::Lookup::lookup(issuer)?;
+		// 	let admin = T::Lookup::lookup(admin)?;
+		// 	let freezer = T::Lookup::lookup(freezer)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &details.owner, Error::<T>::NoPermission);
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &details.owner, Error::<T>::NoPermission);
 
-				details.issuer = issuer.clone();
-				details.admin = admin.clone();
-				details.freezer = freezer.clone();
+		// 		details.issuer = issuer.clone();
+		// 		details.admin = admin.clone();
+		// 		details.freezer = freezer.clone();
 
-				Self::deposit_event(Event::TeamChanged(id, issuer, admin, freezer));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::TeamChanged(id, issuer, admin, freezer));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Set the maximum number of zombie accounts for an asset.
 		///
@@ -809,35 +809,35 @@ pub mod pallet {
 		/// Emits `MaxZombiesChanged`.
 		///
 		/// Weight: `O(1)`
-		#[pallet::weight(T::WeightInfo::set_max_zombies())]
-		pub(super) fn set_max_zombies(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			#[pallet::compact] max_zombies: u32,
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
+		// #[pallet::weight(T::WeightInfo::set_max_zombies())]
+		// pub(super) fn set_max_zombies(
+		// 	origin: OriginFor<T>,
+		// 	#[pallet::compact] id: T::AssetId,
+		// 	#[pallet::compact] max_zombies: u32,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let origin = ensure_signed(origin)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &details.owner, Error::<T>::NoPermission);
-				ensure!(max_zombies >= details.zombies, Error::<T>::TooManyZombies);
+		// 	Asset::<T>::try_mutate(id, |maybe_details| {
+		// 		let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+		// 		ensure!(&origin == &details.owner, Error::<T>::NoPermission);
+		// 		ensure!(max_zombies >= details.zombies, Error::<T>::TooManyZombies);
 
-				let new_deposit = T::AssetDepositPerZombie::get()
-					.saturating_mul(max_zombies.into())
-					.saturating_add(T::AssetDepositBase::get());
+		// 		let new_deposit = T::AssetDepositPerZombie::get()
+		// 			.saturating_mul(max_zombies.into())
+		// 			.saturating_add(T::AssetDepositBase::get());
 
-				if new_deposit > details.deposit {
-					T::Currency::reserve(&origin, new_deposit - details.deposit)?;
-				} else {
-					T::Currency::unreserve(&origin, details.deposit - new_deposit);
-				}
+		// 		if new_deposit > details.deposit {
+		// 			T::Currency::reserve(&origin, new_deposit - details.deposit)?;
+		// 		} else {
+		// 			T::Currency::unreserve(&origin, details.deposit - new_deposit);
+		// 		}
 
-				details.max_zombies = max_zombies;
+		// 		details.max_zombies = max_zombies;
 
-				Self::deposit_event(Event::MaxZombiesChanged(id, max_zombies));
-				Ok(().into())
-			})
-		}
+		// 		Self::deposit_event(Event::MaxZombiesChanged(id, max_zombies));
+		// 		Ok(().into())
+		// 	})
+		// }
 
 		/// Set the metadata for an asset.
 		///
@@ -1287,402 +1287,402 @@ mod tests {
 		frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 	}
 
-	#[test]
-	fn basic_minting_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
-			assert_eq!(Assets::balance(0, 2), 100);
-		});
-	}
+	// #[test]
+	// fn basic_minting_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
+	// 		assert_eq!(Assets::balance(0, 2), 100);
+	// 	});
+	// }
 
-	#[test]
-	fn lifecycle_should_work() {
-		new_test_ext().execute_with(|| {
-			Balances::make_free_balance_be(&1, 100);
-			assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
-			assert_eq!(Balances::reserved_balance(&1), 11);
-			assert!(Asset::<Test>::contains_key(0));
+	// #[test]
+	// fn lifecycle_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		Balances::make_free_balance_be(&1, 100);
+	// 		assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
+	// 		assert_eq!(Balances::reserved_balance(&1), 11);
+	// 		assert!(Asset::<Test>::contains_key(0));
 
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0], vec![0], 12));
-			assert_eq!(Balances::reserved_balance(&1), 14);
-			assert!(Metadata::<Test>::contains_key(0));
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0], vec![0], 12));
+	// 		assert_eq!(Balances::reserved_balance(&1), 14);
+	// 		assert!(Metadata::<Test>::contains_key(0));
 
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
-			assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
+	// 		assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
 
-			assert_ok!(Assets::destroy(Origin::signed(1), 0, 100));
-			assert_eq!(Balances::reserved_balance(&1), 0);
+	// 		assert_ok!(Assets::destroy(Origin::signed(1), 0, 100));
+	// 		assert_eq!(Balances::reserved_balance(&1), 0);
 
-			assert!(!Asset::<Test>::contains_key(0));
-			assert!(!Metadata::<Test>::contains_key(0));
-			assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
+	// 		assert!(!Asset::<Test>::contains_key(0));
+	// 		assert!(!Metadata::<Test>::contains_key(0));
+	// 		assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
 
-			assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
-			assert_eq!(Balances::reserved_balance(&1), 11);
-			assert!(Asset::<Test>::contains_key(0));
+	// 		assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
+	// 		assert_eq!(Balances::reserved_balance(&1), 11);
+	// 		assert!(Asset::<Test>::contains_key(0));
 
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0], vec![0], 12));
-			assert_eq!(Balances::reserved_balance(&1), 14);
-			assert!(Metadata::<Test>::contains_key(0));
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0], vec![0], 12));
+	// 		assert_eq!(Balances::reserved_balance(&1), 14);
+	// 		assert!(Metadata::<Test>::contains_key(0));
 
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
-			assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 20, 100));
+	// 		assert_eq!(Account::<Test>::iter_prefix(0).count(), 2);
 
-			assert_ok!(Assets::force_destroy(Origin::root(), 0, 100));
-			assert_eq!(Balances::reserved_balance(&1), 0);
+	// 		assert_ok!(Assets::force_destroy(Origin::root(), 0, 100));
+	// 		assert_eq!(Balances::reserved_balance(&1), 0);
 
-			assert!(!Asset::<Test>::contains_key(0));
-			assert!(!Metadata::<Test>::contains_key(0));
-			assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
-		});
-	}
+	// 		assert!(!Asset::<Test>::contains_key(0));
+	// 		assert!(!Metadata::<Test>::contains_key(0));
+	// 		assert_eq!(Account::<Test>::iter_prefix(0).count(), 0);
+	// 	});
+	// }
 
-	#[test]
-	fn destroy_with_non_zombies_should_not_work() {
-		new_test_ext().execute_with(|| {
-			Balances::make_free_balance_be(&1, 100);
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_noop!(Assets::destroy(Origin::signed(1), 0, 100), Error::<Test>::RefsLeft);
-			assert_noop!(Assets::force_destroy(Origin::root(), 0, 100), Error::<Test>::RefsLeft);
-			assert_ok!(Assets::burn(Origin::signed(1), 0, 1, 100));
-			assert_ok!(Assets::destroy(Origin::signed(1), 0, 100));
-		});
-	}
+	// #[test]
+	// fn destroy_with_non_zombies_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		Balances::make_free_balance_be(&1, 100);
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_noop!(Assets::destroy(Origin::signed(1), 0, 100), Error::<Test>::RefsLeft);
+	// 		assert_noop!(Assets::force_destroy(Origin::root(), 0, 100), Error::<Test>::RefsLeft);
+	// 		assert_ok!(Assets::burn(Origin::signed(1), 0, 1, 100));
+	// 		assert_ok!(Assets::destroy(Origin::signed(1), 0, 100));
+	// 	});
+	// }
 
-	#[test]
-	fn destroy_with_bad_witness_should_not_work() {
-		new_test_ext().execute_with(|| {
-			Balances::make_free_balance_be(&1, 100);
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
-			assert_noop!(Assets::destroy(Origin::signed(1), 0, 0), Error::<Test>::BadWitness);
-			assert_noop!(Assets::force_destroy(Origin::root(), 0, 0), Error::<Test>::BadWitness);
-		});
-	}
+	// #[test]
+	// fn destroy_with_bad_witness_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		Balances::make_free_balance_be(&1, 100);
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 10, 100));
+	// 		assert_noop!(Assets::destroy(Origin::signed(1), 0, 0), Error::<Test>::BadWitness);
+	// 		assert_noop!(Assets::force_destroy(Origin::root(), 0, 0), Error::<Test>::BadWitness);
+	// 	});
+	// }
 
-	#[test]
-	fn max_zombies_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 2, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 0, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// #[test]
+	// fn max_zombies_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 2, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 0, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
 
-			assert_eq!(Assets::zombie_allowance(0), 0);
-			assert_noop!(Assets::mint(Origin::signed(1), 0, 2, 100), Error::<Test>::TooManyZombies);
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::TooManyZombies);
-			assert_noop!(Assets::force_transfer(Origin::signed(1), 0, 1, 2, 50), Error::<Test>::TooManyZombies);
+	// 		assert_eq!(Assets::zombie_allowance(0), 0);
+	// 		assert_noop!(Assets::mint(Origin::signed(1), 0, 2, 100), Error::<Test>::TooManyZombies);
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::TooManyZombies);
+	// 		assert_noop!(Assets::force_transfer(Origin::signed(1), 0, 1, 2, 50), Error::<Test>::TooManyZombies);
 
-			Balances::make_free_balance_be(&3, 100);
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 3, 100));
+	// 		Balances::make_free_balance_be(&3, 100);
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 3, 100));
 
-			assert_ok!(Assets::transfer(Origin::signed(0), 0, 1, 100));
-			assert_eq!(Assets::zombie_allowance(0), 1);
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-		});
-	}
+	// 		assert_ok!(Assets::transfer(Origin::signed(0), 0, 1, 100));
+	// 		assert_eq!(Assets::zombie_allowance(0), 1);
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 	});
+	// }
 
-	#[test]
-	fn resetting_max_zombies_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 2, 1));
-			Balances::make_free_balance_be(&1, 100);
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 3, 100));
+	// #[test]
+	// fn resetting_max_zombies_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 2, 1));
+	// 		Balances::make_free_balance_be(&1, 100);
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 3, 100));
 
-			assert_eq!(Assets::zombie_allowance(0), 0);
+	// 		assert_eq!(Assets::zombie_allowance(0), 0);
 
-			assert_noop!(Assets::set_max_zombies(Origin::signed(1), 0, 1), Error::<Test>::TooManyZombies);
+	// 		assert_noop!(Assets::set_max_zombies(Origin::signed(1), 0, 1), Error::<Test>::TooManyZombies);
 
-			assert_ok!(Assets::set_max_zombies(Origin::signed(1), 0, 3));
-			assert_eq!(Assets::zombie_allowance(0), 1);
-		});
-	}
+	// 		assert_ok!(Assets::set_max_zombies(Origin::signed(1), 0, 3));
+	// 		assert_eq!(Assets::zombie_allowance(0), 1);
+	// 	});
+	// }
 
-	#[test]
-	fn dezombifying_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 10));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::zombie_allowance(0), 9);
+	// #[test]
+	// fn dezombifying_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 10));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::zombie_allowance(0), 9);
 
-			// introduce a bit of balance for account 2.
-			Balances::make_free_balance_be(&2, 100);
+	// 		// introduce a bit of balance for account 2.
+	// 		Balances::make_free_balance_be(&2, 100);
 
-			// transfer 25 units, nothing changes.
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 25));
-			assert_eq!(Assets::zombie_allowance(0), 9);
+	// 		// transfer 25 units, nothing changes.
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 25));
+	// 		assert_eq!(Assets::zombie_allowance(0), 9);
 
-			// introduce a bit of balance; this will create the account.
-			Balances::make_free_balance_be(&1, 100);
+	// 		// introduce a bit of balance; this will create the account.
+	// 		Balances::make_free_balance_be(&1, 100);
 
-			// now transferring 25 units will create it.
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 25));
-			assert_eq!(Assets::zombie_allowance(0), 10);
-		});
-	}
+	// 		// now transferring 25 units will create it.
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 25));
+	// 		assert_eq!(Assets::zombie_allowance(0), 10);
+	// 	});
+	// }
 
-	#[test]
-	fn min_balance_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 10));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
+	// #[test]
+	// fn min_balance_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 10));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
 
-			// Cannot create a new account with a balance that is below minimum...
-			assert_noop!(Assets::mint(Origin::signed(1), 0, 2, 9), Error::<Test>::BalanceLow);
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 9), Error::<Test>::BalanceLow);
-			assert_noop!(Assets::force_transfer(Origin::signed(1), 0, 1, 2, 9), Error::<Test>::BalanceLow);
+	// 		// Cannot create a new account with a balance that is below minimum...
+	// 		assert_noop!(Assets::mint(Origin::signed(1), 0, 2, 9), Error::<Test>::BalanceLow);
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 9), Error::<Test>::BalanceLow);
+	// 		assert_noop!(Assets::force_transfer(Origin::signed(1), 0, 1, 2, 9), Error::<Test>::BalanceLow);
 
-			// When deducting from an account to below minimum, it should be reaped.
+	// 		// When deducting from an account to below minimum, it should be reaped.
 
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 91));
-			assert!(Assets::balance(0, 1).is_zero());
-			assert_eq!(Assets::balance(0, 2), 100);
-			assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 91));
+	// 		assert!(Assets::balance(0, 1).is_zero());
+	// 		assert_eq!(Assets::balance(0, 2), 100);
+	// 		assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
 
-			assert_ok!(Assets::force_transfer(Origin::signed(1), 0, 2, 1, 91));
-			assert!(Assets::balance(0, 2).is_zero());
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
+	// 		assert_ok!(Assets::force_transfer(Origin::signed(1), 0, 2, 1, 91));
+	// 		assert!(Assets::balance(0, 2).is_zero());
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 1);
 
-			assert_ok!(Assets::burn(Origin::signed(1), 0, 1, 91));
-			assert!(Assets::balance(0, 1).is_zero());
-			assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 0);
-		});
-	}
+	// 		assert_ok!(Assets::burn(Origin::signed(1), 0, 1, 91));
+	// 		assert!(Assets::balance(0, 1).is_zero());
+	// 		assert_eq!(Asset::<Test>::get(0).unwrap().accounts, 0);
+	// 	});
+	// }
 
-	#[test]
-	fn querying_total_supply_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-			assert_eq!(Assets::balance(0, 1), 50);
-			assert_eq!(Assets::balance(0, 2), 50);
-			assert_ok!(Assets::transfer(Origin::signed(2), 0, 3, 31));
-			assert_eq!(Assets::balance(0, 1), 50);
-			assert_eq!(Assets::balance(0, 2), 19);
-			assert_eq!(Assets::balance(0, 3), 31);
-			assert_ok!(Assets::burn(Origin::signed(1), 0, 3, u64::max_value()));
-			assert_eq!(Assets::total_supply(0), 69);
-		});
-	}
+	// #[test]
+	// fn querying_total_supply_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 		assert_eq!(Assets::balance(0, 1), 50);
+	// 		assert_eq!(Assets::balance(0, 2), 50);
+	// 		assert_ok!(Assets::transfer(Origin::signed(2), 0, 3, 31));
+	// 		assert_eq!(Assets::balance(0, 1), 50);
+	// 		assert_eq!(Assets::balance(0, 2), 19);
+	// 		assert_eq!(Assets::balance(0, 3), 31);
+	// 		assert_ok!(Assets::burn(Origin::signed(1), 0, 3, u64::max_value()));
+	// 		assert_eq!(Assets::total_supply(0), 69);
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_amount_below_available_balance_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-			assert_eq!(Assets::balance(0, 1), 50);
-			assert_eq!(Assets::balance(0, 2), 50);
-		});
-	}
+	// #[test]
+	// fn transferring_amount_below_available_balance_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 		assert_eq!(Assets::balance(0, 1), 50);
+	// 		assert_eq!(Assets::balance(0, 2), 50);
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_frozen_user_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::freeze(Origin::signed(1), 0, 1));
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::Frozen);
-			assert_ok!(Assets::thaw(Origin::signed(1), 0, 1));
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-		});
-	}
+	// #[test]
+	// fn transferring_frozen_user_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::freeze(Origin::signed(1), 0, 1));
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::Frozen);
+	// 		assert_ok!(Assets::thaw(Origin::signed(1), 0, 1));
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_frozen_asset_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::freeze_asset(Origin::signed(1), 0));
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::Frozen);
-			assert_ok!(Assets::thaw_asset(Origin::signed(1), 0));
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-		});
-	}
+	// #[test]
+	// fn transferring_frozen_asset_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::freeze_asset(Origin::signed(1), 0));
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 50), Error::<Test>::Frozen);
+	// 		assert_ok!(Assets::thaw_asset(Origin::signed(1), 0));
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 	});
+	// }
 
-	#[test]
-	fn origin_guards_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_noop!(Assets::transfer_ownership(Origin::signed(2), 0, 2), Error::<Test>::NoPermission);
-			assert_noop!(Assets::set_team(Origin::signed(2), 0, 2, 2, 2), Error::<Test>::NoPermission);
-			assert_noop!(Assets::freeze(Origin::signed(2), 0, 1), Error::<Test>::NoPermission);
-			assert_noop!(Assets::thaw(Origin::signed(2), 0, 2), Error::<Test>::NoPermission);
-			assert_noop!(Assets::mint(Origin::signed(2), 0, 2, 100), Error::<Test>::NoPermission);
-			assert_noop!(Assets::burn(Origin::signed(2), 0, 1, 100), Error::<Test>::NoPermission);
-			assert_noop!(Assets::force_transfer(Origin::signed(2), 0, 1, 2, 100), Error::<Test>::NoPermission);
-			assert_noop!(Assets::set_max_zombies(Origin::signed(2), 0, 11), Error::<Test>::NoPermission);
-			assert_noop!(Assets::destroy(Origin::signed(2), 0, 100), Error::<Test>::NoPermission);
-		});
-	}
+	// #[test]
+	// fn origin_guards_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_noop!(Assets::transfer_ownership(Origin::signed(2), 0, 2), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::set_team(Origin::signed(2), 0, 2, 2, 2), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::freeze(Origin::signed(2), 0, 1), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::thaw(Origin::signed(2), 0, 2), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::mint(Origin::signed(2), 0, 2, 100), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::burn(Origin::signed(2), 0, 1, 100), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::force_transfer(Origin::signed(2), 0, 1, 2, 100), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::set_max_zombies(Origin::signed(2), 0, 11), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::destroy(Origin::signed(2), 0, 100), Error::<Test>::NoPermission);
+	// 	});
+	// }
 
-	#[test]
-	fn transfer_owner_should_work() {
-		new_test_ext().execute_with(|| {
-			Balances::make_free_balance_be(&1, 100);
-			Balances::make_free_balance_be(&2, 1);
-			assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
+	// #[test]
+	// fn transfer_owner_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		Balances::make_free_balance_be(&1, 100);
+	// 		Balances::make_free_balance_be(&2, 1);
+	// 		assert_ok!(Assets::create(Origin::signed(1), 0, 1, 10, 1));
 
-			assert_eq!(Balances::reserved_balance(&1), 11);
+	// 		assert_eq!(Balances::reserved_balance(&1), 11);
 
-			assert_ok!(Assets::transfer_ownership(Origin::signed(1), 0, 2));
-			assert_eq!(Balances::reserved_balance(&2), 11);
-			assert_eq!(Balances::reserved_balance(&1), 0);
+	// 		assert_ok!(Assets::transfer_ownership(Origin::signed(1), 0, 2));
+	// 		assert_eq!(Balances::reserved_balance(&2), 11);
+	// 		assert_eq!(Balances::reserved_balance(&1), 0);
 
-			assert_noop!(Assets::transfer_ownership(Origin::signed(1), 0, 1), Error::<Test>::NoPermission);
+	// 		assert_noop!(Assets::transfer_ownership(Origin::signed(1), 0, 1), Error::<Test>::NoPermission);
 
-			assert_ok!(Assets::transfer_ownership(Origin::signed(2), 0, 1));
-			assert_eq!(Balances::reserved_balance(&1), 11);
-			assert_eq!(Balances::reserved_balance(&2), 0);
-		});
-	}
+	// 		assert_ok!(Assets::transfer_ownership(Origin::signed(2), 0, 1));
+	// 		assert_eq!(Balances::reserved_balance(&1), 11);
+	// 		assert_eq!(Balances::reserved_balance(&2), 0);
+	// 	});
+	// }
 
-	#[test]
-	fn set_team_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::set_team(Origin::signed(1), 0, 2, 3, 4));
+	// #[test]
+	// fn set_team_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::set_team(Origin::signed(1), 0, 2, 3, 4));
 
-			assert_ok!(Assets::mint(Origin::signed(2), 0, 2, 100));
-			assert_ok!(Assets::freeze(Origin::signed(4), 0, 2));
-			assert_ok!(Assets::thaw(Origin::signed(3), 0, 2));
-			assert_ok!(Assets::force_transfer(Origin::signed(3), 0, 2, 3, 100));
-			assert_ok!(Assets::burn(Origin::signed(3), 0, 3, 100));
-		});
-	}
+	// 		assert_ok!(Assets::mint(Origin::signed(2), 0, 2, 100));
+	// 		assert_ok!(Assets::freeze(Origin::signed(4), 0, 2));
+	// 		assert_ok!(Assets::thaw(Origin::signed(3), 0, 2));
+	// 		assert_ok!(Assets::force_transfer(Origin::signed(3), 0, 2, 3, 100));
+	// 		assert_ok!(Assets::burn(Origin::signed(3), 0, 3, 100));
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_to_frozen_account_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_eq!(Assets::balance(0, 2), 100);
-			assert_ok!(Assets::freeze(Origin::signed(1), 0, 2));
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-			assert_eq!(Assets::balance(0, 2), 150);
-		});
-	}
+	// #[test]
+	// fn transferring_to_frozen_account_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 2, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_eq!(Assets::balance(0, 2), 100);
+	// 		assert_ok!(Assets::freeze(Origin::signed(1), 0, 2));
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 		assert_eq!(Assets::balance(0, 2), 150);
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_amount_more_than_available_balance_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
-			assert_eq!(Assets::balance(0, 1), 50);
-			assert_eq!(Assets::balance(0, 2), 50);
-			assert_ok!(Assets::burn(Origin::signed(1), 0, 1, u64::max_value()));
-			assert_eq!(Assets::balance(0, 1), 0);
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 1, 50), Error::<Test>::BalanceLow);
-			assert_noop!(Assets::transfer(Origin::signed(2), 0, 1, 51), Error::<Test>::BalanceLow);
-		});
-	}
+	// #[test]
+	// fn transferring_amount_more_than_available_balance_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::transfer(Origin::signed(1), 0, 2, 50));
+	// 		assert_eq!(Assets::balance(0, 1), 50);
+	// 		assert_eq!(Assets::balance(0, 2), 50);
+	// 		assert_ok!(Assets::burn(Origin::signed(1), 0, 1, u64::max_value()));
+	// 		assert_eq!(Assets::balance(0, 1), 0);
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 1, 50), Error::<Test>::BalanceLow);
+	// 		assert_noop!(Assets::transfer(Origin::signed(2), 0, 1, 51), Error::<Test>::BalanceLow);
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_less_than_one_unit_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 0), Error::<Test>::AmountZero);
-		});
-	}
+	// #[test]
+	// fn transferring_less_than_one_unit_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 0), Error::<Test>::AmountZero);
+	// 	});
+	// }
 
-	#[test]
-	fn transferring_more_units_than_total_supply_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 101), Error::<Test>::BalanceLow);
-		});
-	}
+	// #[test]
+	// fn transferring_more_units_than_total_supply_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_noop!(Assets::transfer(Origin::signed(1), 0, 2, 101), Error::<Test>::BalanceLow);
+	// 	});
+	// }
 
-	#[test]
-	fn burning_asset_balance_with_positive_balance_should_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 1), 100);
-			assert_ok!(Assets::burn(Origin::signed(1), 0, 1, u64::max_value()));
-			assert_eq!(Assets::balance(0, 1), 0);
-		});
-	}
+	// #[test]
+	// fn burning_asset_balance_with_positive_balance_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 1), 100);
+	// 		assert_ok!(Assets::burn(Origin::signed(1), 0, 1, u64::max_value()));
+	// 		assert_eq!(Assets::balance(0, 1), 0);
+	// 	});
+	// }
 
-	#[test]
-	fn burning_asset_balance_with_zero_balance_should_not_work() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
-			assert_eq!(Assets::balance(0, 2), 0);
-			assert_noop!(Assets::burn(Origin::signed(1), 0, 2, u64::max_value()), Error::<Test>::BalanceZero);
-		});
-	}
+	// #[test]
+	// fn burning_asset_balance_with_zero_balance_should_not_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		assert_ok!(Assets::mint(Origin::signed(1), 0, 1, 100));
+	// 		assert_eq!(Assets::balance(0, 2), 0);
+	// 		assert_noop!(Assets::burn(Origin::signed(1), 0, 2, u64::max_value()), Error::<Test>::BalanceZero);
+	// 	});
+	// }
 
-	#[test]
-	fn set_metadata_should_work() {
-		new_test_ext().execute_with(|| {
-			// Cannot add metadata to unknown asset
-			assert_noop!(
-				Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 10], 12),
-				Error::<Test>::Unknown,
-			);
-			assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
-			// Cannot add metadata to unowned asset
-			assert_noop!(
-				Assets::set_metadata(Origin::signed(2), 0, vec![0u8; 10], vec![0u8; 10], 12),
-				Error::<Test>::NoPermission,
-			);
+	// #[test]
+	// fn set_metadata_should_work() {
+	// 	new_test_ext().execute_with(|| {
+	// 		// Cannot add metadata to unknown asset
+	// 		assert_noop!(
+	// 			Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 10], 12),
+	// 			Error::<Test>::Unknown,
+	// 		);
+	// 		assert_ok!(Assets::force_create(Origin::root(), 0, 1, 10, 1));
+	// 		// Cannot add metadata to unowned asset
+	// 		assert_noop!(
+	// 			Assets::set_metadata(Origin::signed(2), 0, vec![0u8; 10], vec![0u8; 10], 12),
+	// 			Error::<Test>::NoPermission,
+	// 		);
 
-			// Cannot add oversized metadata
-			assert_noop!(
-				Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 100], vec![0u8; 10], 12),
-				Error::<Test>::BadMetadata,
-			);
-			assert_noop!(
-				Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 100], 12),
-				Error::<Test>::BadMetadata,
-			);
+	// 		// Cannot add oversized metadata
+	// 		assert_noop!(
+	// 			Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 100], vec![0u8; 10], 12),
+	// 			Error::<Test>::BadMetadata,
+	// 		);
+	// 		assert_noop!(
+	// 			Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 100], 12),
+	// 			Error::<Test>::BadMetadata,
+	// 		);
 
-			// Successfully add metadata and take deposit
-			Balances::make_free_balance_be(&1, 30);
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 10], 12));
-			assert_eq!(Balances::free_balance(&1), 9);
+	// 		// Successfully add metadata and take deposit
+	// 		Balances::make_free_balance_be(&1, 30);
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 10], 12));
+	// 		assert_eq!(Balances::free_balance(&1), 9);
 
-			// Update deposit
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 5], 12));
-			assert_eq!(Balances::free_balance(&1), 14);
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 15], 12));
-			assert_eq!(Balances::free_balance(&1), 4);
+	// 		// Update deposit
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 5], 12));
+	// 		assert_eq!(Balances::free_balance(&1), 14);
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 10], vec![0u8; 15], 12));
+	// 		assert_eq!(Balances::free_balance(&1), 4);
 
-			// Cannot over-reserve
-			assert_noop!(
-				Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 20], vec![0u8; 20], 12),
-				BalancesError::<Test, _>::InsufficientBalance,
-			);
+	// 		// Cannot over-reserve
+	// 		assert_noop!(
+	// 			Assets::set_metadata(Origin::signed(1), 0, vec![0u8; 20], vec![0u8; 20], 12),
+	// 			BalancesError::<Test, _>::InsufficientBalance,
+	// 		);
 
-			// Clear Metadata
-			assert!(Metadata::<Test>::contains_key(0));
-			assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![], vec![], 0));
-			assert!(!Metadata::<Test>::contains_key(0));
-		});
-	}
+	// 		// Clear Metadata
+	// 		assert!(Metadata::<Test>::contains_key(0));
+	// 		assert_ok!(Assets::set_metadata(Origin::signed(1), 0, vec![], vec![], 0));
+	// 		assert!(!Metadata::<Test>::contains_key(0));
+	// 	});
+	// }
 }
