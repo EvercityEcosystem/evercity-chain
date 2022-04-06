@@ -128,7 +128,7 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-    super::GenesisConfig::<TestRuntime> {
+    crate::GenesisConfig::<TestRuntime> {
         // Accounts for tests
         genesis_account_registry: ROLES
             .iter()
