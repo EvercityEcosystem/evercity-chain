@@ -11,37 +11,7 @@ use crate::{
     BondUnitAmount, BondUnitPackage, BondUnitSaleLotStructOf, Error, EverUSDBalance, Module,
     AUDITOR_ROLE_MASK, DEFAULT_DAY_DURATION, ISSUER_ROLE_MASK, MASTER_ROLE_MASK,
 };
-
-type Evercity = Module<TestRuntime>;
-type Timestamp = pallet_timestamp::Module<TestRuntime>;
-type Moment = <TestRuntime as pallet_timestamp::Config>::Moment;
-type BondInnerStruct = BondInnerStructOf<TestRuntime>;
-type BondStruct = BondStructOf<TestRuntime>;
-type RuntimeError = Error<TestRuntime>;
-type AccountId = <TestRuntime as frame_system::Config>::AccountId;
-type BondUnitSaleLotStruct = BondUnitSaleLotStructOf<TestRuntime>;
-
-fn bond_current_period(bond: &BondStruct, now: Moment) -> u32 {
-    bond.time_passed_after_activation(now).unwrap().1
-}
-
-/// Auxiliary function that replenish account balance
-fn add_token(id: AccountId, amount: EverUSDBalance) -> DispatchResult {
-    Evercity::token_mint_request_create_everusd(Origin::signed(id), amount)?;
-    Evercity::token_mint_request_confirm_everusd(Origin::signed(CUSTODIAN_ID), id, amount)
-}
-
-/// Converts days into milliseconds
-fn days2timestamp(days: u32) -> Moment {
-    (days * DEFAULT_DAY_DURATION) as u64 * 1000_u64
-}
-
-/// Returns all accounts
-fn iter_accounts() -> RangeInclusive<u64> {
-    1_u64..=9
-}
-
-const CUSTODIAN_ID: u64 = 2;
+use super::helpers::*;
 
 #[test]
 fn it_token_mint_create_with_confirm() {

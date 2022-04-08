@@ -11,15 +11,7 @@ use crate::{
     BondUnitAmount, BondUnitPackage, BondUnitSaleLotStructOf, Error, EverUSDBalance, Module,
     AUDITOR_ROLE_MASK, DEFAULT_DAY_DURATION, ISSUER_ROLE_MASK, MASTER_ROLE_MASK,
 };
-
-type Evercity = Module<TestRuntime>;
-type Timestamp = pallet_timestamp::Module<TestRuntime>;
-type Moment = <TestRuntime as pallet_timestamp::Config>::Moment;
-type BondInnerStruct = BondInnerStructOf<TestRuntime>;
-type BondStruct = BondStructOf<TestRuntime>;
-type RuntimeError = Error<TestRuntime>;
-type AccountId = <TestRuntime as frame_system::Config>::AccountId;
-type BondUnitSaleLotStruct = BondUnitSaleLotStructOf<TestRuntime>;
+use super::helpers::*;
 
 
 #[test]
