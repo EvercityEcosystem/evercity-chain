@@ -2,8 +2,6 @@
 use frame_support::{
     assert_noop, assert_ok,
 };
-
-// use crate::bond::transfer_bond_units;
 use crate::tests::mock::*;
 use crate::{
     EverUSDBalance,
