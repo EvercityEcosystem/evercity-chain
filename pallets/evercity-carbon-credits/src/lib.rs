@@ -945,9 +945,8 @@ pub mod pallet {
                         Some(project) => {
                             ensure!(project.owner == project_owner, Error::<T>::AccountNotOwner);
                             ensure!(project.state == project::REGISTERED, Error::<T>::ProjectNotRegistered);
-                            ensure!(project.get_bond_id().is_some(), Error::<T>::ProjectIsNotBond);
                             let bond_id = match project.get_bond_id() {
-                                None => todo!(),
+                                None => return Err(Error::<T>::ProjectIsNotBond.into()),
                                 Some(b) => b
                             };
                             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
