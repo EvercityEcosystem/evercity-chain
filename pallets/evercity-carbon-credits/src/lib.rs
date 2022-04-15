@@ -872,9 +872,9 @@ pub mod pallet {
                             last_annual_report.set_carbon_credits_released();
             
                             // Create Asset:
-                            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder);
+                            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
                             let create_asset_call = 
-                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, min_balance);
+                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source.clone(), MAX_CARBON_CREDITS_ZOMBIES, min_balance);
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
         
@@ -898,9 +898,10 @@ pub mod pallet {
         
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
-                            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
+                            // let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
+                            let holder_origin = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
                             let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
-                            let result = mint_call.dispatch_bypass_filter(origin);
+                            let result = mint_call.dispatch_bypass_filter(holder_origin);
                             ensure!(!result.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
