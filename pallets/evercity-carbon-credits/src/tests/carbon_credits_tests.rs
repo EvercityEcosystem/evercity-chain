@@ -28,6 +28,26 @@ fn it_works_for_relase_new_cc_gold_standard() {
 }
 
 #[test]
+fn it_works_for_relase_new_cc_to_other_acc_gold_standard() {
+    new_test_ext().execute_with(|| {
+        let (_, project_id, owner) = full_sign_annual_report_gold_standard();
+        let asset_id = 1;
+        let new_acc = 7u64;
+        let release_call = CarbonCredits::release_carbon_credits(Origin::signed(owner), project_id, asset_id, new_acc, 1);
+        let passport = CarbonCredits::get_passport_by_assetid(asset_id).unwrap();
+        let project = CarbonCredits::get_proj_by_id(project_id).unwrap();
+        let balance = Assets::balance(asset_id, new_acc);
+
+        assert_ok!(release_call, ().into());
+        assert_eq!(TEST_CARBON_CREDITS_COUNT, balance);
+        assert_eq!(passport.get_project_id(), project_id);
+        assert_eq!(*passport.get_asset_id_ref(), asset_id);
+        assert_eq!(passport.get_annual_report_index(), project.annual_reports.len() as u64);
+        assert!(project.annual_reports.last().unwrap().is_carbon_credits_released());
+    });
+}
+
+#[test]
 fn it_fails_for_relase_cc_not_owner_role() {
     new_test_ext().execute_with(|| {
         let (_, project_id, owner) = full_sign_annual_report_gold_standard();
