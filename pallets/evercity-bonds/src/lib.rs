@@ -2290,6 +2290,21 @@ impl<T: Config> Module<T> {
     }
 
     #[cfg(debug_assertions)]
+    pub fn create_test_active_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
+        let now = Timestamp::<T>::get();
+        let item = BondStruct {
+                inner,
+                creation_date: now,
+                issuer,
+                nonce: 0,
+                state: BondState::ACTIVE, 
+                .. Default::default()
+        };
+        BondRegistry::<T>::insert(&bond_id, item);
+        Ok(())
+    }
+
+    #[cfg(debug_assertions)]
     pub fn create_test_not_finished_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
         let now = Timestamp::<T>::get();
         let item = BondStruct {

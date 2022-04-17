@@ -220,8 +220,8 @@ pub mod pallet {
 
         /// Project is not a Bond project
         ProjectIsNotBond,
-        /// Bond is not finished error
-        BondNotFinished,
+        /// Bond is not in active or finished state
+        BondNotActiveOrFinished,
         /// Bond unit package registry balance is zero
 		BalanceIsZero,
         /// Zero investment on bond
@@ -309,10 +309,11 @@ pub mod pallet {
         }
 
         /// <pre>
-        /// Method: create_project(standard: Standard, file_id: FileId)
+        /// Method: create_bond_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
         ///            standard: Standard - Carbon Credits Standard
         ///            file_id: FileId - id of file in filesign pallet
+        ///            bond_id: BondId - bond associated with project
         /// Access: Project Owner Role
         ///
         /// Creates new project with relation to PDD file in filesign
@@ -331,7 +332,7 @@ pub mod pallet {
             }
             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
 			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
-			ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+			ensure!(matches!(bond.state, BondState::ACTIVE | BondState::FINISHED) , Error::<T>::BondNotActiveOrFinished);
             let new_id = LastID::<T>::get() + 1;
             let new_project = 
                 ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, bond_id);
@@ -946,14 +947,14 @@ pub mod pallet {
                         Some(project) => {
                             ensure!(project.owner == project_owner, Error::<T>::AccountNotOwner);
                             ensure!(project.state == project::REGISTERED, Error::<T>::ProjectNotRegistered);
-                            ensure!(project.get_bond_id().is_some(), Error::<T>::ProjectIsNotBond);
+                            
                             let bond_id = match project.get_bond_id() {
-                                None => todo!(),
+                                None => return Err(Error::<T>::ProjectIsNotBond.into()),
                                 Some(b) => b
                             };
                             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
                             ensure!(bond.issuer == project_owner, Error::<T>::NotAnIssuer);
-                            ensure!(bond.state == BondState::FINISHED , Error::<T>::BondNotFinished);
+                            ensure!(matches!(bond.state, BondState::ACTIVE | BondState::FINISHED), Error::<T>::BondNotActiveOrFinished);
         
                             // Check that there is at least one annual report
                             let reports_len = project.annual_reports.len();
