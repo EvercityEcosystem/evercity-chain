@@ -3,6 +3,7 @@
 
 mod everusd_trade_request;
 mod approve_mask;
+mod cc_package_lot;
 
 #[cfg(test)]
 mod mock;
@@ -33,7 +34,6 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
 
 	#[pallet::config]
 	/// The module configuration trait.
