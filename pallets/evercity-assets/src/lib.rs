@@ -123,7 +123,7 @@ use sp_runtime::{
 use codec::{Encode, Decode, HasCompact};
 use frame_support::{
 	ensure,
-	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
+	traits::{Currency, ReservableCurrency},
 	dispatch::DispatchError,
 };
 pub use weights::WeightInfo;

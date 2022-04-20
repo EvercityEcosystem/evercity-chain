@@ -33,6 +33,7 @@ frame-system = { default-features = false, version = '3.0.0' }
 sp-api = { default-features = false, version = '3.0.0' }
 sp-runtime = { default-features = false, version = '3.0.0' }
 sp-std = { default-features = false, version = '3.0.0' }
+pallet-timestamp = { default-features = false, version = '3.0.0' }
 pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', path = '../evercity-carbon-credits' }
 pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../evercity-assets' }
 pallet-evercity-bonds ={ default-features = false, version = '0.1.1', path = '../evercity-bonds' }

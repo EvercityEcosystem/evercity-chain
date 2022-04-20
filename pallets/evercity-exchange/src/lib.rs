@@ -16,18 +16,21 @@ pub use pallet::*;
 pub type TradeRequestId = u128;
 pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
 pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
+type Timestamp<T> = pallet_timestamp::Module<T>;
+pub type LotId = u128;
 
 #[frame_support::pallet]
 pub mod pallet {
     use frame_support::{
 		dispatch::{DispatchResultWithPostInfo},
-		pallet_prelude::*,
+		pallet_prelude::{*, OptionQuery, ValueQuery}, Blake2_128Concat, ensure,
 	};
 	use frame_system::pallet_prelude::*;
-	use pallet_evercity_bonds::EverUSDBalance;
+	use pallet_evercity_bonds::{EverUSDBalance, Expired};
 	use crate::{
 		everusd_trade_request::{EverUSDTradeRequest, EverUSDTradeHolderType}, 
-		approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED}
+		approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED},
+		cc_package_lot::{CarbonCreditsPackageLotOf},
 	};
 	use super::*;
 
@@ -41,6 +44,7 @@ pub mod pallet {
 		frame_system::Config +
 		pallet_evercity_carbon_credits::Config + 
 		pallet_evercity_bonds::Config +
+		pallet_timestamp::Config
 	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 	}
@@ -63,6 +67,20 @@ pub mod pallet {
 	/// Id of last trade everud request
 	pub(super) type LastEverUSDTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
 
+	/// Carbon Credits Lots registry - for every Account
+	#[pallet::storage]
+	pub(super) type CarbonCreditLotRegistry<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat, T::AccountId,
+		Blake2_128Concat, LotId,
+		CarbonCreditsPackageLotOf<T>,
+		OptionQuery
+	>;
+
+	/// Id of last Carbon Credit Lot
+	#[pallet::storage]
+	pub(super) type LastLotId<T: Config> = StorageValue<_, LotId, ValueQuery>;
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// No carbon credits balance
@@ -79,6 +97,10 @@ pub mod pallet {
 		TradeRequestNotFound,
 		/// Invalid approve state
 		BadApprove,
+		/// Lot reached time deadline 
+		LotExpired,
+		/// Lot details are invalid
+		InvalidLotDetails,
 	}
 
 	#[pallet::event]
@@ -97,6 +119,36 @@ pub mod pallet {
 	/// Calls:
 	#[pallet::call]
 	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
+
+		#[pallet::weight(10_000)]
+		pub fn create_carbon_credit_lot(
+			origin: OriginFor<T>,
+			lot: CarbonCreditsPackageLotOf<T>
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+
+			// check if lot doesn't have errors 
+			let now = Timestamp::<T>::get();
+			ensure!(!lot.is_expired(now), Error::<T>::LotExpired);
+			if let Some(target) = lot.target_bearer {
+				ensure!(&caller != &target, Error::<T>::InvalidLotDetails);
+			}
+
+			// purge expired lots
+			let ids_to_delete = CarbonCreditLotRegistry::<T>::iter_prefix(&caller)
+				.filter(|(id, lot)| lot.is_expired(now))
+				.map(|(id, lot)| id);
+			for id in ids_to_delete {
+				CarbonCreditLotRegistry::<T>::remove(&caller, id);
+			}
+
+			// check if caller has enough Carbon Credits
+
+			// add new lot
+
+			Ok(().into())
+		}
+
 		/// <pre>
         /// Method: create_everusd_trade_request(
 		/// 			origin: OriginFor<T>, 
