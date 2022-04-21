@@ -12,8 +12,8 @@ pub struct CarbonCreditsPackageLot<AccountId, Moment, CCAmount, EverUSDAmount> {
     pub deadline: Moment,
     /// Amount of Carbon Credits for sale in this lot
     pub amount: CCAmount,
-    /// Total price of this lot
-    pub price: EverUSDAmount,
+    /// Price per 1 Carbon Credit. Total price = amount*price_per_item
+    pub price_per_item: EverUSDAmount,
 }
 
 /// Wrapper of struct CarbonCreditsPackageLot representing pack of carbon credits for sale.

@@ -17,7 +17,6 @@ pub type TradeRequestId = u128;
 pub type CarbonCreditsId<T> = pallet_evercity_carbon_credits::AssetId<T>;
 pub type CarbonCreditsBalance<T> = pallet_evercity_carbon_credits::Balance<T>;
 type Timestamp<T> = pallet_timestamp::Module<T>;
-pub type LotId = u128;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -27,6 +26,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_evercity_bonds::{EverUSDBalance, Expired};
+	use sp_runtime::traits::{CheckedAdd};
 	use crate::{
 		everusd_trade_request::{EverUSDTradeRequest, EverUSDTradeHolderType}, 
 		approve_mask::{CARBON_CREDITS_HOLDER_APPROVED, EVERUSD_HOLDER_APPROVED},
@@ -67,19 +67,15 @@ pub mod pallet {
 	/// Id of last trade everud request
 	pub(super) type LastEverUSDTradeRequestId<T: Config> = StorageValue<_, TradeRequestId, ValueQuery>;
 
-	/// Carbon Credits Lots registry - for every Account
+	/// Carbon Credits Lots registry - for every AccountId and AssetId
 	#[pallet::storage]
 	pub(super) type CarbonCreditLotRegistry<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat, T::AccountId,
-		Blake2_128Concat, LotId,
-		CarbonCreditsPackageLotOf<T>,
-		OptionQuery
+		Blake2_128Concat, CarbonCreditsId<T>,
+		Vec<CarbonCreditsPackageLotOf<T>>,
+		ValueQuery
 	>;
-
-	/// Id of last Carbon Credit Lot
-	#[pallet::storage]
-	pub(super) type LastLotId<T: Config> = StorageValue<_, LotId, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -120,31 +116,46 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
 
+		/// <pre>
+		/// Method: create_carbon_credit_lot
+		/// 
+		/// Arguments: origin: OriginFor<T> - transaction caller
+		///			   asset_id: CarbonCreditsId<T> - Carbon Credit asset id
+		///			   new_lot: CarbonCreditsPackageLotOf<T> - new lot of Carbon Credits to auction off
+		/// Access: for Carbon Credits holder
+		/// 
+		/// Creates new Carbon Credits Lot of given asset_id
+		/// </pre>
 		#[pallet::weight(10_000)]
 		pub fn create_carbon_credit_lot(
 			origin: OriginFor<T>,
-			lot: CarbonCreditsPackageLotOf<T>
+			asset_id: CarbonCreditsId<T>,
+			new_lot: CarbonCreditsPackageLotOf<T>
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 
 			// check if lot doesn't have errors 
 			let now = Timestamp::<T>::get();
-			ensure!(!lot.is_expired(now), Error::<T>::LotExpired);
-			if let Some(target) = lot.target_bearer {
-				ensure!(&caller != &target, Error::<T>::InvalidLotDetails);
+			ensure!(!new_lot.is_expired(now), Error::<T>::LotExpired);
+			if let Some(target) = &new_lot.target_bearer {
+				ensure!(&caller != target, Error::<T>::InvalidLotDetails);
 			}
 
 			// purge expired lots
-			let ids_to_delete = CarbonCreditLotRegistry::<T>::iter_prefix(&caller)
-				.filter(|(id, lot)| lot.is_expired(now))
-				.map(|(id, lot)| id);
-			for id in ids_to_delete {
-				CarbonCreditLotRegistry::<T>::remove(&caller, id);
-			}
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, 
+				|lots| lots.retain(|lot| !lot.is_expired(now)));
 
 			// check if caller has enough Carbon Credits
+			let lots_sum = CarbonCreditLotRegistry::<T>::get(&caller, asset_id)
+				.iter().map(|lot| lot.amount).sum();
+			let total_sum = new_lot.amount.checked_add(&lots_sum);
+			if let Some(sum) = total_sum {
+				ensure!(sum <= pallet_evercity_assets::Module::<T>::balance(asset_id, caller.clone()), 
+					Error::<T>::InsufficientCarbonCreditsBalance);
+			}
 
 			// add new lot
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot));
 
 			Ok(().into())
 		}

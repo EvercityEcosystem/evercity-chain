@@ -127,6 +127,7 @@ use frame_support::{
 	dispatch::DispatchError,
 };
 pub use weights::WeightInfo;
+use core::iter::Sum;
 
 pub use pallet::*;
 
@@ -152,7 +153,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The units in which we record balances.
-		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
+		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + Sum<Self::Balance>;
 
 		/// The arithmetic type of asset identifier.
 		type AssetId: Member + Parameter + Default + Copy + HasCompact;
