@@ -1,7 +1,6 @@
 #![allow(clippy::from_over_into)]
 use crate::{self as pallet_evercity_transfer, *};
 
-use crate::*;
 use frame_support::{
     assert_err, assert_ok, parameter_types,
     sp_runtime::{

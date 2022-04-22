@@ -281,7 +281,7 @@ pub mod pallet {
 
     // EXTRINSICS:
     #[pallet::call]
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
         /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
@@ -972,7 +972,7 @@ pub mod pallet {
                             let new_carbon_credits_holder_source = 
                                 <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
                             let create_asset_call = 
-                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, Self::u128_to_balance(1));
+                                pallet_evercity_assets::Call::<T>::create(asset_id, new_carbon_credits_holder_source, MAX_CARBON_CREDITS_ZOMBIES, Self::u64_to_balance(1));
                             let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
                             ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
           
@@ -1403,12 +1403,12 @@ pub mod pallet {
         }
     }
 
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> { 
-        pub fn u128_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> { 
+        pub fn u64_to_balance(num: u64) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
             num.into()
         }
 
-        pub fn balance_to_u128(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 {
+        pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u64 {
             bal.into()
         }
 
@@ -1416,8 +1416,8 @@ pub mod pallet {
             percent: f64, 
             bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
         ) -> <T as pallet_evercity_assets::pallet::Config>::Balance  {
-            let temp_u64 = ((Self::balance_to_u128(bal_amount) as f64) * percent) as u128;
-            Self::u128_to_balance(temp_u64)
+            let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u64;
+            Self::u64_to_balance(temp_u64)
         }
 
         pub fn proceed_send(

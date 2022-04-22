@@ -3,7 +3,7 @@ use frame_support::assert_ok;
 
 use helpers::*;
 
-pub const TEST_CARBON_CREDITS_COUNT: u128 = 15000;
+pub const TEST_CARBON_CREDITS_COUNT: u64 = 15000;
 pub const TEST_CARBON_CREDITS_DECIMAL: u8 = 0;
 
 use crate::Error;

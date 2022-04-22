@@ -771,10 +771,9 @@ mod tests {
 	use super::*;
 	use crate as pallet_assets;
 
-	use frame_support::{assert_ok, assert_noop, parameter_types};
+	use frame_support::{parameter_types};
 	use sp_core::H256;
 	use sp_runtime::{traits::{BlakeTwo256, IdentityLookup}, testing::Header};
-	use pallet_balances::Error as BalancesError;
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 	type Block = frame_system::mocking::MockBlock<Test>;
@@ -853,9 +852,5 @@ mod tests {
 		type MetadataDepositBase = MetadataDepositBase;
 		type MetadataDepositPerByte = MetadataDepositPerByte;
 		type WeightInfo = ();
-	}
-
-	pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
-		frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 	}
 }

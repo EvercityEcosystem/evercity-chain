@@ -229,10 +229,11 @@
     "approved": "ApproveMask"
   },
   "TradeRequestId": "u128",
+  "CarbonCreditsAmount":"u64",
   "CarbonCreditsId": "AssetId",
   "CarbonCreditsBalance": "Balance",
   "CarbonUnitsMetadata": {
-    "count": "u128",
+    "count": "u64",
     "carbon_distribution": "CarbonDistribution"
   },
   "CarbonDistribution": {

@@ -210,7 +210,7 @@ pub struct BondInnerStruct<Moment, Hash, AccountId> {
     #[codec(compact)]
     pub bond_units_base_price: EverUSDBalance,
 
-    // pub carbon_credits_included: bool,
+    /// Optional Carbon Credits metadata, if Carbon Credits issuance included in bond
     pub carbon_metadata: Option<CarbonUnitsMetadata<AccountId>>
 }
 
@@ -315,20 +315,26 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
     }
 }
 
+/// Metadata of Carbon Credits when creating a bond
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct CarbonUnitsMetadata<AccountId> {
-    pub count: u128,
+    pub count: u64,
+    /// Carbon Credits distribution
     pub carbon_distribution: CarbonDistribution<AccountId>
 }
 
-
+/// How Carbon Credits are distributed between investors, issuer and others
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct CarbonDistribution<AccountId> {
+    /// How many percentage*1000 of Carbon Credits investors get
     pub investors: i32,
+    /// How many percentage*1000 of Carbon Credits issuer gets
     pub issuer: i32,
-    pub evercity: Option<(AccountId, i32)>, 
+    /// Optional account and percentage*1000 it gets
+    pub evercity: Option<(AccountId, i32)>,
+    /// Optional account and percentage*1000 it gets
     pub project_developer: Option<(AccountId, i32)>
 }
 
@@ -344,6 +350,7 @@ impl<AccountId> CarbonDistribution<AccountId> {
             None => 0,
         };
 
+        // maximum percentage = 100%(*1000)
         evercity_amount + project_developer_amount + self.issuer + self.investors == 100_000
     }
 }

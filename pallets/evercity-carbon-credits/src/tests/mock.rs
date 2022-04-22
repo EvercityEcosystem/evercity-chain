@@ -103,7 +103,7 @@ impl pallet_timestamp::Config for TestRuntime {
 
 // ballances
 parameter_types! {
-    pub const ExistentialDeposit: u64 = 0;
+    pub const ExistentialDeposit: u128 = 0;
     pub const MaxLocks: u32 = 50;
 }
 
@@ -117,21 +117,22 @@ impl pallet_balances::Config for TestRuntime {
     type MaxLocks = MaxLocks;
 }
 
-// Asset Pallet Configs
 pub type Balance = u128;
 
 parameter_types! {
-    pub const AssetDeposit: Balance = 1; 
-    pub const ApprovalDeposit: Balance = 1;
+    pub const AssetDeposit: CCAmount = 1; 
+    pub const ApprovalDeposit: CCAmount = 1;
     pub const StringLimit: u32 = 50;
     /// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-    pub const MetadataDepositBase: Balance = 1;
-    pub const MetadataDepositPerByte: Balance = 1;
+    pub const MetadataDepositBase: CCAmount = 1;
+    pub const MetadataDepositPerByte: CCAmount = 1;
 }
+
+pub type CCAmount = u64;
 
 impl pallet_assets::Config for TestRuntime {
     type Event = Event;
-    type Balance = Balance;
+    type Balance = CCAmount;
     type AssetId = u32;
     type Currency = Balances;
     type ForceOrigin = frame_system::EnsureSigned<AccountId>;

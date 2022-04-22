@@ -702,7 +702,7 @@ fn bond_nonzero_send_period_is_not_stable() {
 #[test]
 fn bond_stable_calc_bond_interest_rate() {
     let bond = get_test_bond_stable();
-    let base_value = bond.inner.interest_rate_base_value as u64;
+    let _base_value = bond.inner.interest_rate_base_value as u64;
 
     let reports: Vec<BondImpactReportStruct> = vec![
             //missing report
