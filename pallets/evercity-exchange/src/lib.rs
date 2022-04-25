@@ -79,15 +79,15 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// No carbon credits balance
+		/// Not enough carbon credits balance
         InsufficientCarbonCreditsBalance,
-		/// Not enough everusd
+		/// Not enough everUSD
 		InsufficientEverUSDBalance,
-		/// If trade request id owerflowd
+		/// If trade request id owerflow
 		TradeRequestIdOwerflow,
 		/// Trade request state is invalid
 		InvalidTradeRequestState,
-		/// invalid holder
+		/// Invalid holder
 		BadHolder,
 		/// No trade request found
 		TradeRequestNotFound,
@@ -97,6 +97,10 @@ pub mod pallet {
 		LotExpired,
 		/// Lot details are invalid
 		InvalidLotDetails,
+		/// Attempt to buy more CC than exist in lot
+		NotEnoughCarbonCreditsInLot,
+		/// Lot not found
+		LotNotFound,
 	}
 
 	#[pallet::event]
@@ -107,6 +111,10 @@ pub mod pallet {
 		EverUSDTradeRequestCreated(TradeRequestId, T::AccountId, T::AccountId),
 		/// \[TradeRequestId\]
 		EverUSDTradeRequestAccepted(TradeRequestId),
+		/// \[CarbonCreditsSeller, AssetId, CarbonCreditsLot\]
+		CarbonCreditsLotCreated(T::AccountId, CarbonCreditsId::<T>, CarbonCreditsPackageLotOf::<T>),
+		/// \[Buyer, Seller, Amount\]
+		CarbonCreditsBought(T::AccountId, T::AccountId, CarbonCreditsBalance::<T>),
 	}
 	
 	#[deprecated(note = "use `Event` instead")]
@@ -118,13 +126,19 @@ pub mod pallet {
 
 		/// <pre>
 		/// Method: create_carbon_credit_lot
-		/// 
 		/// Arguments: origin: OriginFor<T> - transaction caller
 		///			   asset_id: CarbonCreditsId<T> - Carbon Credit asset id
 		///			   new_lot: CarbonCreditsPackageLotOf<T> - new lot of Carbon Credits to auction off
 		/// Access: for Carbon Credits holder
 		/// 
-		/// Creates new Carbon Credits Lot of given asset_id
+		/// Creates new Carbon Credits Lot of given asset_id. 
+		/// CarbonCreditsPackageLotOf new_lot contains:
+		/// 			"target_bearer" - optional, if set - lot is private
+		/// 			"deadline" - lot can be sold only before deadline
+		/// 			"amount" - amount of Carbon Credits for sell
+		/// 			"price_per_item" - price per one Carbon Credit
+		/// Function checks if deadline is correct, if caller has enough Carbon Credits.
+		/// Function purges another expired lots for this caller.
 		/// </pre>
 		#[pallet::weight(10_000)]
 		pub fn create_carbon_credit_lot(
@@ -155,10 +169,91 @@ pub mod pallet {
 			}
 
 			// add new lot
-			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot));
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot.clone()));
+			Self::deposit_event(Event::CarbonCreditsLotCreated(caller, asset_id, new_lot));
 
 			Ok(().into())
 		}
+
+		/// <pre>
+		/// Method: buy_carbon_credit_lot_units
+		/// Arguments: origin: OriginFor<T> - transaction caller
+		///				seller: T::AccountId - lot seller
+		///				asset_id: CarbonCreditsId<T> - Carbon Credit asset id
+		///				lot: CarbonCreditsPackageLotOf<T> - from whitch Carbon Credits are bought 
+		///				amount: CarbonCreditsBalance<T> - amount of Carbon Credits to buy
+		/// Access: any account having enough EverUSD,
+		/// 		for private lot - only account in that lot
+		/// 
+		/// Buys a specified amount of Carbon Credits from specified lot created by 
+		/// create_carbon_credit_lot(..) call. Lot should not be expired. 
+		/// Buyer should have enough EverUSD balance. If lot is private 
+		/// (lot.targer_bearer are set) - only target_bearer can buy from that lot. 
+		/// After selling other expired seller's lots are purged.
+		/// </pre>
+		#[pallet::weight(10_000)]
+		pub fn buy_carbon_credit_lot_units(
+			origin: OriginFor<T>,
+			seller: T::AccountId,
+			asset_id: CarbonCreditsId<T>,
+			mut lot: CarbonCreditsPackageLotOf<T>,
+			amount: CarbonCreditsBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+
+			// check if buy attempt is correct
+			let now = Timestamp::<T>::get();
+			ensure!(!lot.is_expired(now), Error::<T>::LotExpired);
+			ensure!(amount <= lot.amount, Error::<T>::NotEnoughCarbonCreditsInLot);
+			let total_price = lot.price_per_item*pallet_evercity_carbon_credits::Module::<T>::balance_to_u64(amount);
+			ensure!(total_price < pallet_evercity_bonds::Module::<T>::get_balance(&caller),
+				Error::<T>::InsufficientEverUSDBalance);
+			// check that target bearer is the same as caller if lot is private 
+			if let Some(account) = lot.target_bearer.clone() {
+				ensure!(account == caller, Error::<T>::LotNotFound)
+			}
+			
+			// change or remove lot if all ok
+			CarbonCreditLotRegistry::<T>::try_mutate(&seller, asset_id, 
+				|lots| -> DispatchResultWithPostInfo {
+					if let Some(index) = lots.iter().position(|item| item==&lot ){
+						// remove or change lot
+						if lot.amount == amount {
+							lots.remove( index );
+						} else if lot.amount > amount {
+							lot.amount = lot.amount - amount;
+							lots[index] = lot;
+						}
+						// transfer CC
+						let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
+						pallet_evercity_carbon_credits::Pallet::<T>::transfer_carbon_credits(
+								cc_holder_origin, 
+								asset_id, 
+								caller.clone(), 
+								amount
+						)?;
+						// transfer everUSD then
+						pallet_evercity_bonds::Module::<T>::transfer_everusd(
+							&caller, 
+							&seller, 
+							total_price
+						)?;
+						
+						// purge expired lots
+						if !lots.is_empty() {
+							lots.retain(|item| !item.is_expired(now));
+						}
+						
+						Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+
+						Ok(().into())
+					}else{
+						Err(Error::<T>::InvalidLotDetails.into())
+					}
+			})?;
+			Ok(().into())
+		}
+
 
 		/// <pre>
         /// Method: create_everusd_trade_request(
@@ -297,5 +392,6 @@ pub mod pallet {
 			Self::deposit_event(Event::EverUSDTradeRequestAccepted(trade_request_id));
 			Ok(().into())
 		}
-    }
+
+	}
 }
