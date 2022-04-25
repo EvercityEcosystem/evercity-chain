@@ -1081,41 +1081,7 @@ pub mod pallet {
                     }
              })?;
 			Ok(().into())
-		}
-
-        /// <pre>
-        /// Method: transfer_carbon_credits(
-        ///    asset_id: <T as pallet_assets::Config>::AssetId, 
-        ///    new_carbon_credits_holder: T::AccountId, 
-        ///    amount: T::Balance
-        ///) 
-        /// Arguments: origin: AccountId - Transaction caller
-        ///
-        /// Access: Carbon Credits holder
-        ///
-        ///  Transfers carbon creadits of asset id in given amount to an adress
-        /// 
-        /// </pre>
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(2, 1))]
-        pub fn transfer_carbon_credits(
-            origin: OriginFor<T>, 
-            asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
-            new_carbon_credits_holder: T::AccountId, 
-            amount: T::Balance
-        ) -> DispatchResultWithPostInfo {
-            let owner = ensure_signed(origin.clone())?;
-            // check passport creds
-            let passport = CarbonCreditPassportRegistry::<T>::get(asset_id);
-            ensure!(passport.is_some(), Error::<T>::PassportNotExist);
-
-            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
-            let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
-            transfer_call.dispatch_bypass_filter(origin)?;
-
-            Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
-            Ok(().into())
-        }
-
+		}    
 
         /// <pre>
         /// Method: burn_carbon_credits(
@@ -1344,6 +1310,39 @@ pub mod pallet {
         pub fn balance(asset_id: AssetId<T>, account_id: T::AccountId) -> T::Balance {
             pallet_evercity_assets::Module::<T>::balance(asset_id, account_id)
         }
+
+        /// <pre>
+        /// Method: transfer_carbon_credits(
+        ///    asset_id: <T as pallet_assets::Config>::AssetId, 
+        ///    new_carbon_credits_holder: T::AccountId, 
+        ///    amount: T::Balance
+        ///) 
+        /// Arguments: origin: AccountId - Transaction caller
+        ///
+        /// Access: Carbon Credits holder
+        ///
+        /// Transfers carbon creadits of asset id in given amount to an address. 
+        /// Weight are 10_000 + T::DbWeight::get().reads_writes(2, 1)
+        /// </pre>
+        pub fn transfer_carbon_credits(
+            origin: OriginFor<T>, 
+            asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
+            new_carbon_credits_holder: T::AccountId, 
+            amount: T::Balance
+        ) -> DispatchResultWithPostInfo {
+            let owner = ensure_signed(origin.clone())?;
+            // check passport creds
+            let passport = CarbonCreditPassportRegistry::<T>::get(asset_id);
+            ensure!(passport.is_some(), Error::<T>::PassportNotExist);
+
+            let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
+            let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
+            transfer_call.dispatch_bypass_filter(origin)?;
+
+            Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
+            Ok(().into())
+        }
+
     
         #[cfg(test)]
         pub fn get_proj_by_id(id: ProjectId) -> Option<ProjectStruct<T::AccountId, T, T::Balance>> {

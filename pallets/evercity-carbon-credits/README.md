@@ -89,9 +89,6 @@ Also signers must be holed in blockchain storage.
 
 - Then project owner can release carbon credits (extrinsic - release_carbon_credits() - if this project without bond, release_bond_carbon_credits() - if project is based on a bond)
 
-- User can transfer carbon credits (extrinsic - transfer_carbon_credits()).
-Any carbon credits holder can access this function.
-
 - User can burn carbon credits (extrinsic - burn_carbon_credits()).
 Any carbon credits holder can access this function.
 

@@ -191,7 +191,7 @@ pub mod pallet {
 						}
 						// transfer CC
 						let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
-						pallet_evercity_carbon_credits::Pallet::<T>::transfer_carbon_credits(
+						pallet_evercity_carbon_credits::Module::<T>::transfer_carbon_credits(
 								cc_holder_origin, 
 								asset_id, 
 								caller.clone(), 
