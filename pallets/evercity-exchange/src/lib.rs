@@ -48,6 +48,7 @@ pub mod pallet {
 	// pallet storages:
 	/// Carbon Credits Lots registry - for every AccountId and AssetId
 	#[pallet::storage]
+	#[pallet::getter(fn lots)]
 	pub(super) type CarbonCreditLotRegistry<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat, T::AccountId,
