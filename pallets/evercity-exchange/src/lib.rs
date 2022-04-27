@@ -88,7 +88,8 @@ pub mod pallet {
 
 	/// Calls:
 	#[pallet::call]
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64>  {
+	//impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64>  {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
 
 		/// <pre>
 		/// Method: create_carbon_credit_lot
@@ -171,7 +172,8 @@ pub mod pallet {
 			let now = Timestamp::<T>::get();
 			ensure!(!lot.is_expired(now), Error::<T>::LotExpired);
 			ensure!(amount <= lot.amount, Error::<T>::NotEnoughCarbonCreditsInLot);
-			let total_price = lot.price_per_item*pallet_evercity_carbon_credits::Module::<T>::balance_to_u64(amount);
+			todo!("fix price calculation");
+			let total_price = lot.price_per_item;//pallet_evercity_carbon_credits::Module::<T>::balance_to_u64(amount);
 			ensure!(total_price < pallet_evercity_bonds::Module::<T>::get_balance(&caller),
 				Error::<T>::InsufficientEverUSDBalance);
 			// check that target bearer is the same as caller if lot is private 

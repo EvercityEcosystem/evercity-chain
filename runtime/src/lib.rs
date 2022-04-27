@@ -297,19 +297,19 @@ impl pallet_evercity_accounts::Config for Runtime {
 }
 
 parameter_types! {
-    pub const AssetDepositBase: CarbonCreditsAmount = 0;
-    pub const AssetDepositPerZombie: CarbonCreditsAmount = 0;
-    pub const ApprovalDeposit: CarbonCreditsAmount = 0;
+    pub const AssetDepositBase: Balance = 0;
+    pub const AssetDepositPerZombie: Balance = 0;
+    pub const ApprovalDeposit: Balance = 0;
     pub const StringLimit: u32 = 50;
-    pub const MetadataDepositBase: CarbonCreditsAmount = 0;
-    pub const MetadataDepositPerByte: CarbonCreditsAmount = 0;
+    pub const MetadataDepositBase: Balance = 0;
+    pub const MetadataDepositPerByte: Balance = 0;
 }
 
 type CarbonCreditsAmount = u64;
 use pallet_evercity_assets;
 impl pallet_evercity_assets::Config for Runtime {
     type Event = Event;
-    type Balance = CarbonCreditsAmount;
+    type Balance = Balance;
     type AssetId = u64;
     type Currency = Balances;
     type ForceOrigin = frame_system::EnsureRoot<AccountId>;
