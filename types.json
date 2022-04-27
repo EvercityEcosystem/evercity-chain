@@ -187,7 +187,7 @@
   },
   "Balance": "u128",
   "AssetId": "u64",
-  "TAssetBalance": "Balance",
+  "TABalance": "Balance",
   "TAssetDepositBalance": "Balance",
   "AssetDetails": {
     "onwer": "AccountId",

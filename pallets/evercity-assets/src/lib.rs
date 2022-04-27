@@ -153,7 +153,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The units in which we record balances.
-		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + Sum<Self::Balance>;
+		type ABalance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + Sum<Self::ABalance>;
 
 		/// The arithmetic type of asset identifier.
 		type AssetId: Member + Parameter + Default + Copy + HasCompact;
@@ -219,7 +219,7 @@ pub mod pallet {
 			#[pallet::compact] id: T::AssetId,
 			admin: <T::Lookup as StaticLookup>::Source,
 			max_zombies: u32,
-			min_balance: T::Balance,
+			min_balance: T::ABalance,
 		) -> DispatchResultWithPostInfo {
 			let owner = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
@@ -300,7 +300,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			#[pallet::compact] id: T::AssetId,
 			beneficiary: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance
+			#[pallet::compact] amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
@@ -345,7 +345,7 @@ pub mod pallet {
 		pub(super) fn burn_self_assets(
 			origin: OriginFor<T>,
 			#[pallet::compact] id: T::AssetId,
-			#[pallet::compact] amount: T::Balance
+			#[pallet::compact] amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// let who = T::Lookup::lookup(who)?;
@@ -355,7 +355,7 @@ pub mod pallet {
 				let burned = Account::<T>::try_mutate_exists(
 					id,
 					&who,
-					|maybe_account| -> Result<T::Balance, DispatchError> {
+					|maybe_account| -> Result<T::ABalance, DispatchError> {
 						let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
 						let mut burned = amount.min(account.balance);
 						account.balance -= burned;
@@ -400,7 +400,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			#[pallet::compact] id: T::AssetId,
 			target: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::Balance
+			#[pallet::compact] amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 			ensure!(!amount.is_zero(), Error::<T>::AmountZero);
@@ -531,17 +531,17 @@ pub mod pallet {
 		/// Some asset class was created. \[asset_id, creator, owner\]
 		Created(T::AssetId, T::AccountId, T::AccountId),
 		/// Some assets were issued. \[asset_id, owner, total_supply\]
-		Issued(T::AssetId, T::AccountId, T::Balance),
+		Issued(T::AssetId, T::AccountId, T::ABalance),
 		/// Some assets were transferred. \[asset_id, from, to, amount\]
-		Transferred(T::AssetId, T::AccountId, T::AccountId, T::Balance),
+		Transferred(T::AssetId, T::AccountId, T::AccountId, T::ABalance),
 		/// Some assets were destroyed. \[asset_id, owner, balance\]
-		Burned(T::AssetId, T::AccountId, T::Balance),
+		Burned(T::AssetId, T::AccountId, T::ABalance),
 		/// The management team changed \[asset_id, issuer, admin, freezer\]
 		TeamChanged(T::AssetId, T::AccountId, T::AccountId, T::AccountId),
 		/// The owner changed \[asset_id, owner\]
 		OwnerChanged(T::AssetId, T::AccountId),
 		/// Some assets was transferred by an admin. \[asset_id, from, to, amount\]
-		ForceTransferred(T::AssetId, T::AccountId, T::AccountId, T::Balance),
+		ForceTransferred(T::AssetId, T::AccountId, T::AccountId, T::ABalance),
 		/// Some account `who` was frozen. \[asset_id, who\]
 		Frozen(T::AssetId, T::AccountId),
 		/// Some account `who` was thawed. \[asset_id, who\]
@@ -601,7 +601,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AssetId,
-		AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>
+		AssetDetails<T::ABalance, T::AccountId, BalanceOf<T>>
 	>;
 	#[pallet::storage]
 	/// The number of units of assets held by any given account.
@@ -611,7 +611,7 @@ pub mod pallet {
 		T::AssetId,
 		Blake2_128Concat,
 		T::AccountId,
-		AssetBalance<T::Balance>,
+		ABalance<T::ABalance>,
 		ValueQuery
 	>;
 	#[pallet::storage]
@@ -669,7 +669,7 @@ impl<
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default)]
-pub struct AssetBalance<
+pub struct ABalance<
 	Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
 > {
 	/// The balance.
@@ -699,17 +699,17 @@ impl<T: Config> Pallet<T> {
 	// Public immutables
 
 	/// Get the asset `id` balance of `who`.
-	pub fn balance(id: T::AssetId, who: T::AccountId) -> T::Balance {
+	pub fn balance(id: T::AssetId, who: T::AccountId) -> T::ABalance {
 		Account::<T>::get(id, who).balance
 	}
 
 	/// Get the total supply of an asset `id`.
-	pub fn total_supply(id: T::AssetId) -> T::Balance {
+	pub fn total_supply(id: T::AssetId) -> T::ABalance {
 		Asset::<T>::get(id).map(|x| x.supply).unwrap_or_else(Zero::zero)
 	}
 
 	pub fn get_asset_details(id: T::AssetId) -> 
-		Option<AssetDetails<<T as pallet::Config>::Balance, <T as frame_system::Config>::AccountId, 
+		Option<AssetDetails<<T as pallet::Config>::ABalance, <T as frame_system::Config>::AccountId, 
 		<<T as pallet::Config>::Currency as frame_support::traits::Currency<<T as frame_system::Config>::AccountId>>::Balance>>
 	{ 
 		Asset::<T>::get(id)
@@ -722,7 +722,7 @@ impl<T: Config> Pallet<T> {
 
 	fn new_account(
 		who: &T::AccountId,
-		d: &mut AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>,
+		d: &mut AssetDetails<T::ABalance, T::AccountId, BalanceOf<T>>,
 	) -> Result<bool, DispatchError> {
 		let accounts = d.accounts.checked_add(1).ok_or(Error::<T>::Overflow)?;
 		let r = Ok(if frame_system::Module::<T>::account_exists(who) {
@@ -740,7 +740,7 @@ impl<T: Config> Pallet<T> {
 	/// If `who`` exists in system and it's a zombie, dezombify it.
 	fn dezombify(
 		who: &T::AccountId,
-		d: &mut AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>,
+		d: &mut AssetDetails<T::ABalance, T::AccountId, BalanceOf<T>>,
 		is_zombie: &mut bool,
 	) {
 		if *is_zombie && frame_system::Module::<T>::account_exists(who) {
@@ -754,7 +754,7 @@ impl<T: Config> Pallet<T> {
 
 	fn dead_account(
 		who: &T::AccountId,
-		d: &mut AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>,
+		d: &mut AssetDetails<T::ABalance, T::AccountId, BalanceOf<T>>,
 		is_zombie: bool,
 	) {
 		if is_zombie {
@@ -843,7 +843,7 @@ mod tests {
 	impl Config for Test {
 		type Currency = Balances;
 		type Event = Event;
-		type Balance = u64;
+		type ABalance = u64;
 		type AssetId = u32;
 		type ForceOrigin = frame_system::EnsureRoot<u64>;
 		type AssetDepositBase = AssetDepositBase;

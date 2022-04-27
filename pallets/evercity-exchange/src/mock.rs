@@ -136,7 +136,7 @@ parameter_types! {
 
 impl pallet_evercity_assets::Config for TestRuntime {
     type Event = Event;
-    type Balance = CCAmount;
+    type ABalance = CCAmount;
     type AssetId = u32;
     type Currency = Balances;
     type ForceOrigin = frame_system::EnsureSigned<AccountId>;

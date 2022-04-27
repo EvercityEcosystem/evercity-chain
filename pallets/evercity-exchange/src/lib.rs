@@ -89,7 +89,7 @@ pub mod pallet {
 	/// Calls:
 	#[pallet::call]
 	//impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64>  {
-	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128>  {
+	impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128>  {
 
 		/// <pre>
 		/// Method: create_carbon_credit_lot

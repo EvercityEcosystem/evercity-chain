@@ -32,7 +32,7 @@ pub use crate::pallet::*;
 
 pub type Timestamp<T> = pallet_timestamp::Module<T>;
 pub type AssetId<T> = <T as pallet_evercity_assets::Config>::AssetId;
-pub type Balance<T> = <T as pallet_evercity_assets::Config>::Balance;
+pub type Balance<T> = <T as pallet_evercity_assets::Config>::ABalance;
 
 const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5_000_000;
 
@@ -97,7 +97,7 @@ pub mod pallet {
         /// \[ProjectOwner, ProjectId\]
         AnnualReportDeleted(T::AccountId, ProjectId),
         // \[ProjectOwner, ProjectId, NewCount\]
-        AnnualReportCreditsCountChanged(T::AccountId, ProjectId, T::Balance),
+        AnnualReportCreditsCountChanged(T::AccountId, ProjectId, T::ABalance),
         /// \[ProjectOwner, ProjectId\]
         AnnualReportSubmited(T::AccountId, ProjectId), 
         /// \[Auditor, ProjectId\]
@@ -239,7 +239,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         u32,
-        ProjectStruct<T::AccountId, T, T::Balance>,
+        ProjectStruct<T::AccountId, T, T::ABalance>,
         OptionQuery
     >;
 
@@ -264,7 +264,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         T::AccountId,
-        Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::Balance>>,
+        Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::ABalance>>,
         ValueQuery
     >;
 
@@ -274,7 +274,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         BondId,
-        CarbonCreditsBondRelease<T::Balance>,
+        CarbonCreditsBondRelease<T::ABalance>,
         OptionQuery
     >;
 
@@ -282,7 +282,7 @@ pub mod pallet {
     // EXTRINSICS:
     #[pallet::call]
     //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> {
         /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
@@ -300,7 +300,7 @@ pub mod pallet {
                 ensure!(pallet_evercity_filesign::Module::<T>::address_is_owner_for_file(id, &caller), Error::<T>::AccountNotFileOwner);
             }
             let new_id = LastID::<T>::get() + 1;
-            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, T, T::Balance>::new(caller.clone(), new_id, standard, file_id);
+            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, T, T::ABalance>::new(caller.clone(), new_id, standard, file_id);
             <ProjectById<T>>::insert(new_id, new_project);
             LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
 
@@ -520,7 +520,7 @@ pub mod pallet {
             origin: OriginFor<T>, 
             project_id: ProjectId, 
             file_id: FileId, 
-            carbon_credits_count: T::Balance,
+            carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
             decimals: u8,
@@ -542,7 +542,7 @@ pub mod pallet {
                             let meta = annual_report::CarbonCreditsMeta::new(name, symbol, decimals);
                             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
                             project.annual_reports
-                                .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::Balance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
+                                .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
                             Ok(())
                         }
                     }
@@ -588,7 +588,7 @@ pub mod pallet {
             file_id: FileId, 
             filehash: pallet_evercity_filesign::file::H256,
             tag: Vec<u8>,
-            carbon_credits_count: T::Balance,
+            carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
             decimals: u8,
@@ -610,7 +610,7 @@ pub mod pallet {
                             );
                             pallet_evercity_filesign::Module::<T>::create_new_file(origin, tag, filehash, Some(file_id))?;
                             project.annual_reports
-                                        .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::Balance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
+                                        .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
                             Ok(())
                         }
                     }
@@ -637,7 +637,7 @@ pub mod pallet {
         pub fn change_report_carbon_credits_count(
             origin: OriginFor<T>, 
             project_id: ProjectId, 
-            new_carbon_credits_count: T::Balance
+            new_carbon_credits_count: T::ABalance
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
@@ -847,7 +847,7 @@ pub mod pallet {
             project_id: ProjectId,
             asset_id: <T as pallet_evercity_assets::Config>::AssetId,
             new_carbon_credits_holder: T::AccountId,
-            min_balance: <T as pallet_evercity_assets::Config>::Balance,
+            min_balance: <T as pallet_evercity_assets::Config>::ABalance,
         ) -> DispatchResultWithPostInfo {
             let project_owner = ensure_signed(origin.clone())?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&project_owner), Error::<T>::AccountNotOwner);
@@ -1037,7 +1037,7 @@ pub mod pallet {
                                                     .map(|(acc, everusd)| {
                                                         (acc, Self::divide_balance(everusd, cc_amount))
                                                     })
-                                                    .collect::<Vec<(T::AccountId, T::Balance)>>();
+                                                    .collect::<Vec<(T::AccountId, T::ABalance)>>();
 
                             // sends the part of balance
                             let proceed_send = |account: T::AccountId, part: i32| {
@@ -1102,7 +1102,7 @@ pub mod pallet {
         pub fn burn_carbon_credits(
             origin: OriginFor<T>, 
             asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
-            amount: T::Balance
+            amount: T::ABalance
         ) -> DispatchResultWithPostInfo {
             let credits_holder = ensure_signed(origin.clone())?;
             // check passport creds
@@ -1137,7 +1137,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Changes state of a project by signing
         fn change_project_state(
-            project: &mut ProjectStruct<T::AccountId, T, T::Balance>, 
+            project: &mut ProjectStruct<T::AccountId, T, T::ABalance>, 
             caller: T::AccountId, 
             event: &mut Option<Event<T>>
         ) -> DispatchResult {
@@ -1218,7 +1218,7 @@ pub mod pallet {
 
         /// Changes state of an annual report by signing
         fn change_project_annual_report_state(
-            project: &mut ProjectStruct<T::AccountId, T, T::Balance>, 
+            project: &mut ProjectStruct<T::AccountId, T, T::ABalance>, 
             caller: T::AccountId, 
             event: &mut Option<Event<T>>
         ) -> DispatchResult {
@@ -1298,17 +1298,17 @@ pub mod pallet {
             }
         }
 
-        fn is_correct_project_signer(project: &ProjectStruct<T::AccountId, T, T::Balance>, account: T::AccountId, role: RoleMask) -> bool {
+        fn is_correct_project_signer(project: &ProjectStruct<T::AccountId, T, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
             pallet_evercity_accounts::Module::<T>::account_is_selected_role(&account, role) &&
             project.is_required_signer((account, role))
         }
 
-        fn is_correct_annual_report_signer(annual_report: &annual_report::AnnualReportStruct<T::AccountId, T, T::Balance>, account: T::AccountId, role: RoleMask) -> bool {
+        fn is_correct_annual_report_signer(annual_report: &annual_report::AnnualReportStruct<T::AccountId, T, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
             pallet_evercity_accounts::Module::<T>::account_is_selected_role(&account, role) &&
             annual_report.is_required_signer((account, role))
         }
 
-        pub fn balance(asset_id: AssetId<T>, account_id: T::AccountId) -> T::Balance {
+        pub fn balance(asset_id: AssetId<T>, account_id: T::AccountId) -> T::ABalance {
             pallet_evercity_assets::Module::<T>::balance(asset_id, account_id)
         }
 
@@ -1329,7 +1329,7 @@ pub mod pallet {
             origin: OriginFor<T>, 
             asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
             new_carbon_credits_holder: T::AccountId, 
-            amount: T::Balance
+            amount: T::ABalance
         ) -> DispatchResultWithPostInfo {
             let owner = ensure_signed(origin.clone())?;
             // check passport creds
@@ -1346,7 +1346,7 @@ pub mod pallet {
 
     
         #[cfg(test)]
-        pub fn get_proj_by_id(id: ProjectId) -> Option<ProjectStruct<T::AccountId, T, T::Balance>> {
+        pub fn get_proj_by_id(id: ProjectId) -> Option<ProjectStruct<T::AccountId, T, T::ABalance>> {
             ProjectById::<T>::get(id)
         }
     
@@ -1356,14 +1356,14 @@ pub mod pallet {
         }
     
         #[cfg(test)]
-        pub fn get_certificates_by_account(account: T::AccountId) -> Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::Balance>> {
+        pub fn get_certificates_by_account(account: T::AccountId) -> Vec<CarbonCreditsBurnCertificate<AssetId<T>, T::ABalance>> {
             BurnCertificates::<T>::get(account)
         }
     
         #[cfg(test)]
         pub fn create_test_carbon_credits(
             account_id: T::AccountId, 
-            cc_amount: T::Balance, 
+            cc_amount: T::ABalance, 
             asset_id: T::AssetId, 
             fake_project_id: ProjectId
         ) -> DispatchResult {
@@ -1379,7 +1379,7 @@ pub mod pallet {
         pub fn create_test_bond_project(
             issuer: T::AccountId, 
             bond_id: BondId, 
-            cc_count: T::Balance, 
+            cc_count: T::ABalance, 
             standard: Standard, 
             project_id: ProjectId,
             project_state: project::ProjectStateMask,
@@ -1390,7 +1390,7 @@ pub mod pallet {
             let meta = annual_report::CarbonCreditsMeta::new(Vec::new(), Vec::new(), 0);
             new_project.state = project_state;//project::REGISTERED;
 
-            let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T, T::Balance>::new(
+            let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(
                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
                 cc_count, 
                 Timestamp::<T>::get(),
@@ -1404,19 +1404,19 @@ pub mod pallet {
     }
 
     //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> { 
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u128> + Into<u128> { 
-        pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::Balance {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> { 
+        pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::ABalance {
             num.into()
         }
 
-        pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::Balance ) -> u128 {
+        pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::ABalance ) -> u128 {
             bal.into()
         }
 
         pub fn divide_balance(
             percent: f64, 
-            bal_amount: <T as pallet_evercity_assets::pallet::Config>::Balance
-        ) -> <T as pallet_evercity_assets::pallet::Config>::Balance  {
+            bal_amount: <T as pallet_evercity_assets::pallet::Config>::ABalance
+        ) -> <T as pallet_evercity_assets::pallet::Config>::ABalance  {
             let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u128;
             Self::u64_to_balance(temp_u64)
         }
@@ -1426,7 +1426,7 @@ pub mod pallet {
             account: T::AccountId,
             part: i32,
             asset_id: T::AssetId,
-            cc_amount: T::Balance
+            cc_amount: T::ABalance
         ) {
             let perc = (part as f64)/(100_000_f64);
             if perc != 0.0 {
