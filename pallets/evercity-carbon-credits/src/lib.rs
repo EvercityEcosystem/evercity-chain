@@ -281,8 +281,8 @@ pub mod pallet {
 
     // EXTRINSICS:
     #[pallet::call]
-    //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> {
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u64> + Into<u64> {
+    //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> {
         /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
@@ -1403,13 +1403,13 @@ pub mod pallet {
         }
     }
 
-    //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::Balance: From<u64> + Into<u64> { 
-    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> { 
-        pub fn u64_to_balance(num: u128) -> <T as pallet_evercity_assets::pallet::Config>::ABalance {
+    impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u64> + Into<u64> { 
+    // impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> { 
+        pub fn u64_to_balance(num: u64) -> <T as pallet_evercity_assets::pallet::Config>::ABalance {
             num.into()
         }
 
-        pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::ABalance ) -> u128 {
+        pub fn balance_to_u64(bal: <T as pallet_evercity_assets::pallet::Config>::ABalance ) -> u64 {
             bal.into()
         }
 
@@ -1417,7 +1417,7 @@ pub mod pallet {
             percent: f64, 
             bal_amount: <T as pallet_evercity_assets::pallet::Config>::ABalance
         ) -> <T as pallet_evercity_assets::pallet::Config>::ABalance  {
-            let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u128;
+            let temp_u64 = ((Self::balance_to_u64(bal_amount) as f64) * percent) as u64;
             Self::u64_to_balance(temp_u64)
         }
 

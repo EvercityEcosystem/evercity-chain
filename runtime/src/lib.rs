@@ -309,7 +309,7 @@ type CarbonCreditsAmount = u64;
 use pallet_evercity_assets;
 impl pallet_evercity_assets::Config for Runtime {
     type Event = Event;
-    type ABalance = Balance;
+    type ABalance = u64;
     type AssetId = u64;
     type Currency = Balances;
     type ForceOrigin = frame_system::EnsureRoot<AccountId>;
