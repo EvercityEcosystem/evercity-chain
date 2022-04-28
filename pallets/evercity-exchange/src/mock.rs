@@ -126,12 +126,12 @@ pub type Balance = u128;
 pub type CCAmount = u64;
 
 parameter_types! {
-    pub const AssetDeposit: CCAmount = 1; 
-    pub const ApprovalDeposit: CCAmount = 1;
+    pub const AssetDeposit: Balance = 1; 
+    pub const ApprovalDeposit: Balance = 1;
     pub const StringLimit: u32 = 50;
     /// https://github.com/paritytech/substrate/blob/069917b/frame/assets/src/lib.rs#L257L271
-    pub const MetadataDepositBase: CCAmount = 1;
-    pub const MetadataDepositPerByte: CCAmount = 1;
+    pub const MetadataDepositBase: Balance = 1;
+    pub const MetadataDepositPerByte: Balance = 1;
 }
 
 impl pallet_evercity_assets::Config for TestRuntime {
