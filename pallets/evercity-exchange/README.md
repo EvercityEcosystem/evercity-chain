@@ -4,16 +4,18 @@ This repositary contains source code of blockchain node, which is a main part of
 
 # 2. Evercity exchange project main entities
 
-Exchange pallet has several entities: 
+ ### CarbonCreditsPackageLot 
+ Struct representing pack of carbon credits for sale.
+ Can include target bearer (to sell only to them). Lot has deadline, after whitch selling is impossible.
 
-### 2.1 EverUSDTradeRequest 
-
-The main entity for carbon credits - EverUSD trading
-
-# 3. Evercity exchange pallet can do several things
-
-- Create trade requst to exchange EverUSD to Carbon Credits
-- Create trade requst to exchange Carbon Credits to EverUSD
-- Accept both types of trade requests
+ # 3. Extrinsics
+ ```rust
+ create_carbon_credit_lot
+ ```
+ Creates a lot with an expiration moment. Lot can be private - then only targer bearer can buy Carbon Credits from the lot. 
+ ```
+ buy_carbon_credit_lot_units
+ ```
+ Buys Carbon Credits from the lot. Can buy defined amount of it, or the whole lot.
 
 

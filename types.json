@@ -132,6 +132,7 @@
   "RequiredSigner": "(AccountId, RoleMask)",
   "Standard": {
     "_enum": [
+      "GOLD_STANDARD_BOND",
       "GOLD_STANDARD"
     ]
   },
@@ -150,7 +151,7 @@
     "status": "ProjectStatus",
     "state": "ProjectStateMask",
     "file_id": "Option<FileId>",
-    "annual_reports": "Vec<AnnualReportStruct<AccountId, Moment, Balance>>",
+    "annual_reports": "Vec<AnnualReportStruct<AccountId, Moment, ABalance>>",
     "required_signers": "Vec<RequiredSigner<AccountId>>",
     "standard": "Standard",
     "bond_id": "Option<[u8; 16]>"
@@ -166,7 +167,7 @@
     "state": "AnnualReportStateMask",
     "carbon_credits_meta": "CarbonCreditsMeta",
     "create_time": "Compact<Moment>",
-    "carbon_credits_count": "Balance",
+    "carbon_credits_count": "ABalance",
     "carbon_credits_released": "bool",
     "required_signers": "Vec<RequiredSigner>"
   },
@@ -183,12 +184,12 @@
   },
   "CarbonCreditsBurnCertificate": {
     "asset_id": "AssetId",
-    "burned_amount": "Balance"
+    "burned_amount": "ABalance"
   },
   "Balance": "u128",
   "AssetId": "u64",
   "ABalance": "u64",
-  "TABalance": "Balance",
+  "CarbonCreditsBalance": "ABalance",
   "TAssetDepositBalance": "Balance",
   "AssetDetails": {
     "onwer": "AccountId",
@@ -203,12 +204,16 @@
     "accounts": "u32",
     "is_frozen": "bool"
   },
+  "AssetMetadata":{
+    "deposit": "TAssetDepositBalance",
+    "name": "Vec<u8>",
+    "symbol": "Vec<u8>",
+    "decimals": "u8"
+  },
   "EverUSDAssetMintRequestId": "u128",
-  "CarbonCreditsAmount":"u64",
   "CarbonCreditsId": "AssetId",
-  "CarbonCreditsBalance": "Balance",
   "CarbonUnitsMetadata": {
-    "count": "u64",
+    "count": "CarbonCreditsBalance",
     "carbon_distribution": "CarbonDistribution"
   },
   "CarbonDistribution": {
@@ -218,13 +223,13 @@
     "project_developer": "Option<(AccountId, i32)>"
   },
   "CarbonCreditsBondRelease": {
-    "amount": "Balance",
+    "amount": "CarbonCreditsBalance",
     "period": "u32"
   },
   "CarbonCreditsPackageLotOf": {
     "target_bearer": "AccountId",
     "deadline": "Compact<Moment>",
-    "amount": "CarbonCreditsAmount",
+    "amount": "CarbonCreditsBalance",
     "price_per_item": "EverUSDBalance"
   }
 }

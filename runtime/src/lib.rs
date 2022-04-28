@@ -305,7 +305,6 @@ parameter_types! {
     pub const MetadataDepositPerByte: Balance = 0;
 }
 
-type CarbonCreditsAmount = u64;
 use pallet_evercity_assets;
 impl pallet_evercity_assets::Config for Runtime {
     type Event = Event;

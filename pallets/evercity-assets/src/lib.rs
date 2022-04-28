@@ -611,7 +611,7 @@ pub mod pallet {
 		T::AssetId,
 		Blake2_128Concat,
 		T::AccountId,
-		ABalance<T::ABalance>,
+		AssetBalance<T::ABalance>,
 		ValueQuery
 	>;
 	#[pallet::storage]
@@ -669,7 +669,7 @@ impl<
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, Default)]
-pub struct ABalance<
+pub struct AssetBalance<
 	Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
 > {
 	/// The balance.

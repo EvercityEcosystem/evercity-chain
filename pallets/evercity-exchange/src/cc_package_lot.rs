@@ -5,13 +5,13 @@ use pallet_evercity_bonds::Expired;
 /// Struct representing pack of carbon credits for sale.
 /// Can include target bearer (to sell only to them)
 #[derive(Encode, Decode, Clone, Default, Eq, PartialEq, RuntimeDebug)]
-pub struct CarbonCreditsPackageLot<AccountId, Moment, CCAmount, EverUSDAmount> {
+pub struct CarbonCreditsPackageLot<AccountId, Moment, CCBalance, EverUSDAmount> {
     /// If set - only targer bearer can buy a lot, if None - anyone can buy
     pub target_bearer: Option<AccountId>,
     /// Lot available for sale only before deadline
     pub deadline: Moment,
     /// Amount of Carbon Credits for sale in this lot
-    pub amount: CCAmount,
+    pub amount: CCBalance,
     /// Price per 1 Carbon Credit. Total price = amount*price_per_item
     pub price_per_item: EverUSDAmount,
 }
@@ -25,8 +25,8 @@ pub type CarbonCreditsPackageLotOf<T> = CarbonCreditsPackageLot<
     pallet_evercity_bonds::EverUSDBalance,
 >;
 
-impl<AccountId, Moment: core::cmp::PartialOrd, CCAmount, EverUSDAmount> Expired<Moment> 
-    for CarbonCreditsPackageLot<AccountId, Moment, CCAmount, EverUSDAmount> {
+impl<AccountId, Moment: core::cmp::PartialOrd, CCBalance, EverUSDAmount> Expired<Moment> 
+    for CarbonCreditsPackageLot<AccountId, Moment, CCBalance, EverUSDAmount> {
     fn is_expired(&self, now: Moment) -> bool {
         self.deadline < now
     }
