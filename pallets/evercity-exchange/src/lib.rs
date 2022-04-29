@@ -108,7 +108,7 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3, 2))]
 		pub fn create_carbon_credit_lot(
 			origin: OriginFor<T>,
-			asset_id: CarbonCreditsId<T>,
+			#[pallet::compact] asset_id: CarbonCreditsId<T>,
 			new_lot: CarbonCreditsPackageLotOf<T>
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -160,9 +160,9 @@ pub mod pallet {
 		pub fn buy_carbon_credit_lot_units(
 			origin: OriginFor<T>,
 			seller: T::AccountId,
-			asset_id: CarbonCreditsId<T>,
+			#[pallet::compact] asset_id: CarbonCreditsId<T>,
 			mut lot: CarbonCreditsPackageLotOf<T>,
-			amount: CarbonCreditsBalance<T>,
+			#[pallet::compact] amount: CarbonCreditsBalance<T>,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
 

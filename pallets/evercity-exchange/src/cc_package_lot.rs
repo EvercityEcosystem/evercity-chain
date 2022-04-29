@@ -9,10 +9,13 @@ pub struct CarbonCreditsPackageLot<AccountId, Moment, CCBalance, EverUSDAmount> 
     /// If set - only targer bearer can buy a lot, if None - anyone can buy
     pub target_bearer: Option<AccountId>,
     /// Lot available for sale only before deadline
+    #[codec(compact)]
     pub deadline: Moment,
     /// Amount of Carbon Credits for sale in this lot
+    #[codec(compact)]
     pub amount: CCBalance,
     /// Price per 1 Carbon Credit. Total price = amount*price_per_item
+    #[codec(compact)]
     pub price_per_item: EverUSDAmount,
 }
 
