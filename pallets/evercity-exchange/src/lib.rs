@@ -75,7 +75,8 @@ pub mod pallet {
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
+	#[pallet::metadata(T::AccountId = "AccountId",  CarbonCreditsId::<T> = "AssetId",
+		 CarbonCreditsPackageLotOf::<T> = "CarbonCreditsPackageLotOf", CarbonCreditsBalance::<T> = "CarbonCreditsBalance")]
 	pub enum Event<T: Config> {
 		/// \[CarbonCreditsSeller, AssetId, CarbonCreditsLot\]
 		CarbonCreditsLotCreated(T::AccountId, CarbonCreditsId::<T>, CarbonCreditsPackageLotOf::<T>),
