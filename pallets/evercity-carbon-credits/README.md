@@ -46,6 +46,12 @@ Entity for registering carbon credits as assets
 
 Entity for granting certificates for carbon emissions offsetting using carbon credits
 
+ ### 4.6 CarbonCreditsPackageLot 
+
+ Struct representing pack of carbon credits for sale.
+ Can include target bearer (to sell only to them). Lot has deadline, after whitch selling is impossible.
+
+
 
 # 5. Evercity Roles and Carbon Creditis project scenario
 
@@ -100,6 +106,15 @@ Some other functions:
 - Project owner can remove account from project signers if it didnt sign the document (extrinsic - remove_project_signer())
 
 - Project owner can remove account from last annual report signers if it didnt sign the document (extrinsic - remove_last_annual_report_signer())
+ 
+ ```rust
+ create_carbon_credit_lot
+ ```
+ Creates a lot with an expiration moment. Lot can be private - then only targer bearer can buy Carbon Credits from the lot. 
+ ```
+ buy_carbon_credit_lot_units
+ ```
+ Buys Carbon Credits from the lot. Can buy defined amount of it, or the whole lot.
 
 
 # 6. Pallet Carbon Credits documentation

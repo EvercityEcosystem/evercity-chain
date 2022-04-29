@@ -1,9 +1,0 @@
-{
-    "CarbonCreditsBalance": "ABalance",
-    "CarbonCreditsPackageLotOf": {
-        "target_bearer": "Option<AccountId>",
-        "deadline": "Compact<Moment>",
-        "amount": "Compact<CarbonCreditsBalance>",
-        "price_per_item": "Compact<EverUSDBalance>"
-    }
-}

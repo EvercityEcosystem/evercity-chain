@@ -326,11 +326,6 @@ impl pallet_evercity_filesign::Config for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
-use pallet_evercity_exchange;
-impl pallet_evercity_exchange::Config for Runtime {
-    type Event = Event;
-}
-
 // Create the runtime by composing the FRAME pallets that were previously configured.
 
 construct_runtime!(
@@ -355,7 +350,6 @@ construct_runtime!(
         EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         EvercityAssets: pallet_evercity_assets::{ Module, Call, Storage, Event<T> },
-        EvercityExchange: pallet_evercity_exchange::{ Module, Call, Storage, Event<T> },
     }
 );
 
