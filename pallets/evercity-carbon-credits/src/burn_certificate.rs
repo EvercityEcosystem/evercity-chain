@@ -5,7 +5,9 @@ use frame_support::{
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct CarbonCreditsBurnCertificate<AssetId, Balance> {
+    /// Carbon Credit asset id
     pub asset_id: AssetId,
+    /// Amount of burned Carbon Credits
     pub burn_amount: Balance,
 }
 

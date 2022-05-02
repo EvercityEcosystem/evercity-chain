@@ -260,6 +260,7 @@ pub mod pallet {
         LotNotFound,
     }
 
+    /// Project storage
     #[pallet::storage]
     pub(super) type ProjectById<T: Config> = StorageMap<
         _,
@@ -269,6 +270,7 @@ pub mod pallet {
         OptionQuery
     >;
 
+    /// Last project id storage
     #[pallet::storage]
     pub(super) type LastID<T: Config> = StorageValue<
         _, 
@@ -276,6 +278,7 @@ pub mod pallet {
         ValueQuery
     >;
 
+    /// Carbon Credits passport storage
     #[pallet::storage]
     pub(super) type CarbonCreditPassportRegistry<T: Config> = StorageMap<
         _,
@@ -285,6 +288,7 @@ pub mod pallet {
         OptionQuery
     >;
 
+    /// Carbon Credits burned certificates storage for an account
     #[pallet::storage]
     pub(super) type BurnCertificates<T: Config> = StorageMap<
         _,
@@ -294,7 +298,7 @@ pub mod pallet {
         ValueQuery
     >;
 
-
+    /// Registy for storing released Carbon Credits for the bond. Bond can release Carbon Credits only once.
 	#[pallet::storage]
     pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
         _,

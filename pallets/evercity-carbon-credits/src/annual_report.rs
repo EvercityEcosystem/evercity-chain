@@ -6,6 +6,16 @@ use frame_support::{
 use crate::required_signers::RequiredSigner;
 use pallet_evercity_filesign::file::FileId;
 
+/// State of annual report in project for annual report state machine.
+/// 
+/// Possible annual report states:
+/// - `REPORT_PROJECT_OWNER_SIGN_PENDING` = 1
+/// - `REPORT_AUDITOR_SIGN_PENDING` = 2
+/// - `REPORT_STANDARD_SIGN_PENDING` = 4
+/// - `REPORT_INVESTOR_SIGN_PENDING` = 8
+/// - `REPORT_REGISTRY_SIGN_PENDING` = 16
+/// - `REPORT_ISSUED` = 32
+/// - `REPORT_EVERCITY_SIGN_PENDING` = 64
 pub type AnnualReportStateMask = u16;
 pub const REPORT_PROJECT_OWNER_SIGN_PENDING: AnnualReportStateMask = 1;
 pub const REPORT_AUDITOR_SIGN_PENDING: AnnualReportStateMask = 2;
@@ -23,13 +33,20 @@ pub type AnnualReportStruct<AccountId, T, Balance> = AnnualReportStructT<Account
 /// Main annual report implementation
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct AnnualReportStructT<AccountId, Moment, Balance> where Balance: Clone, AccountId: PartialEq {
+    /// Id of annual report file (stored in filesign)
     pub file_id: FileId,
+    /// Sign state of annual report 
     pub state: AnnualReportStateMask,
+    /// Carbon Credits metadata
     pub carbon_credits_meta: CarbonCreditsMeta,
+    /// Time of creation
     #[codec(compact)]
     create_time: Moment,
+    /// Amount of Carbon Credits to be released after signing of annual report
     carbon_credits_count: Balance,
+    /// Shows if Carbon Credits was released
     carbon_credits_released: bool,
+    /// List of signers for annual report
     required_signers: Vec<RequiredSigner<AccountId>>,
 }
 
@@ -94,10 +111,14 @@ impl<AccountId, Moment, Balance> AnnualReportStructT<AccountId, Moment, Balance>
     }
 }
 
+/// Metadata for Carbon Credit
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct CarbonCreditsMeta {
+    /// The user friendly name of Carbon Credit 
     pub name: Vec<u8>,
+    ///  The exchange symbol for Carbon Credit
     pub symbol: Vec<u8>,
+    /// The number of decimals this Carbon Credit uses to represent one unit.
     pub decimals: u8,
 }
 
