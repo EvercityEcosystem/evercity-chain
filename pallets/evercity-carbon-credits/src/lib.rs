@@ -1137,7 +1137,7 @@ pub mod pallet {
         /// Burns amount of carbon credits
         /// 
         /// </pre>
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3, 2))]
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(4, 3))]
         pub fn burn_carbon_credits(
             origin: OriginFor<T>, 
             asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
@@ -1147,7 +1147,15 @@ pub mod pallet {
             // check passport creds
             let passport = CarbonCreditPassportRegistry::<T>::get(asset_id);
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
-            ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) >= amount,
+
+            // purge expired lots
+            let now = Timestamp::<T>::get();
+			CarbonCreditLotRegistry::<T>::mutate(&credits_holder, asset_id, 
+				|lots| lots.retain(|lot| !lot.is_expired(now)));
+            let cc_reserved_for_lot = CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id)
+                .iter().map(|lot| lot.amount).sum();
+            // check that free carbon credits (that are not in the lot) is enough
+            ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) - cc_reserved_for_lot >= amount,
                 Error::<T>::InsufficientCarbonCredits
             );
             BurnCertificates::<T>::try_mutate(
