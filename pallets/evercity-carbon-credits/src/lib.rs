@@ -547,7 +547,9 @@ pub mod pallet {
         ///            project_id: ProjectId - Id of project, where to create annual report
         ///            file_id: FileId - Id of pre created file of annual report document
         ///            carbon_credits_count - count of carbon credits to release after signing
-        ///
+        ///            name: Vec<u8> - name of carbon credits, part of metadata
+        ///            symbol: Vec<u8> - symbol
+        ///            decimals: u8 - number of decimals (currently unused, always 0)
         ///
         /// Access: Owner of the project
         ///
@@ -562,7 +564,7 @@ pub mod pallet {
             carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
-            decimals: u8,
+            _decimals: u8,
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
@@ -578,7 +580,7 @@ pub mod pallet {
                                         .all(|x| x.state == annual_report::REPORT_ISSUED),
                                 Error::<T>::NotIssuedAnnualReportsExist
                             );
-                            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, decimals);
+                            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
                             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
                             project.annual_reports
                                 .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
@@ -592,17 +594,7 @@ pub mod pallet {
         }
 
         /// <pre>
-        /// Method: create_annual_report_with_file(
-        ///             project_id: ProjectId, 
-        ///             file_id: FileId, 
-        ///             filehash: pallet_evercity_filesign::file::H256,
-        ///             tag: Vec<u8>,
-        ///             carbon_credits_count: T::Balance,
-        ///             name: Vec<u8>,
-        ///             symbol: Vec<u8>,
-        ///             decimals: u8,
-        ///             ) 
-        /// 
+        /// Method: create_annual_report_with_file
         /// Arguments: origin: AccountId - Transaction caller
         ///            project_id: ProjectId - Id of project, where to create annual report
         ///            file_id: FileId - Id of file to create in filesign
@@ -611,8 +603,7 @@ pub mod pallet {
         ///            carbon_credits_count: T::Balance
         ///            name: Vec<u8> - name of carbon credits, part of metadata
         ///            symbol: Vec<u8> - symbol
-        ///            decimals: u8 - number of decimals
-        ///
+        ///            decimals: u8 - number of decimals (currently unused, always 0)
         ///
         /// Access: Owner of the project
         ///
@@ -630,11 +621,11 @@ pub mod pallet {
             carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
-            decimals: u8,
+            _decimals: u8,
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin.clone())?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
-            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, decimals);
+            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
             ProjectById::<T>::try_mutate(
                 project_id, |project_option| -> DispatchResult {
