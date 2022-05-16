@@ -7,8 +7,11 @@ use frame_support::{
 /// Passport, that prooves, that an asset is a carbon credit asset
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct CarbonCreditsPassport<AssetId>{
+    /// Carbon Credit asset id
     asset_id: AssetId,
+    /// Project were Carbon Credits were created
     project_id: CarbonCreditsOrigin,
+    /// Annual report index (in project) in whitch Carbon Credits were released
     annual_report_index: u64,
 }
 
@@ -55,9 +58,12 @@ impl<AssetId> CarbonCreditsPassport<AssetId> {
     }
 }
 
+/// Carbon Credits source
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 pub enum CarbonCreditsOrigin {
+    /// Project that releases Carbon Credits
     CarbonProject(ProjectId),
+    /// Bond that releases Carbon Credits
     Bond([u8; 16]),
 }
 

@@ -22,7 +22,7 @@ Evercity aims to realize this potential by building an open-source Sustainable F
 
 Powered by Parity Substrate blockchain engine, Sustainable Finance Protocol is an open-source software which allows participants to issue and monitor traditional green bonds, sustainability-linked bonds with adjustable floating impact-linked coupon rate, as well as green bonds linked to carbon credits. The main idea of the project is to increase accuracy of impact monitoring and reporting eliminating the risk of greenwashing, as well as to enable fair and transparent impact allocation between different stakeholders engaged in sustainability-related projects. The main operations performed are confirmed by blockchain digital signatures and can be traced publicly. The platform stablecoin EVERUSD cannot be used outside the platform, which eliminates the risks of money laundering.
 
-Evercity Carbon Credits pallet allows issuing carbon credits according to any standard (or even creating own standard using customizable frameworks) as a result of interaction between various stakeholders: project owners, standard representatives, auditors and registries. We are replicating the globally accepted life cycle of carbon credits on blockchain making it more transparent, efficient and accessible. Key target audiences of our product are project owners who issue carbon credits, companies who want to offset their emissions as well as blockchain projects who want to offset the carbon footprint of their transactions. Evercity Exchange pallet allows trading EVERUS, which originates in the bond pallet, to carbon credits and vice versa.
+Evercity Carbon Credits pallet allows issuing carbon credits according to any standard (or even creating own standard using customizable frameworks) as a result of interaction between various stakeholders: project owners, standard representatives, auditors and registries. We are replicating the globally accepted life cycle of carbon credits on blockchain making it more transparent, efficient and accessible. Key target audiences of our product are project owners who issue carbon credits, companies who want to offset their emissions as well as blockchain projects who want to offset the carbon footprint of their transactions. Also pallet allows trading EVERUSD, which originates in the bond pallet, to carbon credits and vice versa.
 
 
 # 4. Evercity project main entities
@@ -95,7 +95,7 @@ You can find more info about carbon credits flow in this [documentation](https:/
 5. The issuer creates a report where he indicates a number of issued carbon credits (based on the bond project impact), as well as their unique ticker. The report is also approved by CC_AUDITOR and CC_REGISTRY. 
 6. Approved report enables issuance of Carbon Credit units. 
 7. Issued Carbon Credit units are automatically distributed among the accounts and roles indicated at step 1. 
-8. Distributed Carbon Credit units can be transferred, retired and sold for EVERUSD in [pallet-evercity-exchange](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-exchange).
+8. Distributed Carbon Credit units can be retired and sold for EVERUSD by lot logic.
 
 
 # 6. How to start

@@ -8,6 +8,7 @@ pub mod required_signers;
 pub mod carbon_credits_passport;
 pub mod burn_certificate;
 pub mod bond_carbon_release;
+mod cc_package_lot;
 #[cfg(test)]    
 pub mod tests;
 
@@ -34,6 +35,9 @@ pub type Timestamp<T> = pallet_timestamp::Module<T>;
 pub type AssetId<T> = <T as pallet_evercity_assets::Config>::AssetId;
 pub type Balance<T> = <T as pallet_evercity_assets::Config>::ABalance;
 
+pub type CarbonCreditsId<T> = AssetId<T>;
+pub type CarbonCreditsBalance<T> = Balance<T>;
+
 const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5_000_000;
 
 #[frame_support::pallet]
@@ -43,8 +47,10 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use frame_system::pallet_prelude::*;
-    use pallet_evercity_bonds::{bond::BondState, BondId};
+    use pallet_evercity_bonds::{bond::BondState, BondId, Expired};
 	use crate::bond_carbon_release::CarbonCreditsBondRelease;
+	use sp_runtime::traits::{CheckedAdd};
+	use crate::cc_package_lot::{CarbonCreditsPackageLotOf};
     use super::*;
 
     #[pallet::pallet]
@@ -69,7 +75,8 @@ pub mod pallet {
 
     #[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	#[pallet::metadata(T::AccountId = "AccountId", T::Balance = "Balance", T::AssetId = "AssetId")]
+	#[pallet::metadata(T::AccountId = "AccountId", T::ABalance = "ABalance", T::AssetId = "AssetId", CarbonCreditsId::<T> = "AssetId",
+        CarbonCreditsPackageLotOf::<T> = "CarbonCreditsPackageLotOf", CarbonCreditsBalance::<T> = "CarbonCreditsBalance")]
     pub enum Event<T: Config> {
         /// \[ProjectOwner, ProjectId\]
         ProjectCreated(T::AccountId, ProjectId),
@@ -123,9 +130,13 @@ pub mod pallet {
         CarbonCreditsTransfered(T::AccountId, T::AccountId, T::AssetId),
         /// \[ProjectOwner, AssetId\]
         CarbonCreditsAssetBurned(T::AccountId, T::AssetId),
-
         /// \[BondId, AssetId\]
-        BondCarbonCreditsReleased(BondId, T::AssetId)
+        BondCarbonCreditsReleased(BondId, T::AssetId),
+
+        /// \[CarbonCreditsSeller, AssetId, CarbonCreditsLot\]
+		CarbonCreditsLotCreated(T::AccountId, CarbonCreditsId::<T>, CarbonCreditsPackageLotOf::<T>),
+		/// \[Buyer, Seller, Amount\]
+		CarbonCreditsBought(T::AccountId, T::AccountId, CarbonCreditsBalance::<T>),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -159,7 +170,7 @@ pub mod pallet {
         /// Account has already signed a project or annual report
         AccountAlreadySigned,
 
-        // State machine errors
+        // State machine errors:
 
         /// Invalid State of the state machine
         InvalidState,
@@ -174,7 +185,7 @@ pub mod pallet {
         /// State of an annual report doesnt equal to Issued
         ReportNotIssued,
 
-        // Asset error
+        // Asset errors:
 
         /// Error has occured when tried to create asset
         ErrorCreatingAsset,
@@ -214,10 +225,10 @@ pub mod pallet {
         // File errors
         IncorrectFileId,
 
-        // Bond Validation Errors
+        // Bond Validation Errors:
+
         /// Project is a Bond project
         ProjectIsBond,
-
         /// Project is not a Bond project
         ProjectIsNotBond,
         /// Bond is not in active or finished state
@@ -231,9 +242,25 @@ pub mod pallet {
         /// Account is not an issuer
 		NotAnIssuer,
         /// Carbon metadata is not valid
-		CarbonMetadataNotValid
+		CarbonMetadataNotValid,
+
+        // Exchange errors:
+
+        /// Not enough carbon credits balance
+        InsufficientCarbonCreditsBalance,
+        /// Not enough everUSD
+        InsufficientEverUSDBalance,
+        /// Lot reached time deadline 
+        LotExpired,
+        /// Lot details are invalid
+        InvalidLotDetails,
+        /// Attempt to buy more CC than exist in lot
+        NotEnoughCarbonCreditsInLot,
+        /// Lot not found
+        LotNotFound,
     }
 
+    /// Project storage
     #[pallet::storage]
     pub(super) type ProjectById<T: Config> = StorageMap<
         _,
@@ -243,6 +270,7 @@ pub mod pallet {
         OptionQuery
     >;
 
+    /// Last project id storage
     #[pallet::storage]
     pub(super) type LastID<T: Config> = StorageValue<
         _, 
@@ -250,6 +278,7 @@ pub mod pallet {
         ValueQuery
     >;
 
+    /// Carbon Credits passport storage
     #[pallet::storage]
     pub(super) type CarbonCreditPassportRegistry<T: Config> = StorageMap<
         _,
@@ -259,6 +288,7 @@ pub mod pallet {
         OptionQuery
     >;
 
+    /// Carbon Credits burned certificates storage for an account
     #[pallet::storage]
     pub(super) type BurnCertificates<T: Config> = StorageMap<
         _,
@@ -268,7 +298,7 @@ pub mod pallet {
         ValueQuery
     >;
 
-
+    /// Registy for storing released Carbon Credits for the bond. Bond can release Carbon Credits only once.
 	#[pallet::storage]
     pub(super) type BondCarbonReleaseRegistry<T: Config> = StorageMap<
         _,
@@ -278,11 +308,20 @@ pub mod pallet {
         OptionQuery
     >;
 
+    /// Carbon Credits Lots registry - for every AccountId and AssetId
+	#[pallet::storage]
+	#[pallet::getter(fn lots)]
+	pub(super) type CarbonCreditLotRegistry<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat, T::AccountId,
+		Blake2_128Concat, CarbonCreditsId<T>,
+		Vec<CarbonCreditsPackageLotOf<T>>,
+		ValueQuery
+	>;
 
     // EXTRINSICS:
     #[pallet::call]
     impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u64> + Into<u64> {
-    //impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> {
         /// <pre>
         /// Method: create_project(standard: Standard, file_id: FileId)
         /// Arguments: origin: AccountId - Transaction caller
@@ -508,7 +547,9 @@ pub mod pallet {
         ///            project_id: ProjectId - Id of project, where to create annual report
         ///            file_id: FileId - Id of pre created file of annual report document
         ///            carbon_credits_count - count of carbon credits to release after signing
-        ///
+        ///            name: Vec<u8> - name of carbon credits, part of metadata
+        ///            symbol: Vec<u8> - symbol
+        ///            decimals: u8 - number of decimals (currently unused, always 0)
         ///
         /// Access: Owner of the project
         ///
@@ -523,7 +564,7 @@ pub mod pallet {
             carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
-            decimals: u8,
+            _decimals: u8,
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
@@ -539,7 +580,7 @@ pub mod pallet {
                                         .all(|x| x.state == annual_report::REPORT_ISSUED),
                                 Error::<T>::NotIssuedAnnualReportsExist
                             );
-                            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, decimals);
+                            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
                             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
                             project.annual_reports
                                 .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
@@ -553,17 +594,7 @@ pub mod pallet {
         }
 
         /// <pre>
-        /// Method: create_annual_report_with_file(
-        ///             project_id: ProjectId, 
-        ///             file_id: FileId, 
-        ///             filehash: pallet_evercity_filesign::file::H256,
-        ///             tag: Vec<u8>,
-        ///             carbon_credits_count: T::Balance,
-        ///             name: Vec<u8>,
-        ///             symbol: Vec<u8>,
-        ///             decimals: u8,
-        ///             ) 
-        /// 
+        /// Method: create_annual_report_with_file
         /// Arguments: origin: AccountId - Transaction caller
         ///            project_id: ProjectId - Id of project, where to create annual report
         ///            file_id: FileId - Id of file to create in filesign
@@ -572,8 +603,7 @@ pub mod pallet {
         ///            carbon_credits_count: T::Balance
         ///            name: Vec<u8> - name of carbon credits, part of metadata
         ///            symbol: Vec<u8> - symbol
-        ///            decimals: u8 - number of decimals
-        ///
+        ///            decimals: u8 - number of decimals (currently unused, always 0)
         ///
         /// Access: Owner of the project
         ///
@@ -591,11 +621,11 @@ pub mod pallet {
             carbon_credits_count: T::ABalance,
             name: Vec<u8>,
             symbol: Vec<u8>,
-            decimals: u8,
+            _decimals: u8,
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin.clone())?;
             ensure!(accounts::Module::<T>::account_is_cc_project_owner(&caller), Error::<T>::AccountNotOwner);
-            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, decimals);
+            let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
             ProjectById::<T>::try_mutate(
                 project_id, |project_option| -> DispatchResult {
@@ -900,11 +930,9 @@ pub mod pallet {
         
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
-                            // let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
-                            let holder_origin = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
-                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
-                            let result = mint_call.dispatch_bypass_filter(holder_origin);
-                            ensure!(!result.is_err(), {
+                            let holder_origin: OriginFor<T> = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
+                            let mint_call = pallet_evercity_assets::Module::<T>::mint(holder_origin, asset_id, new_carbon_credits_holder_source, cc_amount);
+                            ensure!(!mint_call.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -997,9 +1025,8 @@ pub mod pallet {
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
                             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
-                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
-                            let result = mint_call.dispatch_bypass_filter(origin.clone());
-                            ensure!(!result.is_err(), {
+                            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin.clone(), asset_id, new_carbon_credits_holder_source, cc_amount);
+                            ensure!(!mint_call.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -1098,7 +1125,7 @@ pub mod pallet {
         /// Burns amount of carbon credits
         /// 
         /// </pre>
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3, 2))]
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(4, 3))]
         pub fn burn_carbon_credits(
             origin: OriginFor<T>, 
             asset_id: <T as pallet_evercity_assets::Config>::AssetId, 
@@ -1108,7 +1135,15 @@ pub mod pallet {
             // check passport creds
             let passport = CarbonCreditPassportRegistry::<T>::get(asset_id);
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
-            ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) >= amount,
+
+            // purge expired lots
+            let now = Timestamp::<T>::get();
+			CarbonCreditLotRegistry::<T>::mutate(&credits_holder, asset_id, 
+				|lots| lots.retain(|lot| !lot.is_expired(now)));
+            let cc_reserved_for_lot = CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id)
+                .iter().map(|lot| lot.amount).sum();
+            // check that free carbon credits (that are not in the lot) is enough
+            ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) - cc_reserved_for_lot >= amount,
                 Error::<T>::InsufficientCarbonCredits
             );
             BurnCertificates::<T>::try_mutate(
@@ -1122,15 +1157,144 @@ pub mod pallet {
                         }
                     }
 
-                    let burn_call = pallet_evercity_assets::Call::<T>::burn_self_assets(asset_id, amount);
-                    let result = burn_call.dispatch_bypass_filter(origin);
-                    ensure!(!result.is_err(), Error::<T>::BurnFailed);
+                    let burn_call = pallet_evercity_assets::Module::<T>::burn_self_assets(origin, asset_id, amount);
+                    ensure!(!burn_call.is_err(), Error::<T>::BurnFailed);
                     Ok(())
                 }
             )?;
             Self::deposit_event(Event::CarbonCreditsAssetBurned(credits_holder, asset_id));
             Ok(().into())
         }
+
+        /// <pre>
+		/// Method: create_carbon_credit_lot
+		/// Arguments: origin: OriginFor<T> - transaction caller
+		///			   asset_id: CarbonCreditsId<T> - Carbon Credit asset id
+		///			   new_lot: CarbonCreditsPackageLotOf<T> - new lot of Carbon Credits to auction off
+		/// Access: for Carbon Credits holder
+		/// 
+		/// Creates new Carbon Credits Lot of given asset_id. 
+		/// CarbonCreditsPackageLotOf new_lot contains:
+		/// 			"target_bearer" - optional, if set - lot is private
+		/// 			"deadline" - lot can be sold only before deadline
+		/// 			"amount" - amount of Carbon Credits for sell
+		/// 			"price_per_item" - price per one Carbon Credit
+		/// Function checks if deadline is correct, if caller has enough Carbon Credits.
+		/// Function purges another expired lots for this caller.
+		/// </pre>
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(3, 2))]
+		pub fn create_carbon_credit_lot(
+			origin: OriginFor<T>,
+			#[pallet::compact] asset_id: CarbonCreditsId<T>,
+			new_lot: CarbonCreditsPackageLotOf<T>
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+
+			// check if lot doesn't have errors 
+			let now = Timestamp::<T>::get();
+			ensure!(!new_lot.is_expired(now), Error::<T>::LotExpired);
+			if let Some(target) = &new_lot.target_bearer {
+				ensure!(&caller != target, Error::<T>::InvalidLotDetails);
+			}
+
+			// purge expired lots
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, 
+				|lots| lots.retain(|lot| !lot.is_expired(now)));
+
+			// check if caller has enough Carbon Credits
+			let lots_sum = CarbonCreditLotRegistry::<T>::get(&caller, asset_id)
+				.iter().map(|lot| lot.amount).sum();
+			let total_sum = new_lot.amount.checked_add(&lots_sum);
+			if let Some(sum) = total_sum {
+				ensure!(sum <= pallet_evercity_assets::Module::<T>::balance(asset_id, caller.clone()), 
+					Error::<T>::InsufficientCarbonCreditsBalance);
+			}
+
+			// add new lot
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot.clone()));
+			Self::deposit_event(Event::CarbonCreditsLotCreated(caller, asset_id, new_lot));
+
+			Ok(().into())
+		}
+
+		/// <pre>
+		/// Method: buy_carbon_credit_lot_units
+		/// Arguments: origin: OriginFor<T> - transaction caller
+		///				seller: T::AccountId - lot seller
+		///				asset_id: CarbonCreditsId<T> - Carbon Credit asset id
+		///				lot: CarbonCreditsPackageLotOf<T> - from whitch Carbon Credits are bought 
+		///				amount: CarbonCreditsBalance<T> - amount of Carbon Credits to buy
+		/// Access: any account having enough EverUSD,
+		/// 		for private lot - only account in that lot
+		/// 
+		/// Buys a specified amount of Carbon Credits from specified lot created by 
+		/// create_carbon_credit_lot(..) call. Lot should not be expired. 
+		/// Buyer should have enough EverUSD balance. If lot is private 
+		/// (lot.targer_bearer are set) - only target_bearer can buy from that lot. 
+		/// After selling other expired seller's lots are purged.
+		/// </pre>
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(5, 3))]
+		pub fn buy_carbon_credit_lot_units(
+			origin: OriginFor<T>,
+			seller: T::AccountId,
+			#[pallet::compact] asset_id: CarbonCreditsId<T>,
+			mut lot: CarbonCreditsPackageLotOf<T>,
+			#[pallet::compact] amount: CarbonCreditsBalance<T>,
+		) -> DispatchResultWithPostInfo {
+			let caller = ensure_signed(origin)?;
+
+			// check if buy attempt is correct
+			let now = Timestamp::<T>::get();
+			ensure!(!lot.is_expired(now), Error::<T>::LotExpired);
+			ensure!(amount <= lot.amount, Error::<T>::NotEnoughCarbonCreditsInLot);
+			let total_price = lot.price_per_item*Self::balance_to_u64(amount);
+			ensure!(total_price < pallet_evercity_bonds::Module::<T>::get_balance(&caller),
+				Error::<T>::InsufficientEverUSDBalance);
+			// check that target bearer is the same as caller if lot is private 
+			if let Some(account) = lot.target_bearer.clone() {
+				ensure!(account == caller, Error::<T>::LotNotFound)
+			}
+			
+			// change or remove lot if all ok
+			CarbonCreditLotRegistry::<T>::try_mutate(&seller, asset_id, 
+				|lots| -> DispatchResultWithPostInfo {
+					if let Some(index) = lots.iter().position(|item| item==&lot ){
+						// remove or change lot
+						if lot.amount == amount {
+							lots.remove( index );
+						} else if lot.amount > amount {
+							lot.amount = lot.amount - amount;
+							lots[index] = lot;
+						}
+						// transfer CC
+						let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
+						Self::transfer_carbon_credits(
+								cc_holder_origin, 
+								asset_id, 
+								caller.clone(), 
+								amount
+						)?;
+						// transfer everUSD then
+						pallet_evercity_bonds::Module::<T>::transfer_everusd(
+							&caller, 
+							&seller, 
+							total_price
+						)?;
+						
+						// purge expired lots
+						if !lots.is_empty() {
+							lots.retain(|item| !item.is_expired(now));
+						}
+						
+						Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+
+						Ok(().into())
+					}else{
+						Err(Error::<T>::InvalidLotDetails.into())
+					}
+			})?;
+			Ok(().into())
+		}
     }
 
     // IMPL PALLET
@@ -1337,8 +1501,7 @@ pub mod pallet {
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
 
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
-            let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
-            transfer_call.dispatch_bypass_filter(origin)?;
+            pallet_evercity_assets::Module::<T>::transfer(origin, asset_id, new_carbon_credits_holder_source, amount)?;
 
             Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
             Ok(().into())
@@ -1368,9 +1531,8 @@ pub mod pallet {
             fake_project_id: ProjectId
         ) -> DispatchResult {
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
-            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
             let origin = frame_system::RawOrigin::Signed(account_id).into();
-            let _ = mint_call.dispatch_bypass_filter(origin);
+            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin, asset_id, new_carbon_credits_holder_source, cc_amount);
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
             Ok(())
         }
@@ -1404,7 +1566,6 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u64> + Into<u64> { 
-    // impl<T: Config> Pallet<T> where <T as pallet_evercity_assets::pallet::Config>::ABalance: From<u128> + Into<u128> { 
         pub fn u64_to_balance(num: u64) -> <T as pallet_evercity_assets::pallet::Config>::ABalance {
             num.into()
         }

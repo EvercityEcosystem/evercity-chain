@@ -13,6 +13,16 @@ use frame_support::sp_std::{
 };
 use crate::required_signers::RequiredSigner;
 
+/// Project states for project state machine.
+/// 
+/// Possible project states: 
+/// - `PROJECT_OWNER_SIGN_PENDING` = 1
+/// - `AUDITOR_SIGN_PENDING` = 2
+/// - `STANDARD_SIGN_PENDING` = 4
+/// - `INVESTOR_SIGN_PENDING` = 8
+/// - `REGISTRY_SIGN_PENDING` = 16
+/// - `REGISTERED` = 32
+/// - `EVERCITY_SIGN_PENDING` = 64
 pub type ProjectStateMask = u16;
 pub const PROJECT_OWNER_SIGN_PENDING: ProjectStateMask = 1;
 pub const AUDITOR_SIGN_PENDING: ProjectStateMask = 2;
@@ -29,14 +39,25 @@ pub type ProjectId = u32;
 /// Main struct for projects
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq + Clone, Moment: pallet_timestamp::Config, Balance: Clone {
+    /// Owner of the project. Creates project, assigns auditor (and other) signers for the project.
+    /// Creates annual reports and assigns auditor (and other) signers for it.
+    /// Releases Carbon Credits when annual report is signed.
     pub owner: AccountId,
+    /// Project Id.
     pub id: ProjectId,
+    /// Status for project.
     pub status: ProjectStatus,
+    /// State shows that project is awaiting for specific signers.
     pub state: ProjectStateMask,
+    /// Id of file with project documentation.
     pub file_id: Option<FileId>,
+    /// List of annual reports.
     pub annual_reports: Vec<AnnualReportStruct<AccountId, Moment, Balance>>,
+    /// Signers that should sign to transit project to `REGISTERED` state.
     required_signers: Vec<RequiredSigner<AccountId>>,
+    /// Carbon Credits industry standard.
     standard: Standard,
+    /// Bond Id if project connected to green bond.
     bond_id: Option<BondId>,
 }
 
@@ -77,7 +98,7 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
 
     // Standart must be guaranted immutable for lifetime of the progect on register and issuance step 
     pub fn set_new_standard(&mut self, new_standard: Standard) {
-        if self.state != PROJECT_OWNER_SIGN_PENDING {
+        if self.state == PROJECT_OWNER_SIGN_PENDING {
             self.standard = new_standard
         }
     }
@@ -115,8 +136,11 @@ impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum ProjectStatus {
+    /// When project is created
     PREPARING,
+    /// When project awaits signs from auditors
     REGISTRATION,
+    /// When project registered (signed by all kind of auditors)
     ISSUANCE,
 }
 

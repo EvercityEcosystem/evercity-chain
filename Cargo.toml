@@ -10,6 +10,5 @@ members = [
     'pallets/evercity-assets',
     'pallets/evercity-carbon-credits',
     'pallets/evercity-bonds/transfer',
-    'pallets/evercity-exchange',
     'runtime',
 ]

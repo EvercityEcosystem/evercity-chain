@@ -56,7 +56,6 @@ pallet-assets = { default-features = false, version = '3.0.0' }
 
 pallet-evercity-filesign = { default-features = false, version = '0.1.4', path = '../pallets/evercity-filesign' }
 pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../pallets/evercity-assets' }
-pallet-evercity-exchange = { default-features = false, version = '0.1.0', path = '../pallets/evercity-exchange' }
 
 getrandom = {version = "0.2.3", features = ['js']}
 
@@ -95,5 +94,4 @@ std = [
     'pallet-evercity-filesign/std',
     'pallet-evercity-assets/std',
     'pallet-assets/std',
-    'pallet-evercity-exchange/std',
 ]

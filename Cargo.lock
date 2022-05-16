@@ -1414,7 +1414,6 @@ dependencies = [
  "pallet-evercity-assets",
  "pallet-evercity-bonds",
  "pallet-evercity-carbon-credits",
- "pallet-evercity-exchange",
  "pallet-evercity-filesign",
  "pallet-evercity-transfer",
  "pallet-grandpa",
@@ -3881,29 +3880,6 @@ dependencies = [
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
  "pallet-evercity-bonds",
- "pallet-evercity-filesign",
- "pallet-randomness-collective-flip",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "sp-api",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-evercity-exchange"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-evercity-accounts",
- "pallet-evercity-assets",
- "pallet-evercity-bonds",
- "pallet-evercity-carbon-credits",
  "pallet-evercity-filesign",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
