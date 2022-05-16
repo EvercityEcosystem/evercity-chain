@@ -930,11 +930,9 @@ pub mod pallet {
         
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
-                            // let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
-                            let holder_origin = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
-                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
-                            let result = mint_call.dispatch_bypass_filter(holder_origin);
-                            ensure!(!result.is_err(), {
+                            let holder_origin: OriginFor<T> = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
+                            let mint_call = pallet_evercity_assets::Module::<T>::mint(holder_origin, asset_id, new_carbon_credits_holder_source, cc_amount);
+                            ensure!(!mint_call.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -1027,9 +1025,8 @@ pub mod pallet {
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
                             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
-                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
-                            let result = mint_call.dispatch_bypass_filter(origin.clone());
-                            ensure!(!result.is_err(), {
+                            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin.clone(), asset_id, new_carbon_credits_holder_source, cc_amount);
+                            ensure!(!mint_call.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -1160,9 +1157,8 @@ pub mod pallet {
                         }
                     }
 
-                    let burn_call = pallet_evercity_assets::Call::<T>::burn_self_assets(asset_id, amount);
-                    let result = burn_call.dispatch_bypass_filter(origin);
-                    ensure!(!result.is_err(), Error::<T>::BurnFailed);
+                    let burn_call = pallet_evercity_assets::Module::<T>::burn_self_assets(origin, asset_id, amount);
+                    ensure!(!burn_call.is_err(), Error::<T>::BurnFailed);
                     Ok(())
                 }
             )?;
@@ -1505,8 +1501,7 @@ pub mod pallet {
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
 
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
-            let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
-            transfer_call.dispatch_bypass_filter(origin)?;
+            pallet_evercity_assets::Module::<T>::transfer(origin, asset_id, new_carbon_credits_holder_source, amount)?;
 
             Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
             Ok(().into())
@@ -1536,9 +1531,8 @@ pub mod pallet {
             fake_project_id: ProjectId
         ) -> DispatchResult {
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
-            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
             let origin = frame_system::RawOrigin::Signed(account_id).into();
-            let _ = mint_call.dispatch_bypass_filter(origin);
+            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin, asset_id, new_carbon_credits_holder_source, cc_amount);
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
             Ok(())
         }

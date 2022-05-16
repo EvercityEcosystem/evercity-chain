@@ -283,174 +283,7 @@ pub mod pallet {
 			})
 		}
 
-		/// Mint assets of a particular class.
-		///
-		/// The origin must be Signed and the sender must be the Issuer of the asset `id`.
-		///
-		/// - `id`: The identifier of the asset to have some amount minted.
-		/// - `beneficiary`: The account to be credited with the minted assets.
-		/// - `amount`: The amount of the asset to be minted.
-		///
-		/// Emits `Destroyed` event when successful.
-		///
-		/// Weight: `O(1)`
-		/// Modes: Pre-existing balance of `beneficiary`; Account pre-existence of `beneficiary`.
-		#[pallet::weight(T::WeightInfo::mint())]
-		pub(super) fn mint(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			beneficiary: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::ABalance
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
-			let beneficiary = T::Lookup::lookup(beneficiary)?;
-
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-
-				ensure!(&origin == &details.issuer, Error::<T>::NoPermission);
-				details.supply = details.supply.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-
-				Account::<T>::try_mutate(id, &beneficiary, |t| -> DispatchResultWithPostInfo {
-					let new_balance = t.balance.saturating_add(amount);
-					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
-					if t.balance.is_zero() {
-						t.is_zombie = Self::new_account(&beneficiary, details)?;
-					}
-					t.balance = new_balance;
-					Ok(().into())
-				})?;
-				Self::deposit_event(Event::Issued(id, beneficiary, amount));
-				Ok(().into())
-			})
-		}
-
-
-		/// Reduce the balance of `who` by as much as possible up to `amount` assets of `id`.
-		///
-		/// Origin must be Signed and the sender should be the Manager of the asset `id`.
-		///
-		/// Bails with `BalanceZero` if the `who` is already dead.
-		///
-		/// - `id`: The identifier of the asset to have some amount burned.
-		/// - `who`: The account to be debited from.
-		/// - `amount`: The maximum amount by which `who`'s balance should be reduced.
-		///
-		/// Emits `Burned` with the actual amount burned. If this takes the balance to below the
-		/// minimum for the asset, then the amount burned is increased to take it to zero.
-		///
-		/// Weight: `O(1)`
-		/// Modes: Post-existence of `who`; Pre & post Zombie-status of `who`.
-		#[pallet::weight(T::WeightInfo::burn())]
-		pub(super) fn burn_self_assets(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			#[pallet::compact] amount: T::ABalance
-		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			// let who = T::Lookup::lookup(who)?;
-
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				let burned = Account::<T>::try_mutate_exists(
-					id,
-					&who,
-					|maybe_account| -> Result<T::ABalance, DispatchError> {
-						let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
-						let mut burned = amount.min(account.balance);
-						account.balance -= burned;
-						*maybe_account = if account.balance < d.min_balance {
-							burned += account.balance;
-							Self::dead_account(&who, d, account.is_zombie);
-							None
-						} else {
-							Some(account)
-						};
-						Ok(burned)
-					}
-				)?;
-
-				d.supply = d.supply.saturating_sub(burned);
-
-				Self::deposit_event(Event::Burned(id, who, burned));
-				Ok(().into())
-			})
-		}
-
-		/// Move some assets from the sender account to another.
-		///
-		/// Origin must be Signed.
-		///
-		/// - `id`: The identifier of the asset to have some amount transferred.
-		/// - `target`: The account to be credited.
-		/// - `amount`: The amount by which the sender's balance of assets should be reduced and
-		/// `target`'s balance increased. The amount actually transferred may be slightly greater in
-		/// the case that the transfer would otherwise take the sender balance above zero but below
-		/// the minimum balance. Must be greater than zero.
-		///
-		/// Emits `Transferred` with the actual amount transferred. If this takes the source balance
-		/// to below the minimum for the asset, then the amount transferred is increased to take it
-		/// to zero.
-		///
-		/// Weight: `O(1)`
-		/// Modes: Pre-existence of `target`; Post-existence of sender; Prior & post zombie-status
-		/// of sender; Account pre-existence of `target`.
-		#[pallet::weight(T::WeightInfo::transfer())]
-		pub(super) fn transfer(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::AssetId,
-			target: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] amount: T::ABalance
-		) -> DispatchResultWithPostInfo {
-			let origin = ensure_signed(origin)?;
-			ensure!(!amount.is_zero(), Error::<T>::AmountZero);
-
-			let mut origin_account = Account::<T>::get(id, &origin);
-			ensure!(!origin_account.is_frozen, Error::<T>::Frozen);
-			origin_account.balance = origin_account.balance.checked_sub(&amount)
-				.ok_or(Error::<T>::BalanceLow)?;
-
-			let dest = T::Lookup::lookup(target)?;
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(!details.is_frozen, Error::<T>::Frozen);
-
-				if dest == origin {
-					return Ok(().into())
-				}
-
-				let mut amount = amount;
-				if origin_account.balance < details.min_balance {
-					amount += origin_account.balance;
-					origin_account.balance = Zero::zero();
-				}
-
-				Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
-					let new_balance = a.balance.saturating_add(amount);
-					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
-					if a.balance.is_zero() {
-						a.is_zombie = Self::new_account(&dest, details)?;
-					}
-					a.balance = new_balance;
-					Ok(().into())
-				})?;
-
-				match origin_account.balance.is_zero() {
-					false => {
-						Self::dezombify(&origin, details, &mut origin_account.is_zombie);
-						Account::<T>::insert(id, &origin, &origin_account)
-					}
-					true => {
-						Self::dead_account(&origin, details, origin_account.is_zombie);
-						Account::<T>::remove(id, &origin);
-					}
-				}
-
-				Self::deposit_event(Event::Transferred(id, origin, dest, amount));
-				Ok(().into())
-			})
-		}
-
+	
 		/// Set the metadata for an asset.
 		///
 		/// NOTE: There is no `unset_metadata` call. Simply pass an empty name, symbol,
@@ -518,6 +351,198 @@ pub mod pallet {
 				}
 
 				Self::deposit_event(Event::MetadataSet(id, name, symbol, decimals));
+				Ok(().into())
+			})
+		}
+
+	}
+
+	impl<T: Config> Pallet<T> {
+		/// Mint assets of a particular class.
+		///
+		/// The origin must be Signed and the sender must be the Issuer of the asset `id`.
+		///
+		/// - `id`: The identifier of the asset to have some amount minted.
+		/// - `beneficiary`: The account to be credited with the minted assets.
+		/// - `amount`: The amount of the asset to be minted.
+		///
+		/// Emits `Destroyed` event when successful.
+		///
+		/// Weight: `O(1)`
+		/// Modes: Pre-existing balance of `beneficiary`; Account pre-existence of `beneficiary`.
+		/// #[pallet::weight(T::WeightInfo::mint())]
+		/// fn mint() -> Weight {
+		/// 		(32_995_000 as Weight)
+		/// 		.saturating_add(T::DbWeight::get().reads(2 as Weight))
+		/// 		.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		/// }
+		pub fn mint(
+			origin: OriginFor<T>,
+			// #[pallet::compact] 
+			id: T::AssetId,
+			beneficiary: <T::Lookup as StaticLookup>::Source,
+			// #[pallet::compact] 
+			amount: T::ABalance
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+			let beneficiary = T::Lookup::lookup(beneficiary)?;
+
+			Asset::<T>::try_mutate(id, |maybe_details| {
+				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+
+				ensure!(&origin == &details.issuer, Error::<T>::NoPermission);
+				details.supply = details.supply.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+
+				Account::<T>::try_mutate(id, &beneficiary, |t| -> DispatchResultWithPostInfo {
+					let new_balance = t.balance.saturating_add(amount);
+					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
+					if t.balance.is_zero() {
+						t.is_zombie = Self::new_account(&beneficiary, details)?;
+					}
+					t.balance = new_balance;
+					Ok(().into())
+				})?;
+				Self::deposit_event(Event::Issued(id, beneficiary, amount));
+				Ok(().into())
+			})
+		}
+
+
+		/// Reduce the balance of `who` by as much as possible up to `amount` assets of `id`.
+		///
+		/// Origin must be Signed and the sender should be the Manager of the asset `id`.
+		///
+		/// Bails with `BalanceZero` if the `who` is already dead.
+		///
+		/// - `id`: The identifier of the asset to have some amount burned.
+		/// - `who`: The account to be debited from.
+		/// - `amount`: The maximum amount by which `who`'s balance should be reduced.
+		///
+		/// Emits `Burned` with the actual amount burned. If this takes the balance to below the
+		/// minimum for the asset, then the amount burned is increased to take it to zero.
+		///
+		/// Weight: `O(1)`
+		/// Modes: Post-existence of `who`; Pre & post Zombie-status of `who`.
+		/// #[pallet::weight(T::WeightInfo::burn())]
+		/// 	fn burn() -> Weight {
+		/// 		(29_245_000 as Weight)
+		/// 		.saturating_add(T::DbWeight::get().reads(2 as Weight))
+		/// 		.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		/// }
+		pub fn burn_self_assets(
+			origin: OriginFor<T>,
+			// #[pallet::compact] 
+			id: T::AssetId,
+			// #[pallet::compact] 
+			amount: T::ABalance
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			// let who = T::Lookup::lookup(who)?;
+
+			Asset::<T>::try_mutate(id, |maybe_details| {
+				let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+				let burned = Account::<T>::try_mutate_exists(
+					id,
+					&who,
+					|maybe_account| -> Result<T::ABalance, DispatchError> {
+						let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
+						let mut burned = amount.min(account.balance);
+						account.balance -= burned;
+						*maybe_account = if account.balance < d.min_balance {
+							burned += account.balance;
+							Self::dead_account(&who, d, account.is_zombie);
+							None
+						} else {
+							Some(account)
+						};
+						Ok(burned)
+					}
+				)?;
+
+				d.supply = d.supply.saturating_sub(burned);
+
+				Self::deposit_event(Event::Burned(id, who, burned));
+				Ok(().into())
+			})
+		}
+
+		/// Move some assets from the sender account to another.
+		///
+		/// Origin must be Signed.
+		///
+		/// - `id`: The identifier of the asset to have some amount transferred.
+		/// - `target`: The account to be credited.
+		/// - `amount`: The amount by which the sender's balance of assets should be reduced and
+		/// `target`'s balance increased. The amount actually transferred may be slightly greater in
+		/// the case that the transfer would otherwise take the sender balance above zero but below
+		/// the minimum balance. Must be greater than zero.
+		///
+		/// Emits `Transferred` with the actual amount transferred. If this takes the source balance
+		/// to below the minimum for the asset, then the amount transferred is increased to take it
+		/// to zero.
+		///
+		/// Weight: `O(1)`
+		/// Modes: Pre-existence of `target`; Post-existence of sender; Prior & post zombie-status
+		/// of sender; Account pre-existence of `target`.
+		/// #[pallet::weight(T::WeightInfo::transfer())]
+		/// 	fn transfer() -> Weight {
+		/// 		(42_211_000 as Weight)
+		/// 		.saturating_add(T::DbWeight::get().reads(4 as Weight))
+		/// 		.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		/// }
+		pub fn transfer(
+			origin: OriginFor<T>,
+			// #[pallet::compact] 
+			id: T::AssetId,
+			target: <T::Lookup as StaticLookup>::Source,
+			// #[pallet::compact] 
+			amount: T::ABalance
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+			ensure!(!amount.is_zero(), Error::<T>::AmountZero);
+
+			let mut origin_account = Account::<T>::get(id, &origin);
+			ensure!(!origin_account.is_frozen, Error::<T>::Frozen);
+			origin_account.balance = origin_account.balance.checked_sub(&amount)
+				.ok_or(Error::<T>::BalanceLow)?;
+
+			let dest = T::Lookup::lookup(target)?;
+			Asset::<T>::try_mutate(id, |maybe_details| {
+				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+				ensure!(!details.is_frozen, Error::<T>::Frozen);
+
+				if dest == origin {
+					return Ok(().into())
+				}
+
+				let mut amount = amount;
+				if origin_account.balance < details.min_balance {
+					amount += origin_account.balance;
+					origin_account.balance = Zero::zero();
+				}
+
+				Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
+					let new_balance = a.balance.saturating_add(amount);
+					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
+					if a.balance.is_zero() {
+						a.is_zombie = Self::new_account(&dest, details)?;
+					}
+					a.balance = new_balance;
+					Ok(().into())
+				})?;
+
+				match origin_account.balance.is_zero() {
+					false => {
+						Self::dezombify(&origin, details, &mut origin_account.is_zombie);
+						Account::<T>::insert(id, &origin, &origin_account)
+					}
+					true => {
+						Self::dead_account(&origin, details, origin_account.is_zombie);
+						Account::<T>::remove(id, &origin);
+					}
+				}
+
+				Self::deposit_event(Event::Transferred(id, origin, dest, amount));
 				Ok(().into())
 			})
 		}
