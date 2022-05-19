@@ -355,9 +355,6 @@ pub mod pallet {
 			})
 		}
 
-	}
-
-	impl<T: Config> Pallet<T> {
 		/// Mint assets of a particular class.
 		///
 		/// The origin must be Signed and the sender must be the Issuer of the asset `id`.
@@ -370,18 +367,13 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		/// Modes: Pre-existing balance of `beneficiary`; Account pre-existence of `beneficiary`.
-		/// #[pallet::weight(T::WeightInfo::mint())]
-		/// fn mint() -> Weight {
-		/// 		(32_995_000 as Weight)
-		/// 		.saturating_add(T::DbWeight::get().reads(2 as Weight))
-		/// 		.saturating_add(T::DbWeight::get().writes(2 as Weight))
-		/// }
-		pub fn mint(
+		#[pallet::weight(T::WeightInfo::mint())]
+		pub(super) fn mint(
 			origin: OriginFor<T>,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			id: T::AssetId,
 			beneficiary: <T::Lookup as StaticLookup>::Source,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
@@ -423,17 +415,12 @@ pub mod pallet {
 		///
 		/// Weight: `O(1)`
 		/// Modes: Post-existence of `who`; Pre & post Zombie-status of `who`.
-		/// #[pallet::weight(T::WeightInfo::burn())]
-		/// 	fn burn() -> Weight {
-		/// 		(29_245_000 as Weight)
-		/// 		.saturating_add(T::DbWeight::get().reads(2 as Weight))
-		/// 		.saturating_add(T::DbWeight::get().writes(2 as Weight))
-		/// }
-		pub fn burn_self_assets(
+		#[pallet::weight(T::WeightInfo::burn())]
+		pub(super) fn burn_self_assets(
 			origin: OriginFor<T>,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			id: T::AssetId,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -484,18 +471,13 @@ pub mod pallet {
 		/// Weight: `O(1)`
 		/// Modes: Pre-existence of `target`; Post-existence of sender; Prior & post zombie-status
 		/// of sender; Account pre-existence of `target`.
-		/// #[pallet::weight(T::WeightInfo::transfer())]
-		/// 	fn transfer() -> Weight {
-		/// 		(42_211_000 as Weight)
-		/// 		.saturating_add(T::DbWeight::get().reads(4 as Weight))
-		/// 		.saturating_add(T::DbWeight::get().writes(3 as Weight))
-		/// }
-		pub fn transfer(
+		#[pallet::weight(T::WeightInfo::transfer())]
+		pub(super) fn transfer(
 			origin: OriginFor<T>,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			id: T::AssetId,
 			target: <T::Lookup as StaticLookup>::Source,
-			// #[pallet::compact] 
+			#[pallet::compact] 
 			amount: T::ABalance
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
