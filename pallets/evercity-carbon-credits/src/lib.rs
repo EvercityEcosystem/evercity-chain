@@ -21,6 +21,7 @@ use frame_support::{
     traits::UnfilteredDispatchable,
 };
 use sp_runtime::traits::StaticLookup;
+use sp_runtime::traits::Zero;
 use project::{ProjectStruct, ProjectId};
 use standard::Standard;
 use pallet_evercity_filesign::file::{FileId};
@@ -316,7 +317,7 @@ pub mod pallet {
 		Blake2_128Concat, T::AccountId,
 		Blake2_128Concat, CarbonCreditsId<T>,
 		Vec<CarbonCreditsPackageLotOf<T>>,
-		ValueQuery
+		OptionQuery
 	>;
 
     // EXTRINSICS:
@@ -1140,10 +1141,14 @@ pub mod pallet {
 
             // purge expired lots
             let now = Timestamp::<T>::get();
-			CarbonCreditLotRegistry::<T>::mutate(&credits_holder, asset_id, 
-				|lots| lots.retain(|lot| !lot.is_expired(now)));
-            let cc_reserved_for_lot = CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id)
-                .iter().map(|lot| lot.amount).sum();
+			CarbonCreditLotRegistry::<T>::mutate_exists(&credits_holder, asset_id, 
+				|lots| match lots {
+                    Some(lots) => lots.retain(|lot| !lot.is_expired(now)),
+                    None => ()});
+            let cc_reserved_for_lot = match CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id) {
+                None => Zero::zero(),
+                Some(lots) => lots.iter().map(|lot| lot.amount).sum()
+            };
             // check that free carbon credits (that are not in the lot) is enough
             ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) - cc_reserved_for_lot >= amount,
                 Error::<T>::InsufficientCarbonCredits
@@ -1201,12 +1206,17 @@ pub mod pallet {
 			}
 
 			// purge expired lots
-			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, 
-				|lots| lots.retain(|lot| !lot.is_expired(now)));
+			CarbonCreditLotRegistry::<T>::mutate_exists(&caller, asset_id, 
+				|lots| match lots {
+                    None => (),
+                    Some(lots) => lots.retain(|lot| !lot.is_expired(now))
+                });
 
 			// check if caller has enough Carbon Credits
-			let lots_sum = CarbonCreditLotRegistry::<T>::get(&caller, asset_id)
-				.iter().map(|lot| lot.amount).sum();
+			let lots_sum = match CarbonCreditLotRegistry::<T>::get(&caller, asset_id) {
+                None => Zero::zero(),
+                Some(lots) => lots.iter().map(|lot| lot.amount).sum()
+            };
 			let total_sum = new_lot.amount.checked_add(&lots_sum);
 			if let Some(sum) = total_sum {
 				ensure!(sum <= pallet_evercity_assets::Module::<T>::balance(asset_id, caller.clone()), 
@@ -1214,7 +1224,14 @@ pub mod pallet {
 			}
 
 			// add new lot
-			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot.clone()));
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| match lots {
+                None => {
+                    let mut new_vec = Vec::new();
+                    new_vec.push(new_lot.clone());
+                    *lots = Some(new_vec);
+                },
+                Some(lots) => lots.push(new_lot.clone())
+            });
 			Self::deposit_event(Event::CarbonCreditsLotCreated(caller, asset_id, new_lot));
 
 			Ok(().into())
@@ -1259,42 +1276,51 @@ pub mod pallet {
 			}
 			
 			// change or remove lot if all ok
-			CarbonCreditLotRegistry::<T>::try_mutate(&seller, asset_id, 
-				|lots| -> DispatchResultWithPostInfo {
-					if let Some(index) = lots.iter().position(|item| item==&lot ){
-						// remove or change lot
-						if lot.amount == amount {
-							lots.remove( index );
-						} else if lot.amount > amount {
-							lot.amount = lot.amount - amount;
-							lots[index] = lot;
-						}
-						// transfer CC
-						let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
-						Self::transfer_carbon_credits(
-								cc_holder_origin, 
-								asset_id, 
-								caller.clone(), 
-								amount
-						)?;
-						// transfer everUSD then
-						pallet_evercity_bonds::Module::<T>::transfer_everusd(
-							&caller, 
-							&seller, 
-							total_price
-						)?;
-						
-						// purge expired lots
-						if !lots.is_empty() {
-							lots.retain(|item| !item.is_expired(now));
-						}
-						
-						Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+			CarbonCreditLotRegistry::<T>::try_mutate_exists(&seller, asset_id, 
+				|lots_opt| -> DispatchResultWithPostInfo {
+                    match lots_opt {
+                        Some(lots) => {
+                            if let Some(index) = lots.iter().position(|item| item==&lot ){
+                                // remove or change lot
+                                if lot.amount == amount {
+                                    lots.remove( index );
+                                } else if lot.amount > amount {
+                                    lot.amount = lot.amount - amount;
+                                    lots[index] = lot;
+                                }
+                                // transfer CC
+                                let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
+                                Self::transfer_carbon_credits(
+                                        cc_holder_origin, 
+                                        asset_id, 
+                                        caller.clone(), 
+                                        amount
+                                )?;
+                                // transfer everUSD then
+                                pallet_evercity_bonds::Module::<T>::transfer_everusd(
+                                    &caller, 
+                                    &seller, 
+                                    total_price
+                                )?;
+                                
+                                // purge expired lots
+                                if !lots.is_empty() {
+                                    lots.retain(|item| !item.is_expired(now));
+                                }
 
-						Ok(().into())
-					}else{
-						Err(Error::<T>::InvalidLotDetails.into())
-					}
+                                if lots.is_empty() {
+                                    lots_opt.take();
+                                }
+                                
+                                Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+        
+                                Ok(().into())
+                            }else{
+                                Err(Error::<T>::InvalidLotDetails.into())
+                            }
+                        },
+                        None => Err(Error::<T>::InvalidLotDetails.into())
+                    }		
 			})?;
 			Ok(().into())
 		}
