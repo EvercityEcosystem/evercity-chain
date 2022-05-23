@@ -1,6 +1,6 @@
 use evercity_runtime::pallet_evercity_bonds::account::{
     EvercityAccountStructT, AUDITOR_ROLE_MASK, CUSTODIAN_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK,
-    INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK,
+    INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK, RoleMask
 };
 use evercity_runtime::pallet_evercity_accounts;
 
@@ -169,7 +169,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
-    endowed_accounts: Vec<(AccountId, u8)>,
+    endowed_accounts: Vec<(AccountId, RoleMask)>,
     evercity_accounts: Vec<(AccountId, pallet_evercity_accounts::accounts::RoleMask)>,
     _root_key: AccountId,
 ) -> GenesisConfig {
@@ -220,6 +220,7 @@ fn testnet_genesis(
                         acc.clone(),
                         pallet_evercity_accounts::accounts::AccountStruct {
                             roles: *role,
+                            identity: 0,
                         },
                     )
                 })

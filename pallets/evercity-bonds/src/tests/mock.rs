@@ -105,7 +105,7 @@ impl pallet_balances::Config for TestRuntime {
     type MaxLocks = MaxLocks;
 }
 // (AccountId, role)
-static ROLES: [(u64, u8); 8] = [
+static ROLES: [(u64, RoleMask); 8] = [
     (1_u64, MASTER_ROLE_MASK),
     (2_u64, CUSTODIAN_ROLE_MASK),
     (3_u64, ISSUER_ROLE_MASK),

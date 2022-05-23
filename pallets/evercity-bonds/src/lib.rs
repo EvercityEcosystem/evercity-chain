@@ -120,7 +120,7 @@
 #![recursion_limit = "256"]
 
 use account::{
-    is_roles_correct, EvercityAccountStructOf, EvercityAccountStructT, OnAddAccount,
+    is_roles_correct, RoleMask, EvercityAccountStructOf, EvercityAccountStructT, OnAddAccount,
     TokenBurnRequestStruct, TokenBurnRequestStructOf, TokenMintRequestStruct,
     TokenMintRequestStructOf, AUDITOR_ROLE_MASK, CUSTODIAN_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK,
     INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK,
@@ -271,9 +271,9 @@ decl_event!(
         BondUnitSaleLotStructOf = BondUnitSaleLotStructOf<T>,
     {
         /// \[master, account, role, data\]
-        AccountAdd(AccountId, AccountId, u8, u64),
+        AccountAdd(AccountId, AccountId, RoleMask, u64),
         /// \[master, account, role, data\]
-        AccountSet(AccountId, AccountId, u8, u64),
+        AccountSet(AccountId, AccountId, RoleMask, u64),
         /// \[master, account\]
         AccountDisable(AccountId, AccountId),
         /// \[account, everusd\]
@@ -441,10 +441,10 @@ decl_module! {
         }
 
         /// <pre>
-        /// Method: account_add_with_role_and_data(origin, who: T::AccountId, role: u8, identity: u64)
+        /// Method: account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64)
         /// Arguments:  origin: AccountId - transaction caller
         ///             who: AccountId - id of account to add to accounts registry of platform
-        ///             role: u8 - role(s) of account (see ALL_ROLES_MASK for allowed roles)
+        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
         ///             identity: u64 - reserved field for integration with external platforms
         /// Access: Master role
         ///
@@ -453,7 +453,7 @@ decl_module! {
         /// KYC providers
         /// </pre>
         #[weight = <T as Config>::WeightInfo::account_add_with_role_and_data()]
-        fn account_add_with_role_and_data(origin, who: T::AccountId, role: u8,#[compact]  identity: u64) -> DispatchResult {
+        fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask,#[compact]  identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
@@ -466,17 +466,17 @@ decl_module! {
         }
 
         /// <pre>
-        /// Method: account_set_with_role_and_data(origin, who: T::AccountId, role: u8, identity: u64)
+        /// Method: account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64)
         /// Arguments:  origin: AccountId - transaction caller
         ///             who: AccountId - account to modify
-        ///             role: u8 - role(s) of account (see ALL_ROLES_MASK for allowed roles)
+        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
         ///             identity: u64 - reserved field for integration with external platforms
         /// Access: Master role
         ///
         /// Modifies existing account, assigning new role(s) or identity to it
         /// </pre>
         #[weight = <T as Config>::WeightInfo::account_set_with_role_and_data()]
-        fn account_set_with_role_and_data(origin, who: T::AccountId, role: u8,#[compact]  identity: u64) -> DispatchResult {
+        fn account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask,#[compact]  identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
@@ -1670,7 +1670,7 @@ impl<T: Config> Module<T> {
     /// Checks if the acc can create burn and mint tokens requests(INVESTOR or ISSUER)
     /// </pre>
     pub fn account_token_mint_burn_allowed(acc: &T::AccountId) -> bool {
-        const ALLOWED_ROLES_MASK: u8 = INVESTOR_ROLE_MASK | ISSUER_ROLE_MASK;
+        const ALLOWED_ROLES_MASK: RoleMask = INVESTOR_ROLE_MASK | ISSUER_ROLE_MASK;
         AccountRegistry::<T>::get(acc).roles & ALLOWED_ROLES_MASK != 0
     }
 

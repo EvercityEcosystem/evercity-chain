@@ -180,7 +180,8 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
                 (
                     *acc,
                     AccountStruct {
-                        roles: *role
+                        roles: *role,
+                        identity: 0
                     },
                 )
             })
@@ -212,7 +213,8 @@ pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
                 (
                     *acc,
                     AccountStruct {
-                        roles: *role
+                        roles: *role,
+                        identity: 0,
                     },
                 )
             })

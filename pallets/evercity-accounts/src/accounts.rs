@@ -51,16 +51,33 @@ pub const fn is_roles_mask_included(roles: RoleMask, const_mask: RoleMask) -> bo
     roles <= const_mask && roles > 0
 }
 
+/// Main structure, containing account data: roles(bit mask), identity(external id), creation_time.
+/// This structure is used to check and assign account roles
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
 pub struct AccountStruct {
     pub roles: RoleMask,
+    #[codec(compact)]
+    pub identity: u64,
+    // #[codec(compact)]
+    // pub create_time: Moment,
 }
 
 impl AccountStruct {
     pub fn new(roles: RoleMask) -> Self {
         AccountStruct{
-            roles
+            roles,
+            identity: 0u64
         }
     }
 }
+
+// impl AccountStruct {
+//     pub fn new(roles: RoleMask, identity: u64, create_time: Moment) -> Self {
+//         AccountStruct{
+//             roles,
+//             identity,
+//             create_time
+//         }
+//     }
+// }
