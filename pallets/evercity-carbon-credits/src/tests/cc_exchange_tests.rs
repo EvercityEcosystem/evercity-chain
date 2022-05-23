@@ -36,6 +36,8 @@ fn it_works_create_cc_lot() {
         assert_ok!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), cc_id, lot.clone()));
         let lots = CarbonCredits::lots(cc_holder, cc_id);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(lot, lots[0]);
     });
@@ -71,6 +73,8 @@ fn it_works_buy_cc_lot() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(0, lots.len());
         assert_eq!(cc_amount, cc_holder_amount - cc_holder_amount_after);
         assert_eq!(total_price, everusd_balance - everusd_balance_after);
@@ -108,6 +112,8 @@ fn it_works_buy_cc_lot_partially() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_amount - cc_to_buy, lots[0].amount);
         assert_eq!(cc_to_buy, cc_holder_amount - cc_holder_amount_after);
@@ -144,6 +150,8 @@ fn it_works_create_cc_lot_several_times() {
         assert_ok!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), carbon_credits_id, lot2.clone()));
         let lots = CarbonCredits::lots(cc_holder, carbon_credits_id);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(2, lots.len());
         assert_eq!(lot, lots[0]);
         assert_eq!(lot2, lots[1]);
@@ -187,6 +195,8 @@ fn it_works_create_cc_lot_several_times_expired_deleted() {
         assert_ok!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), carbon_credits_id, lot3.clone()));
         let lots = CarbonCredits::lots(cc_holder, carbon_credits_id);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(lot3, lots[0]);
     });
@@ -231,6 +241,8 @@ fn it_works_buy_cc_lot_several_times() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_amount - cc_to_buy*2, lots[0].amount);
         assert_eq!(cc_to_buy*2, cc_holder_amount - cc_holder_amount_after);
@@ -265,7 +277,7 @@ fn it_fails_create_lot_not_enough_cc() {
         frame_support::assert_err!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), cc_id, lot.clone()),
             RuntimeError::InsufficientCarbonCreditsBalance);
         let lots = CarbonCredits::lots(cc_holder, cc_id);
-        assert_eq!(0, lots.len());
+        assert!(lots.is_none());
     });
 }
 
@@ -290,7 +302,7 @@ fn it_fails_create_lot_private_to_seller() {
         assert_noop!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), cc_id, lot.clone()),
             RuntimeError::InvalidLotDetails);
         let lots = CarbonCredits::lots(cc_holder, cc_id);
-        assert_eq!(0, lots.len());
+        assert!(lots.is_none());
     });
 }
 
@@ -316,7 +328,7 @@ fn it_fails_create_lot_expired() {
         assert_noop!(CarbonCredits::create_carbon_credit_lot(Origin::signed(cc_holder), cc_id, lot.clone()),
             RuntimeError::LotExpired);
         let lots = CarbonCredits::lots(cc_holder, cc_id);
-        assert_eq!(0, lots.len());
+        assert!(lots.is_none());
     });
 }
 
@@ -351,6 +363,8 @@ fn it_works_buy_private_lot() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_amount - cc_to_buy, lots[0].amount);
         assert_eq!(cc_to_buy, cc_holder_amount - cc_holder_amount_after);
@@ -388,6 +402,8 @@ fn it_fails_buy_lot_not_enough_everusd() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_amount, lots[0].amount);
         assert_eq!(cc_holder_amount, cc_holder_amount_after);
@@ -427,6 +443,8 @@ fn it_fails_buy_lot_expired() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_holder_amount, cc_holder_amount_after);
         assert_eq!(everusd_balance, everusd_balance_after);
@@ -463,6 +481,8 @@ fn it_fails_buy_lot_amount_too_big() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_holder_amount, cc_holder_amount_after);
         assert_eq!(everusd_balance, everusd_balance_after);
@@ -502,6 +522,8 @@ fn it_fails_buy_lot_is_private() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
+        assert!(lots.is_some());
+        let lots = lots.unwrap();
         assert_eq!(1, lots.len());
         assert_eq!(cc_holder_amount, cc_holder_amount_after);
         assert_eq!(everusd_balance, everusd_balance_after);

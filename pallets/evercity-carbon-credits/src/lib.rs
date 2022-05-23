@@ -21,6 +21,7 @@ use frame_support::{
     traits::UnfilteredDispatchable,
 };
 use sp_runtime::traits::StaticLookup;
+use sp_runtime::traits::Zero;
 use project::{ProjectStruct, ProjectId};
 use standard::Standard;
 use pallet_evercity_filesign::file::{FileId};
@@ -316,7 +317,7 @@ pub mod pallet {
 		Blake2_128Concat, T::AccountId,
 		Blake2_128Concat, CarbonCreditsId<T>,
 		Vec<CarbonCreditsPackageLotOf<T>>,
-		ValueQuery
+		OptionQuery
 	>;
 
     // EXTRINSICS:
@@ -931,8 +932,9 @@ pub mod pallet {
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
                             let holder_origin: OriginFor<T> = frame_system::RawOrigin::Signed(new_carbon_credits_holder).into();
-                            let mint_call = pallet_evercity_assets::Module::<T>::mint(holder_origin, asset_id, new_carbon_credits_holder_source, cc_amount);
-                            ensure!(!mint_call.is_err(), {
+                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
+                            let result = mint_call.dispatch_bypass_filter(holder_origin);
+                            ensure!(!result.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -1025,8 +1027,9 @@ pub mod pallet {
                             // Mint Carbon Credits
                             let cc_amount = last_annual_report.carbon_credits_count();
                             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(project_owner.clone());
-                            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin.clone(), asset_id, new_carbon_credits_holder_source, cc_amount);
-                            ensure!(!mint_call.is_err(), {
+                            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
+                            let result = mint_call.dispatch_bypass_filter(origin.clone());
+                            ensure!(!result.is_err(), {
                                 // destroy if failed
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
@@ -1138,10 +1141,14 @@ pub mod pallet {
 
             // purge expired lots
             let now = Timestamp::<T>::get();
-			CarbonCreditLotRegistry::<T>::mutate(&credits_holder, asset_id, 
-				|lots| lots.retain(|lot| !lot.is_expired(now)));
-            let cc_reserved_for_lot = CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id)
-                .iter().map(|lot| lot.amount).sum();
+			CarbonCreditLotRegistry::<T>::mutate_exists(&credits_holder, asset_id, 
+				|lots| match lots {
+                    Some(lots) => lots.retain(|lot| !lot.is_expired(now)),
+                    None => ()});
+            let cc_reserved_for_lot = match CarbonCreditLotRegistry::<T>::get(&credits_holder, asset_id) {
+                None => Zero::zero(),
+                Some(lots) => lots.iter().map(|lot| lot.amount).sum()
+            };
             // check that free carbon credits (that are not in the lot) is enough
             ensure!(pallet_evercity_assets::Pallet::<T>::balance(asset_id, credits_holder.clone()) - cc_reserved_for_lot >= amount,
                 Error::<T>::InsufficientCarbonCredits
@@ -1157,8 +1164,9 @@ pub mod pallet {
                         }
                     }
 
-                    let burn_call = pallet_evercity_assets::Module::<T>::burn_self_assets(origin, asset_id, amount);
-                    ensure!(!burn_call.is_err(), Error::<T>::BurnFailed);
+                    let burn_call = pallet_evercity_assets::Call::<T>::burn_self_assets(asset_id, amount);
+                    let result = burn_call.dispatch_bypass_filter(origin);
+                    ensure!(!result.is_err(), Error::<T>::BurnFailed);
                     Ok(())
                 }
             )?;
@@ -1198,12 +1206,17 @@ pub mod pallet {
 			}
 
 			// purge expired lots
-			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, 
-				|lots| lots.retain(|lot| !lot.is_expired(now)));
+			CarbonCreditLotRegistry::<T>::mutate_exists(&caller, asset_id, 
+				|lots| match lots {
+                    None => (),
+                    Some(lots) => lots.retain(|lot| !lot.is_expired(now))
+                });
 
 			// check if caller has enough Carbon Credits
-			let lots_sum = CarbonCreditLotRegistry::<T>::get(&caller, asset_id)
-				.iter().map(|lot| lot.amount).sum();
+			let lots_sum = match CarbonCreditLotRegistry::<T>::get(&caller, asset_id) {
+                None => Zero::zero(),
+                Some(lots) => lots.iter().map(|lot| lot.amount).sum()
+            };
 			let total_sum = new_lot.amount.checked_add(&lots_sum);
 			if let Some(sum) = total_sum {
 				ensure!(sum <= pallet_evercity_assets::Module::<T>::balance(asset_id, caller.clone()), 
@@ -1211,7 +1224,14 @@ pub mod pallet {
 			}
 
 			// add new lot
-			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| lots.push(new_lot.clone()));
+			CarbonCreditLotRegistry::<T>::mutate(&caller, asset_id, |lots| match lots {
+                None => {
+                    let mut new_vec = Vec::new();
+                    new_vec.push(new_lot.clone());
+                    *lots = Some(new_vec);
+                },
+                Some(lots) => lots.push(new_lot.clone())
+            });
 			Self::deposit_event(Event::CarbonCreditsLotCreated(caller, asset_id, new_lot));
 
 			Ok(().into())
@@ -1256,42 +1276,51 @@ pub mod pallet {
 			}
 			
 			// change or remove lot if all ok
-			CarbonCreditLotRegistry::<T>::try_mutate(&seller, asset_id, 
-				|lots| -> DispatchResultWithPostInfo {
-					if let Some(index) = lots.iter().position(|item| item==&lot ){
-						// remove or change lot
-						if lot.amount == amount {
-							lots.remove( index );
-						} else if lot.amount > amount {
-							lot.amount = lot.amount - amount;
-							lots[index] = lot;
-						}
-						// transfer CC
-						let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
-						Self::transfer_carbon_credits(
-								cc_holder_origin, 
-								asset_id, 
-								caller.clone(), 
-								amount
-						)?;
-						// transfer everUSD then
-						pallet_evercity_bonds::Module::<T>::transfer_everusd(
-							&caller, 
-							&seller, 
-							total_price
-						)?;
-						
-						// purge expired lots
-						if !lots.is_empty() {
-							lots.retain(|item| !item.is_expired(now));
-						}
-						
-						Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+			CarbonCreditLotRegistry::<T>::try_mutate_exists(&seller, asset_id, 
+				|lots_opt| -> DispatchResultWithPostInfo {
+                    match lots_opt {
+                        Some(lots) => {
+                            if let Some(index) = lots.iter().position(|item| item==&lot ){
+                                // remove or change lot
+                                if lot.amount == amount {
+                                    lots.remove( index );
+                                } else if lot.amount > amount {
+                                    lot.amount = lot.amount - amount;
+                                    lots[index] = lot;
+                                }
+                                // transfer CC
+                                let cc_holder_origin = frame_system::RawOrigin::Signed(seller.clone()).into();
+                                Self::transfer_carbon_credits(
+                                        cc_holder_origin, 
+                                        asset_id, 
+                                        caller.clone(), 
+                                        amount
+                                )?;
+                                // transfer everUSD then
+                                pallet_evercity_bonds::Module::<T>::transfer_everusd(
+                                    &caller, 
+                                    &seller, 
+                                    total_price
+                                )?;
+                                
+                                // purge expired lots
+                                if !lots.is_empty() {
+                                    lots.retain(|item| !item.is_expired(now));
+                                }
 
-						Ok(().into())
-					}else{
-						Err(Error::<T>::InvalidLotDetails.into())
-					}
+                                if lots.is_empty() {
+                                    lots_opt.take();
+                                }
+                                
+                                Self::deposit_event(Event::CarbonCreditsBought(caller, seller.clone(), amount));
+        
+                                Ok(().into())
+                            }else{
+                                Err(Error::<T>::InvalidLotDetails.into())
+                            }
+                        },
+                        None => Err(Error::<T>::InvalidLotDetails.into())
+                    }		
 			})?;
 			Ok(().into())
 		}
@@ -1501,8 +1530,8 @@ pub mod pallet {
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
 
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(new_carbon_credits_holder.clone());
-            pallet_evercity_assets::Module::<T>::transfer(origin, asset_id, new_carbon_credits_holder_source, amount)?;
-
+            let transfer_call = pallet_evercity_assets::Call::<T>::transfer(asset_id, new_carbon_credits_holder_source, amount);
+            transfer_call.dispatch_bypass_filter(origin)?;
             Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
             Ok(().into())
         }
@@ -1532,7 +1561,8 @@ pub mod pallet {
         ) -> DispatchResult {
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
             let origin = frame_system::RawOrigin::Signed(account_id).into();
-            let mint_call = pallet_evercity_assets::Module::<T>::mint(origin, asset_id, new_carbon_credits_holder_source, cc_amount);
+            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
+            let _ = mint_call.dispatch_bypass_filter(origin);
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
             Ok(())
         }
