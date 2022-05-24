@@ -75,3 +75,9 @@ impl<Moment> AccountStruct<Moment> {
         }
     }
 }
+
+// use impl_trait_for_tuples::impl_for_tuples;
+// #[impl_trait_for_tuples::impl_for_tuples(30)]
+// pub trait OnAddAccount<AccountId, Moment> {
+//     fn on_add_account(account: &AccountId, data: &EvercityAccountStruct<Moment>);
+// }

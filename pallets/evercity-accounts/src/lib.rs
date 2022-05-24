@@ -37,6 +37,9 @@ pub trait Config: frame_system::Config + pallet_timestamp::Config  {
 
 decl_storage! {
     trait Store for Module<T: Config> as CarbonCredits {
+        Fuse get(fn fuse)
+            build(|config| !config.genesis_account_registry.is_empty()):
+            bool;
         /// Storage map for accounts, their roles and corresponding info
         AccountRegistry
             get(fn account_registry)
@@ -52,8 +55,8 @@ decl_event!(
     where
         AccountId = <T as frame_system::Config>::AccountId,
     {
-        /// \[master, account, role\]
-        AccountAdd(AccountId, AccountId, RoleMask),
+        /// \[master, account, role, identity\]
+        AccountAdd(AccountId, AccountId, RoleMask, u64),
 
         /// \[master, account, role\]
         AccountSet(AccountId, AccountId, RoleMask),
@@ -63,6 +66,8 @@ decl_event!(
 
         /// \[master, account\]
         MasterSet(AccountId, AccountId),
+        /// \[master, account\]
+        AccountDisable(AccountId, AccountId),
     }
 );
 
@@ -81,6 +86,8 @@ decl_error! {
         AccountRoleMasterIncluded,
 
         InvalidAction,
+        /// Account not authorized(doesn't have a needed role, or doesnt present in AccountRegistry at all)
+        AccountNotAuthorized,
     }
 }
 
@@ -88,16 +95,30 @@ decl_module! {
     pub struct Module<T: Config> for enum Call where origin: T::Origin {
         type Error = Error<T>;
         fn deposit_event() = default;
+
+        #[weight = T::DbWeight::get().reads_writes(2,1)]
+        fn set_master(origin) -> DispatchResult {
+            let caller = ensure_signed(origin)?;
+            Fuse::try_mutate(|fuse|->DispatchResult{
+                if *fuse {
+                    Err( Error::<T>::InvalidAction.into() )
+                }else{
+                    AccountRegistry::<T>::insert(&caller, AccountStruct::new(MASTER_ROLE_MASK, 0, Timestamp::<T>::get()));
+                    *fuse = true;
+                    Ok(())
+                }
+            })
+        }
         
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
-        pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64) -> DispatchResult {
+        pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, #[compact] identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
             ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
             ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
             AccountRegistry::<T>::insert(who.clone(), AccountStruct::new(role, identity, Timestamp::<T>::get()));
-            Self::deposit_event(RawEvent::AccountAdd(caller, who, role));
+            Self::deposit_event(RawEvent::AccountAdd(caller, who, role, identity));
             Ok(())
         }
 
@@ -116,18 +137,18 @@ decl_module! {
             Ok(())
         }
 
-        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
-        pub fn set_master(origin, who: T::AccountId) -> DispatchResult {
-            let caller = ensure_signed(origin)?;
-            ensure!(caller != who, Error::<T>::InvalidAction);
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
-            ensure!(!Self::account_is_master(&who), Error::<T>::InvalidAction);
-            AccountRegistry::<T>::mutate(who.clone(),|acc|{
-                acc.roles |= MASTER_ROLE_MASK;
-            });
-            Self::deposit_event(RawEvent::MasterSet(caller, who));
-            Ok(())
-        }
+        // #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        // pub fn set_master(origin, who: T::AccountId) -> DispatchResult {
+        //     let caller = ensure_signed(origin)?;
+        //     ensure!(caller != who, Error::<T>::InvalidAction);
+        //     ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
+        //     ensure!(!Self::account_is_master(&who), Error::<T>::InvalidAction);
+        //     AccountRegistry::<T>::mutate(who.clone(),|acc|{
+        //         acc.roles |= MASTER_ROLE_MASK;
+        //     });
+        //     Self::deposit_event(RawEvent::MasterSet(caller, who));
+        //     Ok(())
+        // }
 
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_withdraw_role(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
@@ -143,10 +164,43 @@ decl_module! {
             Self::deposit_event(RawEvent::AccountWithdraw(caller, who, role));
             Ok(())
         }
+
+        
+        /// <pre>
+        /// Method: account_disable(who: AccountId)
+        /// Arguments: origin: AccountId - transaction caller
+        ///            who: AccountId - account to disable
+        /// Access: Master role
+        ///
+        /// Disables all roles of account, setting roles bitmask to 0.
+        /// Accounts are not allowed to perform any actions without role,
+        /// but still have its data in blockchain (to not loose related entities)
+        /// </pre>
+       // #[weight = <T as Config>::WeightInfo::account_disable()]
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(4, 1)]
+        fn account_disable(origin, who: T::AccountId) -> DispatchResult {
+            let caller = ensure_signed(origin)?;
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(caller != who, Error::<T>::InvalidAction);
+            ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
+
+            AccountRegistry::<T>::mutate(&who,|acc|{
+                acc.roles = 0; // set no roles
+            });
+
+            Self::deposit_event(RawEvent::AccountDisable(caller, who));
+            Ok(())
+        }
     }
 }
 
 impl<T: Config> Module<T> {
+    // fn account_add(account: &T::AccountId, mut data: EvercityAccountStructOf<T>) {
+    //     data.create_time = Timestamp::<T>::get();
+    //     AccountRegistry::<T>::insert(account, &data);
+    //     T::OnAddAccount::on_add_account(account, &data);
+    // }
+
     /// <pre>
     /// Method: account_is_master(acc: &T::AccountId) -> bool
     /// Arguments: acc: AccountId - checked account id
@@ -158,7 +212,78 @@ impl<T: Config> Module<T> {
         AccountRegistry::<T>::get(acc).roles & MASTER_ROLE_MASK != 0
     }
 
+    /// <pre>
+    /// Method: account_is_custodian(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Custodian role
+    /// </pre>
+    pub fn account_is_custodian(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & CUSTODIAN_ROLE_MASK != 0
+    }
+
      /// <pre>
+    /// Method: account_is_issuer(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Issuer role
+    /// </pre>
+    pub fn account_is_issuer(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & ISSUER_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_is_investor(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Investor role
+    /// </pre>
+    pub fn account_is_investor(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & INVESTOR_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_is_auditor(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Auditor role
+    /// </pre>
+    pub fn account_is_auditor(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & AUDITOR_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_is_manager(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Manager role
+    /// </pre>
+    pub fn account_is_manager(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & MANAGER_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_is_impact_reporter(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc has global Impact Reporter role
+    /// </pre>
+    pub fn account_is_impact_reporter(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & IMPACT_REPORTER_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_token_mint_burn_allowed(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - checked account id
+    ///
+    /// Checks if the acc can create burn and mint tokens requests(INVESTOR or ISSUER)
+    /// </pre>
+    pub fn account_token_mint_burn_allowed(acc: &T::AccountId) -> bool {
+        const ALLOWED_ROLES_MASK: RoleMask = INVESTOR_ROLE_MASK | ISSUER_ROLE_MASK;
+        AccountRegistry::<T>::get(acc).roles & ALLOWED_ROLES_MASK != 0
+    }
+
+    /// <pre>
     /// Method: account_is_cc_project_owner(acc: &T::AccountId) -> bool
     /// Arguments: acc: AccountId - checked account id
     ///
