@@ -8,7 +8,7 @@ use crate::accounts::*;
 fn it_works_account_add_with_role_and_data() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         assert_ok!(assign_role_result, ());
     });
 }
@@ -17,7 +17,7 @@ fn it_works_account_add_with_role_and_data() {
 fn it_fils_account_add_with_role_and_data_not_master() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[1].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[1].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         assert_ne!(assign_role_result, DispatchResult::Ok(()));
     });
 }
@@ -35,7 +35,7 @@ fn it_fails_account_set_with_role_and_data_not_exits() {
 fn it_works_account_set_with_role_and_data() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_AUDITOR_ROLE_MASK);
         assert!(EvercityAccounts::account_is_cc_investor(&some_new_account));
         assert_ok!(assign_role_result, ());
@@ -46,7 +46,7 @@ fn it_works_account_set_with_role_and_data() {
 fn it_fails_account_set_with_role_and_data_not_master() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(Origin::signed(ROLES[1].0), some_new_account, CC_AUDITOR_ROLE_MASK);
         assert_ne!(assign_role_result, DispatchResult::Ok(()));
     });
@@ -56,7 +56,7 @@ fn it_fails_account_set_with_role_and_data_not_master() {
 fn it_fails_account_set_with_master_role() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, MASTER_ROLE_MASK);
         assert_ne!(assign_role_result, DispatchResult::Ok(()));
     });
@@ -66,7 +66,7 @@ fn it_fails_account_set_with_master_role() {
 fn it_works_roles_assigned_correctly_set_master() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CUSTODIAN_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CUSTODIAN_ROLE_MASK, 0);
         let all_roles = vec![
                 CUSTODIAN_ROLE_MASK, 
                 ISSUER_ROLE_MASK, 
@@ -101,7 +101,7 @@ fn it_works_account_set_with_master_role() {
         let some_new_master_account = 666;
         let some_new_account = 1349;
         let set_master_result = EvercityAccounts::set_master(Origin::signed(ROLES[0].0), some_new_master_account);
-        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(some_new_master_account), some_new_account, CC_PROJECT_OWNER_ROLE_MASK);
+        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(some_new_master_account), some_new_account, CC_PROJECT_OWNER_ROLE_MASK, 0);
 
         assert_ok!(set_master_result, ());
         assert_ok!(assign_role_result, ());
@@ -125,7 +125,7 @@ fn it_fails_account_set_with_master_role_already_master() {
 fn it_works_account_withraw_role() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_AUDITOR_ROLE_MASK);
 
         let withdraw_role_result = EvercityAccounts::account_withdraw_role(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
@@ -140,7 +140,7 @@ fn it_works_account_withraw_role() {
 fn it_works_check_events() {
     new_test_ext_with_event().execute_with(|| {
         let some_new_account = 666;
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let add_account_event = last_event().unwrap();
 
         let _ = EvercityAccounts::account_set_with_role_and_data(Origin::signed(ROLES[0].0), some_new_account, CC_AUDITOR_ROLE_MASK);

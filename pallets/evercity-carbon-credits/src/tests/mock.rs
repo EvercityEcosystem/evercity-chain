@@ -181,7 +181,8 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
                     *acc,
                     AccountStruct {
                         roles: *role,
-                        identity: 0
+                        identity: 0,
+                        create_time: 0,
                     },
                 )
             })
@@ -215,6 +216,7 @@ pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
                     AccountStruct {
                         roles: *role,
                         identity: 0,
+                        create_time: 0,
                     },
                 )
             })

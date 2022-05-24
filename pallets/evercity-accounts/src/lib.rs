@@ -29,7 +29,9 @@ use frame_support::sp_std::{
 };
 use accounts::*;
 
-pub trait Config: frame_system::Config {
+type Timestamp<T> = pallet_timestamp::Module<T>;
+
+pub trait Config: frame_system::Config + pallet_timestamp::Config  {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
@@ -39,7 +41,7 @@ decl_storage! {
         AccountRegistry
             get(fn account_registry)
             config(genesis_account_registry):
-            map hasher(blake2_128_concat) T::AccountId => AccountStruct;
+            map hasher(blake2_128_concat) T::AccountId => EvercityAccountStructOf<T> ;
 
         LastID: u32;
     }
@@ -88,13 +90,13 @@ decl_module! {
         fn deposit_event() = default;
         
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
-        pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
+        pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
             ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
             ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
-            AccountRegistry::<T>::insert(who.clone(), AccountStruct::new(role));
+            AccountRegistry::<T>::insert(who.clone(), AccountStruct::new(role, identity, Timestamp::<T>::get()));
             Self::deposit_event(RawEvent::AccountAdd(caller, who, role));
             Ok(())
         }

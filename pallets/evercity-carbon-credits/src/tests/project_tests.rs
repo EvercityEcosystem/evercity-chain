@@ -595,7 +595,7 @@ fn it_fails_sign_project_already_registered_project_gold_standard() {
         let some_new_acc = 7;
 
         let all_roles = ROLES.iter().map(|x| x.1).reduce(|x, y| x + y).unwrap();
-        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(0), some_new_acc, all_roles);
+        let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(0), some_new_acc, all_roles, 0);
 
         let _ = CarbonCredits::create_project(Origin::signed(owner), standard, create_project_documentation_file(owner));
         crate::tests::helpers::assign_project_mock_users_required_signers_gold_standard(1);

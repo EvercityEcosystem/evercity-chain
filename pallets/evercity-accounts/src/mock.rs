@@ -14,6 +14,9 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRunt
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
 
 // Configure a mock runtime to test the pallet.
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+
 frame_support::construct_runtime!(
 	pub enum TestRuntime where
 		Block = Block,
@@ -23,6 +26,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		EvercityAccounts: pallet_evercity_accounts::{Module, Call, Storage, Event<T>},
+        Timestamp: pallet_timestamp::{Module, Call, Storage},
 	}
 );
 
@@ -56,7 +60,16 @@ impl pallet_evercity_accounts::Config for TestRuntime {
     type Event = Event;
 }
 
+impl pallet_timestamp::Config for TestRuntime {
+    /// A timestamp: milliseconds since the unix epoch.
+    type Moment = u64;
+    type OnTimestampSet = ();
+    type MinimumPeriod = MinimumPeriod;
+    type WeightInfo = ();
+}
+
 parameter_types! {
+    pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
     pub const ExistentialDeposit: u64 = 0;
     pub const MaxLocks: u32 = 50;
 }
@@ -110,6 +123,7 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
                     AccountStruct {
                         roles: *role,
                         identity: 0,
+                        create_time: 0,
                     },
                 )
             })
@@ -143,6 +157,7 @@ pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
                     AccountStruct {
                         roles: *role,
                         identity: 0,
+                        create_time: 0,
                     },
                 )
             })
