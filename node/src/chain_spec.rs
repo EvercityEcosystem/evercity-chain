@@ -1,16 +1,17 @@
-use evercity_runtime::pallet_evercity_bonds::account::{
-    EvercityAccountStructT, AUDITOR_ROLE_MASK, CUSTODIAN_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK,
-    INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK, RoleMask
+use evercity_runtime::pallet_evercity_accounts::accounts::{
+    AccountStruct, AUDITOR_ROLE_MASK, CUSTODIAN_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK,
+    INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK, 
+    CC_PROJECT_OWNER_ROLE_MASK, CC_AUDITOR_ROLE_MASK, CC_STANDARD_ROLE_MASK, CC_REGISTRY_ROLE_MASK
 };
 use evercity_runtime::pallet_evercity_accounts;
 
 use evercity_runtime::{
-    AccountId, AuraConfig, BalancesConfig, EvercityConfig, GenesisConfig, GrandpaConfig, Signature,
+    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature,
     SudoConfig, SystemConfig, EvercityAccountsConfig, WASM_BINARY,
 };
 use sp_core::{crypto::Ss58Codec, sr25519, Pair, Public};
 
-type EvercityAccountStruct = EvercityAccountStructT<u64>;
+// type EvercityAccountStruct = EvercityAccountStructOf<u64>;
 
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -64,19 +65,19 @@ pub fn development_config() -> Result<ChainSpec, String> {
                     ),
                     (
                         get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        CUSTODIAN_ROLE_MASK,
+                        CUSTODIAN_ROLE_MASK|CC_PROJECT_OWNER_ROLE_MASK,
                     ),
                     (
                         get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                        ISSUER_ROLE_MASK,
+                        ISSUER_ROLE_MASK|CC_AUDITOR_ROLE_MASK,
                     ),
                     (
                         get_account_id_from_seed::<sr25519::Public>("Dave"),
-                        INVESTOR_ROLE_MASK,
+                        INVESTOR_ROLE_MASK|CC_STANDARD_ROLE_MASK,
                     ),
                     (
                         get_account_id_from_seed::<sr25519::Public>("Eve"),
-                        AUDITOR_ROLE_MASK,
+                        AUDITOR_ROLE_MASK|CC_REGISTRY_ROLE_MASK,
                     ),
                     (
                         get_account_id_from_seed::<sr25519::Public>("Ferdie"),
@@ -87,28 +88,28 @@ pub fn development_config() -> Result<ChainSpec, String> {
                         IMPACT_REPORTER_ROLE_MASK,
                     ),
                 ],
-                vec![
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        pallet_evercity_accounts::accounts::MASTER_ROLE_MASK,
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        pallet_evercity_accounts::accounts::CC_PROJECT_OWNER_ROLE_MASK,
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                        pallet_evercity_accounts::accounts::CC_AUDITOR_ROLE_MASK,
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Dave"),
-                        pallet_evercity_accounts::accounts::CC_STANDARD_ROLE_MASK,
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Eve"),
-                        pallet_evercity_accounts::accounts::CC_REGISTRY_ROLE_MASK,
-                    ),
-                ],
+                // vec![
+                //     (
+                //         get_account_id_from_seed::<sr25519::Public>("Alice"),
+                //         MASTER_ROLE_MASK,
+                //     ),
+                //     (
+                //         get_account_id_from_seed::<sr25519::Public>("Bob"),
+                //         CC_PROJECT_OWNER_ROLE_MASK,
+                //     ),
+                //     (
+                //         get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                //         CC_AUDITOR_ROLE_MASK,
+                //     ),
+                //     (
+                //         get_account_id_from_seed::<sr25519::Public>("Dave"),
+                //         CC_STANDARD_ROLE_MASK,
+                //     ),
+                //     (
+                //         get_account_id_from_seed::<sr25519::Public>("Eve"),
+                //         CC_REGISTRY_ROLE_MASK,
+                //     ),
+                // ],
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
             )
@@ -145,8 +146,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 wasm_binary,
                 // @FIXME! setup Master and Custodian
                 vec![authority_keys_from_seed("Evercity//Master")],
+              //  vec![(master_account_id.clone(), MASTER_ROLE_MASK)],
                 vec![(master_account_id.clone(), MASTER_ROLE_MASK)],
-                vec![(master_account_id.clone(), pallet_evercity_accounts::accounts::MASTER_ROLE_MASK)],
                 // Sudo account
                 master_account_id,
             )
@@ -169,7 +170,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
-    endowed_accounts: Vec<(AccountId, RoleMask)>,
+    //endowed_accounts: Vec<(AccountId, RoleMask)>,
     evercity_accounts: Vec<(AccountId, pallet_evercity_accounts::accounts::RoleMask)>,
     _root_key: AccountId,
 ) -> GenesisConfig {
@@ -180,7 +181,7 @@ fn testnet_genesis(
             changes_trie_config: Default::default(),
         }),
         pallet_balances: Some(BalancesConfig {
-            balances: endowed_accounts
+            balances: evercity_accounts
                 .iter()
                 .map(|x| (x.0.clone(), 1 << 60))
                 .collect(),
@@ -195,22 +196,6 @@ fn testnet_genesis(
                 .collect(),
         }),
         pallet_sudo: Some(SudoConfig { key: _root_key }),
-        pallet_evercity_bonds: Some(EvercityConfig {
-            // set roles for each pre-set accounts (set role)
-            genesis_account_registry: endowed_accounts
-                .iter()
-                .map(|(acc, role)| {
-                    (
-                        acc.clone(),
-                        EvercityAccountStruct {
-                            roles: *role,
-                            identity: 0,
-                            create_time: 0,
-                        },
-                    )
-                })
-                .collect(),
-        }),
         pallet_evercity_accounts: Some(EvercityAccountsConfig {
             // set roles for each pre-set accounts (set role)
             genesis_account_registry: evercity_accounts
@@ -218,7 +203,7 @@ fn testnet_genesis(
                 .map(|(acc, role)| {
                     (
                         acc.clone(),
-                        pallet_evercity_accounts::accounts::AccountStruct {
+                        AccountStruct {
                             roles: *role,
                             identity: 0,
                             create_time: 0,

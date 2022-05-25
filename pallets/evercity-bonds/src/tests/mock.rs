@@ -8,6 +8,11 @@ use frame_support::sp_runtime::{
     traits::{BlakeTwo256, IdentityLookup},
 };
 use sp_core::H256;
+use pallet_evercity_accounts::accounts::{
+    RoleMask, ISSUER_ROLE_MASK, MASTER_ROLE_MASK,
+    AUDITOR_ROLE_MASK, MANAGER_ROLE_MASK, INVESTOR_ROLE_MASK, CUSTODIAN_ROLE_MASK,
+    AccountStruct
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
 type Block = frame_system::mocking::MockBlock<TestRuntime>;
@@ -22,6 +27,7 @@ frame_support::construct_runtime!(
             Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
             Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
             Evercity: pallet_evercity::{Module, Call, Storage, Event<T>},
+            EvercityAccounts: pallet_evercity_accounts::{Module, Call, Storage, Event<T>},
         }
 );
 
@@ -74,12 +80,15 @@ impl Config for TestRuntime {
     type MaxMintAmount = MaxMintAmount;
     type TimeStep = TimeStep;
     type WeightInfo = ();
-    type OnAddAccount = ();
     type OnAddBond = ();
 }
 
 parameter_types! {
     pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
+}
+
+impl pallet_evercity_accounts::Config for TestRuntime {
+	type Event = Event;
 }
 
 impl pallet_timestamp::Config for TestRuntime {
@@ -128,14 +137,14 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-    crate::GenesisConfig::<TestRuntime> {
+    pallet_evercity_accounts::GenesisConfig::<TestRuntime> {
         // Accounts for tests
         genesis_account_registry: ROLES
             .iter()
             .map(|(acc, role)| {
                 (
                     *acc,
-                    EvercityAccountStructT::<u64> {
+                    AccountStruct::<u64> {
                         roles: *role,
                         identity: 0,
                         create_time: 0,

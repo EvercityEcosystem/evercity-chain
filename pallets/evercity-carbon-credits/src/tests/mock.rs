@@ -50,7 +50,6 @@ impl pallet_evercity_bonds::Config for TestRuntime {
     type MaxMintAmount = MaxMintAmount;
     type TimeStep = TimeStep;
     type WeightInfo = ();
-    type OnAddAccount = ();
     type OnAddBond = ();
 }
 

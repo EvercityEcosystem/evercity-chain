@@ -119,15 +119,12 @@
 #![allow(clippy::too_many_arguments)]
 #![recursion_limit = "256"]
 
-use account::{
-    is_roles_correct, RoleMask, EvercityAccountStructOf, EvercityAccountStructT, OnAddAccount,
-    TokenBurnRequestStruct, TokenBurnRequestStructOf, TokenMintRequestStruct,
-    TokenMintRequestStructOf, AUDITOR_ROLE_MASK, CUSTODIAN_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK,
-    INVESTOR_ROLE_MASK, ISSUER_ROLE_MASK, MANAGER_ROLE_MASK, MASTER_ROLE_MASK,
-};
+use pallet_evercity_accounts as accounts;
+
 use bond::{
     transfer_bond_units, AccountYield, BondInnerStructOf, BondPeriodNumber, BondState,
     BondUnitAmount, BondUnitSaleLotStructOf, OnAddBond,
+
 };
 pub use bond::{
     BondId, BondImpactReportStruct, BondPeriod, BondStruct, BondStructOf, BondUnitPackage,
@@ -147,14 +144,15 @@ use frame_support::{
 use frame_system::ensure_signed;
 pub use period::{PeriodDataStruct, PeriodYield};
 
-pub trait Config: frame_system::Config + pallet_timestamp::Config {
+pub trait Config: frame_system::Config 
+        + pallet_timestamp::Config
+        + pallet_evercity_accounts::Config {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     type BurnRequestTtl: Get<u32>;
     type MintRequestTtl: Get<u32>;
     type MaxMintAmount: Get<EverUSDBalance>;
     type TimeStep: Get<BondPeriod>;
     type WeightInfo: WeightInfo;
-    type OnAddAccount: OnAddAccount<Self::AccountId, Self::Moment>;
     type OnAddBond: OnAddBond<Self::AccountId, Self::Moment, Self::Hash>;
 }
 
@@ -176,17 +174,18 @@ const MIN_BOND_DURATION: BondPeriodNumber = 1;
 /// Evercity project types
 /// All these types must be put in CUSTOM_TYPES part of config for polkadot.js
 /// to be correctly presented in DApp
-pub mod account;
 pub mod bond;
 mod default_weight;
 #[cfg(test)]
 pub mod ledger;
-// #[cfg(test)]
-// mod mock;
+
+pub mod token;
 pub mod period;
 pub mod runtime_api;
 #[cfg(test)]
 mod tests;
+
+use token::*;
 
 macro_rules! ensure_active {
     ($f:expr, $err:expr) => {
@@ -201,15 +200,7 @@ macro_rules! ensure_active {
 
 decl_storage! {
     trait Store for Module<T: Config> as Evercity {
-        Fuse get(fn fuse)
-            build(|config| !config.genesis_account_registry.is_empty()):
-            bool;
-        /// Storage map for accounts, their roles and corresponding info
-        AccountRegistry
-            get(fn account_registry)
-            config(genesis_account_registry):
-            map hasher(blake2_128_concat) T::AccountId => EvercityAccountStructOf<T>;
-
+      
         /// Total supply of EverUSD token. Sum of all token balances in system
         TotalSupplyEverUSD
             get(fn total_supply_everusd):
@@ -270,12 +261,6 @@ decl_event!(
         AccountId = <T as frame_system::Config>::AccountId,
         BondUnitSaleLotStructOf = BondUnitSaleLotStructOf<T>,
     {
-        /// \[master, account, role, data\]
-        AccountAdd(AccountId, AccountId, RoleMask, u64),
-        /// \[master, account, role, data\]
-        AccountSet(AccountId, AccountId, RoleMask, u64),
-        /// \[master, account\]
-        AccountDisable(AccountId, AccountId),
         /// \[account, everusd\]
         MintRequestCreated(AccountId, EverUSDBalance),
         /// \[account, everusd\]
@@ -399,98 +384,6 @@ decl_module! {
         // Events must be initialized if they are used by the pallet.
         fn deposit_event() = default;
 
-        // Account management functions
-
-        #[weight = T::DbWeight::get().reads_writes(2,1)]
-        fn set_master(origin) -> DispatchResult {
-            let caller = ensure_signed(origin)?;
-            Fuse::try_mutate(|fuse|->DispatchResult{
-                if *fuse {
-                    Err( Error::<T>::InvalidAction.into() )
-                }else{
-                    Self::account_add(&caller, EvercityAccountStructT { roles: MASTER_ROLE_MASK, identity:0, create_time: Timestamp::<T>::get() });
-                    *fuse = true;
-                    Ok(())
-                }
-            })
-        }
-
-        /// <pre>
-        /// Method: account_disable(who: AccountId)
-        /// Arguments: origin: AccountId - transaction caller
-        ///            who: AccountId - account to disable
-        /// Access: Master role
-        ///
-        /// Disables all roles of account, setting roles bitmask to 0.
-        /// Accounts are not allowed to perform any actions without role,
-        /// but still have its data in blockchain (to not loose related entities)
-        /// </pre>
-        #[weight = <T as Config>::WeightInfo::account_disable()]
-        fn account_disable(origin, who: T::AccountId) -> DispatchResult {
-            let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(caller != who, Error::<T>::InvalidAction);
-            ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
-
-            AccountRegistry::<T>::mutate(&who,|acc|{
-                acc.roles = 0; // set no roles
-            });
-
-            Self::deposit_event(RawEvent::AccountDisable(caller, who));
-            Ok(())
-        }
-
-        /// <pre>
-        /// Method: account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64)
-        /// Arguments:  origin: AccountId - transaction caller
-        ///             who: AccountId - id of account to add to accounts registry of platform
-        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
-        ///             identity: u64 - reserved field for integration with external platforms
-        /// Access: Master role
-        ///
-        /// Adds new account with given role(s). Roles are set as bitmask. Contains parameter
-        /// "identity", planned to use in the future to connect accounts with external services like
-        /// KYC providers
-        /// </pre>
-        #[weight = <T as Config>::WeightInfo::account_add_with_role_and_data()]
-        fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask,#[compact]  identity: u64) -> DispatchResult {
-            let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
-            ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
-
-            Self::account_add( &who, EvercityAccountStructT { roles: role, identity, create_time: Timestamp::<T>::get() } );
-
-            Self::deposit_event(RawEvent::AccountAdd(caller, who, role, identity));
-            Ok(())
-        }
-
-        /// <pre>
-        /// Method: account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64)
-        /// Arguments:  origin: AccountId - transaction caller
-        ///             who: AccountId - account to modify
-        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
-        ///             identity: u64 - reserved field for integration with external platforms
-        /// Access: Master role
-        ///
-        /// Modifies existing account, assigning new role(s) or identity to it
-        /// </pre>
-        #[weight = <T as Config>::WeightInfo::account_set_with_role_and_data()]
-        fn account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask,#[compact]  identity: u64) -> DispatchResult {
-            let caller = ensure_signed(origin)?;
-            ensure!(caller != who, Error::<T>::InvalidAction);
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
-            ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
-
-            AccountRegistry::<T>::mutate(&who,|acc|{
-                acc.roles |= role;
-            });
-
-            Self::deposit_event(RawEvent::AccountSet(caller, who, role, identity));
-            Ok(())
-        }
-
         // Token balances manipulation functions
 
         /// <pre>
@@ -507,7 +400,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_mint_request_create_everusd()]
         fn token_mint_request_create_everusd(origin, #[compact] amount_to_mint: EverUSDBalance) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(amount_to_mint <= T::MaxMintAmount::get(), Error::<T>::MintRequestParamIncorrect);
 
             MintRequestEverUSD::<T>::try_mutate(&caller, |request|->DispatchResult{
@@ -557,7 +450,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_mint_request_confirm_everusd()]
         fn token_mint_request_confirm_everusd(origin, who: T::AccountId, #[compact] amount: EverUSDBalance) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(MintRequestEverUSD::<T>::contains_key(&who), Error::<T>::MintRequestDoesntExist);
             let mint_request = MintRequestEverUSD::<T>::get(&who);
             let now = Timestamp::<T>::get();
@@ -591,7 +484,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_mint_request_decline_everusd()]
         fn token_mint_request_decline_everusd(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(MintRequestEverUSD::<T>::contains_key(&who), Error::<T>::MintRequestDoesntExist);
             let amount = MintRequestEverUSD::<T>::get(&who).amount;
             MintRequestEverUSD::<T>::remove(&who);
@@ -613,7 +506,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_burn_request_create_everusd()]
         fn token_burn_request_create_everusd(origin, #[compact]  amount_to_burn: EverUSDBalance) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
 
             let current_balance = BalanceEverUSD::<T>::get(&caller);
             ensure!(amount_to_burn <= current_balance, Error::<T>::BalanceOverdraft);
@@ -662,7 +555,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_burn_request_confirm_everusd()]
         fn token_burn_request_confirm_everusd(origin, who: T::AccountId, #[compact]  amount: EverUSDBalance) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(BurnRequestEverUSD::<T>::contains_key(&who), Error::<T>::BurnRequestDoesntExist);
             let burn_request = BurnRequestEverUSD::<T>::get(&who);
             let now = Timestamp::<T>::get();
@@ -694,7 +587,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::token_burn_request_decline_everusd()]
         fn token_burn_request_decline_everusd(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(BurnRequestEverUSD::<T>::contains_key(&who), Error::<T>::BurnRequestDoesntExist);
             let amount = BurnRequestEverUSD::<T>::get(&who).amount;
             BurnRequestEverUSD::<T>::remove(&who);
@@ -725,7 +618,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_add_new()]
         fn bond_add_new(origin, bond: BondId, body: BondInnerStructOf<T> ) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_issuer(&caller),Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_issuer(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(body.is_valid(T::TimeStep::get()), Error::<T>::BondParamIncorrect );
             ensure!(!BondRegistry::<T>::contains_key(&bond), Error::<T>::BondAlreadyExists);
 
@@ -763,8 +656,8 @@ decl_module! {
         fn bond_set_manager(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             // Bond Auxiliary roles can be set only by Master
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(Self::account_is_manager(&acc), Error::<T>::AccountRoleParamIncorrect);
+            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_manager(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
                 ensure!(
@@ -794,8 +687,8 @@ decl_module! {
         fn bond_set_auditor(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             // Bond auxiliary roles can be set only by Master
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(Self::account_is_auditor(&acc), Error::<T>::AccountRoleParamIncorrect);
+            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_auditor(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
                 ensure!(
@@ -823,8 +716,8 @@ decl_module! {
         fn bond_set_impact_reporter(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             // Bond auxiliary roles can be set only by Master
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
-            ensure!(Self::account_is_impact_reporter(&acc), Error::<T>::AccountRoleParamIncorrect);
+            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_impact_reporter(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
                 item.impact_reporter = acc;
@@ -898,7 +791,7 @@ decl_module! {
         fn bond_release(origin, bond: BondId, #[compact]  nonce: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             // Bond can be released only by Master
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             Self::with_bond(&bond, |item|{
                 ensure!(item.nonce == nonce, Error::<T>::BondNonceObsolete );
                 ensure!(item.state == BondState::PREPARE, Error::<T>::BondStateNotPermitAction);
@@ -940,7 +833,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_unit_package_buy()]
         fn bond_unit_package_buy(origin, bond: BondId,#[compact]  nonce: u64,#[compact] unit_amount: BondUnitAmount ) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             Self::with_bond(&bond, |mut item|{
                 ensure!(item.nonce == nonce, Error::<T>::BondNonceObsolete);
                 ensure!(
@@ -1020,7 +913,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_unit_package_return()]
         fn bond_unit_package_return(origin, bond: BondId,#[compact]  unit_amount: BondUnitAmount ) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(unit_amount > 0, Error::<T>::BondParamIncorrect);
             // Active Bond cannot be withdrawn
             Self::with_bond(&bond, |item|{
@@ -1075,7 +968,7 @@ decl_module! {
                 // Ensure the Bond raises less then bond_units_mincap_amount bond units
                 ensure!(item.inner.bond_units_mincap_amount > item.issued_amount, Error::<T>::BondParamIncorrect);
                 ensure!(
-                    item.issuer == caller || item.manager == caller || Self::account_is_master(&caller) ,
+                    item.issuer == caller || item.manager == caller || accounts::Module::<T>::account_is_master(&caller) ,
                     Error::<T>::BondAccessDenied
                 );
                 let now = Timestamp::<T>::get();
@@ -1130,7 +1023,7 @@ decl_module! {
         fn bond_activate(origin, bond: BondId,#[compact]  nonce: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             //Bond can be activated only by Master
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             //if it's raised enough bond units during bidding process
             Self::with_bond(&bond, |item|{
                 ensure!(item.nonce == nonce, Error::<T>::BondNonceObsolete );
@@ -1220,7 +1113,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_impact_report_approve()]
         fn bond_impact_report_approve(origin, bond: BondId,#[compact] period: BondPeriodNumber,#[compact]  impact_data: u64 ) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_auditor(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_auditor(&caller), Error::<T>::AccountNotAuthorized);
             let now = Timestamp::<T>::get();
             {
                 let item = BondRegistry::<T>::get(bond);
@@ -1311,7 +1204,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_declare_bankrupt()]
         fn bond_declare_bankrupt(origin, bond: BondId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+             ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
 
             Self::with_bond(&bond, |mut item|{
                 ensure!(item.state == BondState::ACTIVE, Error::<T>::BondStateNotPermitAction);
@@ -1541,7 +1434,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_unit_lot_settle()]
         fn bond_unit_lot_settle(origin, bond: BondId, bondholder: T::AccountId, lot: BondUnitSaleLotStructOf<T>)->DispatchResult{
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             let now = Timestamp::<T>::get();
             // prevent expired lots sales
             ensure!(!lot.is_expired( now ), Error::<T>::LotObsolete);
@@ -1587,93 +1480,6 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
-    fn account_add(account: &T::AccountId, mut data: EvercityAccountStructOf<T>) {
-        data.create_time = Timestamp::<T>::get();
-        AccountRegistry::<T>::insert(account, &data);
-        T::OnAddAccount::on_add_account(account, &data);
-    }
-
-    /// <pre>
-    /// Method: account_is_master(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Master role
-    /// </pre>
-    pub fn account_is_master(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & MASTER_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_custodian(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Custodian role
-    /// </pre>
-    pub fn account_is_custodian(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & CUSTODIAN_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_issuer(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Issuer role
-    /// </pre>
-    pub fn account_is_issuer(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & ISSUER_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_investor(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Investor role
-    /// </pre>
-    pub fn account_is_investor(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & INVESTOR_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_auditor(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Auditor role
-    /// </pre>
-    pub fn account_is_auditor(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & AUDITOR_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_manager(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Manager role
-    /// </pre>
-    pub fn account_is_manager(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & MANAGER_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_is_impact_reporter(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc has global Impact Reporter role
-    /// </pre>
-    pub fn account_is_impact_reporter(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & IMPACT_REPORTER_ROLE_MASK != 0
-    }
-
-    /// <pre>
-    /// Method: account_token_mint_burn_allowed(acc: &T::AccountId) -> bool
-    /// Arguments: acc: AccountId - checked account id
-    ///
-    /// Checks if the acc can create burn and mint tokens requests(INVESTOR or ISSUER)
-    /// </pre>
-    pub fn account_token_mint_burn_allowed(acc: &T::AccountId) -> bool {
-        const ALLOWED_ROLES_MASK: RoleMask = INVESTOR_ROLE_MASK | ISSUER_ROLE_MASK;
-        AccountRegistry::<T>::get(acc).roles & ALLOWED_ROLES_MASK != 0
-    }
-
     /// <pre>
     /// Method: balance_everusd(acc: &T::AccountId) -> EverUSDBalance
     /// Arguments: acc: AccountId - account id

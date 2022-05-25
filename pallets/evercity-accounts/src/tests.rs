@@ -1,8 +1,10 @@
 use crate::mock::*;
-use frame_support::{assert_ok, dispatch::{
+use frame_support::{assert_ok, assert_noop, dispatch::{
     DispatchResult, 
 }};
 use crate::accounts::*;
+use crate::Error;
+type RuntimeError = Error<TestRuntime>;
 
 #[test]
 fn it_works_account_add_with_role_and_data() {
@@ -175,5 +177,49 @@ fn it_works_check_events() {
         // assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::MasterSet(ROLES[0].0, some_new_account)), set_master_event);
         assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::AccountWithdraw(ROLES[0].0, some_new_account, CC_AUDITOR_ROLE_MASK)),
              withdraw_account_event);
+    });
+}
+
+#[test]
+fn fuse_is_blone() {
+    new_test_ext().execute_with(|| {
+        let fuse = EvercityAccounts::fuse();
+        assert_eq!(fuse, true);
+
+        assert_noop!(
+            EvercityAccounts::set_master(Origin::signed(2),),
+            RuntimeError::InvalidAction
+        );
+    })
+}
+
+#[test]
+fn fuse_is_intact_on_bare_storage() {
+    let mut ext: sp_io::TestExternalities = frame_system::GenesisConfig::default()
+        .build_storage::<TestRuntime>()
+        .unwrap()
+        .into();
+
+    ext.execute_with(|| {
+        assert_eq!(EvercityAccounts::fuse(), false);
+
+        assert_noop!(
+            EvercityAccounts::account_add_with_role_and_data(Origin::signed(1), 101, MASTER_ROLE_MASK, 0),
+            RuntimeError::AccountNotMaster
+        );
+        assert_ok!(EvercityAccounts::set_master(Origin::signed(1),));
+        // make amend
+        // assert_ok!(EvercityAccounts::account_add_with_role_and_data(
+        //     Origin::signed(1),
+        //     101,
+        //     MASTER_ROLE_MASK,
+        //     0
+        // ));
+
+        assert_eq!(EvercityAccounts::fuse(), true);
+        assert_noop!(
+            EvercityAccounts::set_master(Origin::signed(2),),
+            RuntimeError::InvalidAction
+        );
     });
 }

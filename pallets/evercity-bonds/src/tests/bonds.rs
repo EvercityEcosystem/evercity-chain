@@ -520,7 +520,7 @@ fn bond_try_create_by_nonissuer() {
     let bondid: BondId = "BOND".into();
 
     new_test_ext().execute_with(|| {
-        for acc in iter_accounts().filter(|acc| !Evercity::account_is_issuer(acc)) {
+        for acc in iter_accounts().filter(|acc| !EvercityAccounts::account_is_issuer(acc)) {
             assert_noop!(
                 Evercity::bond_add_new(Origin::signed(acc), bondid, bond.inner.clone()),
                 RuntimeError::AccountNotAuthorized
@@ -538,7 +538,7 @@ fn bond_try_create_incorrect_stable_or_unstable() {
         let bondid: BondId = "BOND".into();
     
         new_test_ext().execute_with(|| {
-            for acc in iter_accounts().filter(|acc| Evercity::account_is_issuer(acc)) {
+            for acc in iter_accounts().filter(|acc| EvercityAccounts::account_is_issuer(acc)) {
                 assert_noop!(
                     Evercity::bond_add_new(Origin::signed(acc), stable_bondid, stable_bond.inner.clone()),
                     RuntimeError::BondParamIncorrect
@@ -616,7 +616,7 @@ fn bond_try_activate_by_nonmaster() {
             AUDITOR
         ));
         // try to activate bond
-        for acc in iter_accounts().filter(|acc| !Evercity::account_is_master(acc)) {
+        for acc in iter_accounts().filter(|acc| !EvercityAccounts::account_is_master(acc)) {
             assert_noop!(
                 Evercity::bond_activate(Origin::signed(acc), bondid, 0),
                 RuntimeError::AccountNotAuthorized

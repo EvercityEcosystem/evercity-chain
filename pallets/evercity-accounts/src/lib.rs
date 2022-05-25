@@ -180,7 +180,7 @@ decl_module! {
         #[weight = 10_000 + T::DbWeight::get().reads_writes(4, 1)]
         fn account_disable(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
 

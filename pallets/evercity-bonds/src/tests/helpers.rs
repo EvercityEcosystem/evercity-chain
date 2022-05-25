@@ -19,7 +19,7 @@ use crate::{
 // (8, EvercityAccountStruct { roles: MANAGER,           identity: 80u64}), // MANAGER   (accountId: 8)
 // (101+ : some external accounts
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-pub type Timestamp = pallet_timestamp::Module<TestRuntime>;
+//pub type Timestamp = pallet_timestamp::Module<TestRuntime>;
 pub type Moment = <TestRuntime as pallet_timestamp::Config>::Moment;
 pub type BondInnerStruct = BondInnerStructOf<TestRuntime>;
 pub type BondStruct = BondStructOf<TestRuntime>;
