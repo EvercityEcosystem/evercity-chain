@@ -319,6 +319,7 @@ impl<Moment, Hash, AccountId> BondInnerStruct<Moment, Hash, AccountId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, PartialEq, RuntimeDebug)]
 pub struct CarbonUnitsMetadata<AccountId> {
+    /// for future use: doesn't contribute in carbon credits business logic
     pub count: u64,
     /// Carbon Credits distribution
     pub carbon_distribution: CarbonDistribution<AccountId>
