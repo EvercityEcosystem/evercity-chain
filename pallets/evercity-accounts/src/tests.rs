@@ -86,7 +86,7 @@ fn it_works_roles_assigned_correctly_set_master() {
                 AUDITOR_ROLE_MASK, 
                 MANAGER_ROLE_MASK, 
                 IMPACT_REPORTER_ROLE_MASK, 
-                EMISSION_CREATOR_ROLE_MASK,
+                BOND_EMITTER_ROLE_MASK,
                 CC_PROJECT_OWNER_ROLE_MASK, 
                 CC_AUDITOR_ROLE_MASK, 
                 CC_STANDARD_ROLE_MASK, 
