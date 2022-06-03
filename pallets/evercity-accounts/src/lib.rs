@@ -73,8 +73,7 @@ decl_event!(
 
 decl_error! {
     pub enum Error for Module<T: Config> {
-        // Account errors:
-        AccountNotMaster,
+        
         AccountNotAuditor,
         AccountNotOwner,
         AccountNotStandard,
@@ -113,10 +112,11 @@ decl_module! {
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, #[compact] identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
             ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
+
             AccountRegistry::<T>::insert(who.clone(), AccountStruct::new(role, identity, Timestamp::<T>::get()));
             Self::deposit_event(RawEvent::AccountAdd(caller, who, role, identity));
             Ok(())
@@ -126,10 +126,11 @@ decl_module! {
         pub fn account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
             ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
+
             AccountRegistry::<T>::mutate(who.clone(),|acc|{
                 acc.roles |= role;
             });
@@ -137,24 +138,25 @@ decl_module! {
             Ok(())
         }
 
-        // #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
-        // pub fn set_master(origin, who: T::AccountId) -> DispatchResult {
-        //     let caller = ensure_signed(origin)?;
-        //     ensure!(caller != who, Error::<T>::InvalidAction);
-        //     ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
-        //     ensure!(!Self::account_is_master(&who), Error::<T>::InvalidAction);
-        //     AccountRegistry::<T>::mutate(who.clone(),|acc|{
-        //         acc.roles |= MASTER_ROLE_MASK;
-        //     });
-        //     Self::deposit_event(RawEvent::MasterSet(caller, who));
-        //     Ok(())
-        // }
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        pub fn add_master_role(origin, who: T::AccountId) -> DispatchResult {
+            let caller = ensure_signed(origin)?;
+            ensure!(caller != who, Error::<T>::InvalidAction);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            ensure!(!Self::account_is_master(&who), Error::<T>::InvalidAction);
+
+            AccountRegistry::<T>::mutate(who.clone(),|acc|{
+                acc.roles |= MASTER_ROLE_MASK;
+            });
+            Self::deposit_event(RawEvent::MasterSet(caller, who));
+            Ok(())
+        }
 
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_withdraw_role(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
             ensure!(is_roles_correct(role), Error::<T>::AccountRoleParamIncorrect);
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
@@ -180,7 +182,7 @@ decl_module! {
         #[weight = 10_000 + T::DbWeight::get().reads_writes(4, 1)]
         fn account_disable(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotMaster);
+            ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountNotExist);
 
@@ -195,11 +197,6 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
-    // fn account_add(account: &T::AccountId, mut data: EvercityAccountStructOf<T>) {
-    //     data.create_time = Timestamp::<T>::get();
-    //     AccountRegistry::<T>::insert(account, &data);
-    //     T::OnAddAccount::on_add_account(account, &data);
-    // }
 
     /// <pre>
     /// Method: account_is_master(acc: &T::AccountId) -> bool
@@ -270,6 +267,16 @@ impl<T: Config> Module<T> {
     /// </pre>
     pub fn account_is_impact_reporter(acc: &T::AccountId) -> bool {
         AccountRegistry::<T>::get(acc).roles & IMPACT_REPORTER_ROLE_MASK != 0
+    }
+
+    /// <pre>
+    /// Method: account_is_bond_emitter(acc: &T::AccountId) -> bool
+    /// Arguments: acc: AccountId - account id to check
+    ///
+    /// Checks if the acc has global Bond Emitter role (BOND_EMITTER_ROLE_MASK) 
+    /// </pre>
+    pub fn account_is_bond_emitter(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & BOND_EMITTER_ROLE_MASK != 0
     }
 
     /// <pre>

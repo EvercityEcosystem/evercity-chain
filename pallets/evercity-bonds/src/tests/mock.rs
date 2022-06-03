@@ -9,7 +9,7 @@ use frame_support::sp_runtime::{
 };
 use sp_core::H256;
 use pallet_evercity_accounts::accounts::{
-    RoleMask, ISSUER_ROLE_MASK, MASTER_ROLE_MASK,
+    RoleMask, ISSUER_ROLE_MASK, MASTER_ROLE_MASK, BOND_EMITTER_ROLE_MASK,
     AUDITOR_ROLE_MASK, MANAGER_ROLE_MASK, INVESTOR_ROLE_MASK, CUSTODIAN_ROLE_MASK,
     AccountStruct
 };
@@ -114,7 +114,7 @@ impl pallet_balances::Config for TestRuntime {
     type MaxLocks = MaxLocks;
 }
 // (AccountId, role)
-static ROLES: [(u64, RoleMask); 8] = [
+static ROLES: [(u64, RoleMask); 9] = [
     (1_u64, MASTER_ROLE_MASK),
     (2_u64, CUSTODIAN_ROLE_MASK),
     (3_u64, ISSUER_ROLE_MASK),
@@ -123,6 +123,7 @@ static ROLES: [(u64, RoleMask); 8] = [
     (6_u64, INVESTOR_ROLE_MASK),
     (7_u64, ISSUER_ROLE_MASK | INVESTOR_ROLE_MASK),
     (8_u64, MANAGER_ROLE_MASK),
+    (9_u64, BOND_EMITTER_ROLE_MASK),
 ];
 
 // Build genesis storage according to the mock runtime.

@@ -48,7 +48,7 @@ pub const fn is_roles_correct(roles: RoleMask) -> bool {
 
 #[inline]
 pub const fn is_roles_mask_included(roles: RoleMask, const_mask: RoleMask) -> bool {
-    roles <= const_mask && roles > 0
+    (roles & const_mask) != 0 && roles > 0
 }
 
 /// Main structure, containing account data: roles(bit mask), identity(external id), creation_time.

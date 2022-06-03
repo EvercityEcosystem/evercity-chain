@@ -32,21 +32,21 @@
 //!
 //!  - Issuer creates bond: <i>bond_add_new(BondId, BondInnerStructOf<T>)</i>, initial bond status is PREPARE
 //!  - Bond in PREPARE state:
-//!    - Master assigns Manager to help Issuer to configure Bond: <i>bond_add_new(BondId, BondInnerStructOf<T>)</i>
+//!    - Bond Emitter assigns Manager to help Issuer to configure Bond: <i>bond_add_new(BondId, BondInnerStructOf<T>)</i>
 //!    - Manager or Issuer modifies Bond<i>bond_update(BondId, u64, BondInnerStructOf<T>)</i>
 //!    - "bond_update()" can be called multiple times, allowing many updates of bond structure,
 //!      until all business requirements are met
-//!    - Master confirms that Bond is correct, moves Bond to go to BOOKING state: <i>bond_release(BondId, u64)</i>
+//!    - Bond Emitter confirms that Bond is correct, moves Bond to go to BOOKING state: <i>bond_release(BondId, u64)</i>
 //!
 //!  - Bond in BOOKING state
 //!    - Investors see Bond on platform, and each buys some amount Bond Units: (many
 //!      calls) <i>bond_unit_package_buy(BondId, u64, BondUnitAmount)</i>
 //!    - Some of Investors refuse, returning their bought BondUnitsPackage-s: (many calls)
 //!      <i>bond_unit_package_return(BondId, BondUnitAmount)</i>
-//!    - If Investors have bought NOT enough BondUnits until "mincap_deadline", Master, Issuer or Manager withdraws it back
+//!    - If Investors have bought NOT enough BondUnits until "mincap_deadline", Bond Emitter, Issuer or Manager withdraws it back
 //!      to PREPARE state: <i>bond_withdraw(BondId)</i>. Bond cannot be "canceled" until deadline.
 //!      All pre-bought Bond Units can be returned by Investors
-//!    - If Investors bought enough BondUnits until deadline, Master moves the Bond to ACTIVE state:
+//!    - If Investors bought enough BondUnits until deadline, Bond Emitter moves the Bond to ACTIVE state:
 //!      <i>bond_activate(BondId, u64)</i>
 //!    - Date, when bond becomes ACTIVE (BOOKING->ACTIVE) - is a bond start time. All next periods
 //!      will be calculated using this time as start moment
@@ -56,7 +56,7 @@
 //!        This structure(array, fixed size) will hold accumulated coupon yield values, confirmed
 //!        impact data, recieved for given period, etc)
 //!    - If deadline is passed, but "mincap" was not reached, bond returns to PREPARE state when
-//!      Master, Issuer or Manager calls <i>bond_withdraw(BondId)</i>
+//!      Bond Emitter, Issuer or Manager calls <i>bond_withdraw(BondId)</i>
 //!      - \[TODO\] "bond_withdraw" logic can be changed, we're refactoring its logic currently
 //!  - Bond in ACTIVE state
 //!    - passes start_period, while interest_rate is fixed and Issuer constructs project in real world
@@ -613,7 +613,7 @@ decl_module! {
         /// amount of "payment_periods", all min-max deviations must be correct
         /// (max_deviation > baseline, min_deviation < baseline), etc...
         /// If all checks were passed, bond object is created in BondRegistry, receives state "PREPARE"
-        /// and awaits when account with Master role allows it to be moved to state BOOKING
+        /// and awaits when account with Bond Emitter role allows it to be moved to state BOOKING
         /// </pre>
         #[weight = <T as Config>::WeightInfo::bond_add_new()]
         fn bond_add_new(origin, bond: BondId, body: BondInnerStructOf<T> ) -> DispatchResult {
@@ -643,7 +643,7 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller, assigner
         ///            bond: BondId - bond identifier
         ///            acc: AccountId - assignee account
-        /// Access: Master role
+        /// Access: Bond Emitter role
         ///
         /// Assigns target account to be the manager of the bond. Manager can make
         /// almost the same actions with bond as Issuer, instead of most important,
@@ -655,8 +655,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_set()]
         fn bond_set_manager(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            // Bond Auxiliary roles can be set only by Master
-            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            // Bond Auxiliary roles can be set only by Bond Emitter role
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(accounts::Module::<T>::account_is_manager(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
@@ -676,7 +676,7 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller, assigner
         ///            bond: BondId - bond identifier
         ///            acc: AccountId - assignee
-        /// Access: Master role
+        /// Access: Bond Emitter role
         ///
         /// Assigns target account to be the auditor of the bond. Auditor confirms
         /// impact data coming in bond, and performs other verification-related actions.
@@ -686,8 +686,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_set()]
         fn bond_set_auditor(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            // Bond auxiliary roles can be set only by Master
-            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            // Bond auxiliary roles can be set only by Bond Emitter role
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(accounts::Module::<T>::account_is_auditor(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
@@ -707,16 +707,16 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller, assigner
         ///            bond: BondId - bond identifier
         ///            acc: AccountId - assignee
-        /// Access: only accounts with Master role
+        /// Access: only accounts with Bond Emitter role
         ///
         /// Assigns an account to be a publisher of impact_data for this bond. Only assigned
-        /// by Master, target account must have IMPACT_REPORTER role.
+        /// by Bond Emitter, target account must have IMPACT_REPORTER role.
         /// </pre>
         #[weight = <T as Config>::WeightInfo::bond_set()]
         fn bond_set_impact_reporter(origin, bond: BondId, acc: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            // Bond auxiliary roles can be set only by Master
-            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            // Bond auxiliary roles can be set only by Bond Emitter role
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(accounts::Module::<T>::account_is_impact_reporter(&acc), Error::<T>::AccountRoleParamIncorrect);
 
             Self::with_bond(&bond, |item|{
@@ -775,7 +775,7 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller
         ///            bond: BondId - bond identifier
         ///            nonce: u64 - bond nonce
-        /// Access: only accounts with Master role
+        /// Access: only accounts with Bond Emitter role
         ///
         /// Releases the bond on the market starting presale.
         /// Moves bond form PREPARE to BOOKING state, allowing investors to buy
@@ -790,8 +790,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_release()]
         fn bond_release(origin, bond: BondId, #[compact]  nonce: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            // Bond can be released only by Master
-            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            // Bond can be released only by Bond Emitter role
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
             Self::with_bond(&bond, |item|{
                 ensure!(item.nonce == nonce, Error::<T>::BondNonceObsolete );
                 ensure!(item.state == BondState::PREPARE, Error::<T>::BondStateNotPermitAction);
@@ -950,10 +950,10 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller
         ///            bond: BondId - bond identifier
         ///
-        /// Access: accounts with Master role, bond Issuer, or bond Manager
+        /// Access: accounts with Bond Emitter role, bond Issuer, or bond Manager
         /// Can be called after the bond was released but not raised enough capacity after deadline.
         /// In BOOKING state only. If bond haven't reached "bond_units_mincap_amount" (Investors
-        /// haven't bought enough of BUs), bond managers(Issuer, Manager) or Master can return
+        /// haven't bought enough of BUs), bond managers(Issuer, Manager) or Bond Emitter can return
         /// bond in PREPARE state, denying acquisiton of new bond units, and allowing
         /// team to change parameters of bond and then try to release it with more suitable
         /// for Investors parameters. Cannot be called until "mincap_deadline"
@@ -962,13 +962,13 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_withdraw()]
         fn bond_withdraw(origin, bond: BondId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            // Bond issuer, bond Manager, or Master can do it
+            // Bond issuer, bond Manager, or Bond Emitter can do it
             Self::with_bond(&bond, |item|{
                 ensure!( item.state == BondState::BOOKING, Error::<T>::BondStateNotPermitAction );
                 // Ensure the Bond raises less then bond_units_mincap_amount bond units
                 ensure!(item.inner.bond_units_mincap_amount > item.issued_amount, Error::<T>::BondParamIncorrect);
                 ensure!(
-                    item.issuer == caller || item.manager == caller || accounts::Module::<T>::account_is_master(&caller) ,
+                    item.issuer == caller || item.manager == caller || accounts::Module::<T>::account_is_bond_emitter(&caller) ,
                     Error::<T>::BondAccessDenied
                 );
                 let now = Timestamp::<T>::get();
@@ -1008,7 +1008,7 @@ decl_module! {
         /// Arguments: origin: AccountId - transaction caller
         ///            bond: BondId - bond identifier
         ///            nonce: u64 - bond nonce
-        /// Access: only accounts with Master role
+        /// Access: only accounts with Bond Emitter role
         ///
         /// Activates the bond after it raised minimum capacity of bond units, opening
         /// BondUnitsPackages, owned by Investors, to be traded of free market. Function
@@ -1022,8 +1022,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_activate()]
         fn bond_activate(origin, bond: BondId,#[compact]  nonce: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            //Bond can be activated only by Master
-            ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            //Bond can be activated only by Bond Emitter
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
             //if it's raised enough bond units during bidding process
             Self::with_bond(&bond, |item|{
                 ensure!(item.nonce == nonce, Error::<T>::BondNonceObsolete );
@@ -1194,7 +1194,7 @@ decl_module! {
         /// Method: bond_declare_bankrupt(origin, bond: BondId)
         /// Arguments: origin: AccountId - transaction caller
         ///            bond: BondId - bond identifier
-        /// Access: Master role
+        /// Access: Bond Emitter role
         ///
         /// Marks the bond as bankrupt, moving it from ACTIVE to BANKRUPT state.
         /// Function checks, that "get_debt()" of bond is > 0 (bond_credit > bond_debit),
@@ -1204,7 +1204,8 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::bond_declare_bankrupt()]
         fn bond_declare_bankrupt(origin, bond: BondId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-             ensure!(accounts::Module::<T>::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
+            // Only Bond Emitter role can declare bankrupt
+            ensure!(accounts::Module::<T>::account_is_bond_emitter(&caller), Error::<T>::AccountNotAuthorized);
 
             Self::with_bond(&bond, |mut item|{
                 ensure!(item.state == BondState::ACTIVE, Error::<T>::BondStateNotPermitAction);

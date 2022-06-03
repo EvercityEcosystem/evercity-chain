@@ -17,6 +17,7 @@ use crate::{
 // (5, EvercityAccountStruct { roles: AUDITOR,           identity: 50u64}), // AUDITOR   (accountId: 5)
 // (7, EvercityAccountStruct { roles: ISSUER | ISSUER,   identity: 70u64}), // ISSUER   (accountId: 5)
 // (8, EvercityAccountStruct { roles: MANAGER,           identity: 80u64}), // MANAGER   (accountId: 8)
+// (9, EvercityAccountStruct { roles: BOND_EMITTER_ROLE_MASK,     identity: 80u64}), // BOND_EMITTER_ROLE_MASK   (accountId: 9)
 // (101+ : some external accounts
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 //pub type Timestamp = pallet_timestamp::Module<TestRuntime>;

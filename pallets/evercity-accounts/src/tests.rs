@@ -6,6 +6,156 @@ use crate::accounts::*;
 use crate::Error;
 type RuntimeError = Error<TestRuntime>;
 
+// use crate::tests::mock::*;
+use crate::{
+    AUDITOR_ROLE_MASK, ISSUER_ROLE_MASK, MASTER_ROLE_MASK,
+};
+// use super::helpers::*;
+
+
+#[test]
+fn it_returns_true_for_correct_role_checks() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(EvercityAccounts::account_is_master(&1), true);
+        assert_eq!(EvercityAccounts::account_is_custodian(&2), true);
+        assert_eq!(EvercityAccounts::account_is_issuer(&3), true);
+        assert_eq!(EvercityAccounts::account_is_investor(&4), true);
+        assert_eq!(EvercityAccounts::account_is_auditor(&5), true);
+        assert_eq!(EvercityAccounts::account_is_manager(&6), true);
+        assert_eq!(EvercityAccounts::account_is_bond_emitter(&7), true);
+        assert_eq!(EvercityAccounts::account_is_impact_reporter(&8), true);
+        assert_eq!(EvercityAccounts::account_is_cc_project_owner(&9), true);
+        assert_eq!(EvercityAccounts::account_is_cc_auditor(&10), true);
+        assert_eq!(EvercityAccounts::account_is_cc_standard(&11), true);
+        assert_eq!(EvercityAccounts::account_is_cc_investor(&12), true);
+        assert_eq!(EvercityAccounts::account_is_cc_registry(&13), true);
+
+        assert_eq!(EvercityAccounts::account_is_master(&100), false);
+        assert_eq!(EvercityAccounts::account_is_custodian(&100), false);
+        assert_eq!(EvercityAccounts::account_is_issuer(&100), false);
+        assert_eq!(EvercityAccounts::account_is_investor(&100), false);
+        assert_eq!(EvercityAccounts::account_is_auditor(&100), false);
+        assert_eq!(EvercityAccounts::account_token_mint_burn_allowed(&100), false);
+    });
+}
+
+#[test]
+fn it_returns_false_for_incorrect_role_checks() {
+    new_test_ext().execute_with(|| {
+        // Dispatch a signed extrinsic.
+        //assert_ok!(AccountRegistry::insert(Origin::signed(1), EvercityAccountStruct {roles: 1u8, identity: 67u64}));
+        // Read pallet storage and assert an expected result.
+        assert_eq!(EvercityAccounts::account_is_auditor(&1), false);
+        assert_eq!(EvercityAccounts::account_is_issuer(&2), false);
+        assert_eq!(EvercityAccounts::account_is_investor(&3), false);
+        assert_eq!(EvercityAccounts::account_is_custodian(&4), false);
+        assert_eq!(EvercityAccounts::account_is_master(&5), false);
+    });
+}
+
+#[test]
+fn it_adds_new_account_with_correct_roles() {
+    new_test_ext().execute_with(|| {
+        Timestamp::set_timestamp(12345);
+
+        assert_ok!(EvercityAccounts::account_add_with_role_and_data(
+            Origin::signed(1),
+            101,
+            CUSTODIAN_ROLE_MASK,
+            88u64
+        ));
+        assert_eq!(EvercityAccounts::account_is_custodian(&101), true);
+        assert_eq!(EvercityAccounts::account_is_investor(&101), false);
+
+        assert_ok!(EvercityAccounts::account_add_with_role_and_data(
+            Origin::signed(1),
+            102,
+            AUDITOR_ROLE_MASK,
+            89u64
+        ));
+        assert_eq!(EvercityAccounts::account_is_custodian(&102), false);
+        assert_eq!(EvercityAccounts::account_is_auditor(&102), true);
+    });
+}
+
+#[test]
+fn it_correctly_sets_new_role_to_existing_account() {
+    new_test_ext().execute_with(|| {
+        // add new role to existing account (allowed only for master)
+        assert_eq!(EvercityAccounts::account_is_issuer(&3), true);
+        assert_ok!(EvercityAccounts::account_set_with_role_and_data(
+            Origin::signed(1),
+            3,
+            AUDITOR_ROLE_MASK
+        ));
+        assert_eq!(EvercityAccounts::account_is_issuer(&3), true);
+        assert_eq!(EvercityAccounts::account_is_auditor(&3), true);
+        assert_eq!(EvercityAccounts::account_is_investor(&3), false);
+
+        assert_eq!(EvercityAccounts::account_is_custodian(&2), true);
+        assert_eq!(EvercityAccounts::account_is_issuer(&2), false);
+        assert_ok!(EvercityAccounts::account_set_with_role_and_data(
+            Origin::signed(1),
+            2,
+            ISSUER_ROLE_MASK
+        ));
+        assert_eq!(EvercityAccounts::account_is_custodian(&2), true);
+        assert_eq!(EvercityAccounts::account_is_issuer(&2), true);
+    });
+}
+
+#[test]
+fn it_disable_account() {
+    new_test_ext().execute_with(|| {
+        assert_ok!(EvercityAccounts::account_add_with_role_and_data(
+            Origin::signed(1),
+            101,
+            ISSUER_ROLE_MASK,
+            88u64
+        ));
+        assert_eq!(EvercityAccounts::account_is_issuer(&101), true);
+        assert_ok!(EvercityAccounts::account_disable(Origin::signed(1), 101));
+
+        assert_eq!(EvercityAccounts::account_is_issuer(&101), false);
+    });
+}
+
+#[test]
+fn it_try_disable_yourself() {
+    new_test_ext().execute_with(|| {
+        assert_noop!(
+            EvercityAccounts::account_disable(Origin::signed(1), 1),
+            RuntimeError::InvalidAction
+        );
+        assert_noop!(
+            EvercityAccounts::account_set_with_role_and_data(Origin::signed(1), 1, 0),
+            RuntimeError::InvalidAction
+        );
+    });
+}
+
+#[test]
+fn it_denies_add_and_set_roles_for_non_master() {
+    new_test_ext().execute_with(|| {
+        // trying to add account form non-master account
+        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(12345);
+        assert_noop!(
+            EvercityAccounts::account_add_with_role_and_data(
+                Origin::signed(2),
+                101,
+                MASTER_ROLE_MASK,
+                88u64
+            ),
+            RuntimeError::AccountNotAuthorized
+        );
+
+        assert_noop!(
+            EvercityAccounts::account_set_with_role_and_data(Origin::signed(2), 3, ISSUER_ROLE_MASK),
+            RuntimeError::AccountNotAuthorized
+        );
+    });
+}
+
 #[test]
 fn it_works_account_add_with_role_and_data() {
     new_test_ext().execute_with(|| {
@@ -17,7 +167,7 @@ fn it_works_account_add_with_role_and_data() {
 }
 
 #[test]
-fn it_fils_account_add_with_role_and_data_not_master() {
+fn it_fails_account_add_with_role_and_data_not_master() {
     new_test_ext().execute_with(|| {
         let some_new_account = 666;
         let assign_role_result = EvercityAccounts::account_add_with_role_and_data(
@@ -205,7 +355,7 @@ fn fuse_is_intact_on_bare_storage() {
 
         assert_noop!(
             EvercityAccounts::account_add_with_role_and_data(Origin::signed(1), 101, MASTER_ROLE_MASK, 0),
-            RuntimeError::AccountNotMaster
+            RuntimeError::AccountNotAuthorized
         );
         assert_ok!(EvercityAccounts::set_master(Origin::signed(1),));
         // make amend
@@ -222,4 +372,19 @@ fn fuse_is_intact_on_bare_storage() {
             RuntimeError::InvalidAction
         );
     });
+}
+
+#[test]
+fn it_checks_is_roles_mask_included() {
+    // true
+    assert!(is_roles_mask_included(MASTER_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(is_roles_mask_included(MASTER_ROLE_MASK | CUSTODIAN_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(is_roles_mask_included(ALL_ROLES_MASK, MASTER_ROLE_MASK));
+    assert!(is_roles_mask_included(MASTER_ROLE_MASK | CC_AUDITOR_ROLE_MASK, MASTER_ROLE_MASK));
+    // false
+    assert!(!is_roles_mask_included(AUDITOR_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(!is_roles_mask_included(CUSTODIAN_ROLE_MASK | CC_AUDITOR_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(!is_roles_mask_included(CC_INVESTOR_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(!is_roles_mask_included(CC_PROJECT_OWNER_ROLE_MASK | CC_STANDARD_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(!is_roles_mask_included(BOND_EMITTER_ROLE_MASK, MASTER_ROLE_MASK));
 }
