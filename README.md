@@ -38,12 +38,13 @@ Each Evercity account can accommodate one or more roles from the bond and carbon
 
 Bond roles
 
-- MASTER: the administrative role that can create new accounts and assign roles to them. This role also regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
+- MASTER: the administrative role that can create new accounts and assign roles to them. 
+- BOND_EMITTER: This role regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
 - CUSTODIAN: the role which can mint and burn the main platform token. This role is assigned to the public account of the partner bank, which exchanges USD --> EVERUSD and EVERUSD --> USD.
 - ISSUER: the role which can create bonds. An account with the ISSUER role issues a bond to fund a sustainability-aligned project. After receiving funds from the sale of Bond Units, the ISSUER undertakes to provide data on the impact of the project, which influences the coupon rate that should be paid to the investor. The ISSUER is obliged to replenish the bond balance with the amount necessary to cover its financial obligations.
 - INVESTOR: accounts with the INVESTOR role use the EVERUSD token to buy Bond Units and sell them on the secondary market. Each billing period Investor receives a coupon income proportional to its balances of various Bond Units
 - AUDITOR: these accounts check and confirm the environmental impact data sent by Issuer, as well as certify the documents uploaded to the platform
-MANAGER: the task of accounts with this role is to help Issuers work with projects, verify data and prepare documents
+- MANAGER: the task of accounts with this role is to help Issuers work with projects, verify data and prepare documents
 
 Carbon credit roles
 - CC_PROJECT_OWNER: the role which can create carbon projects, annual reports and issue carbon credits.
