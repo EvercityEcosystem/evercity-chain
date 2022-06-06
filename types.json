@@ -9,11 +9,6 @@
   "EverUSDBalance": "u64",
   "Moment": "u64",
   "BondId": "[u8;16]",
-  "EvercityAccountStructOf": {
-    "roles": "u8",
-    "identity": "Compact<u64>",
-    "create_time": "Compact<Moment>"
-  },
   "TokenMintRequestStructOf": {
     "amount": "Compact<EverUSDBalance>",
     "deadline": "Compact<Moment>"
@@ -127,7 +122,14 @@
   },
   "RoleMask": "u32",
   "AccountStruct": {
-    "roles": "RoleMask"
+    "roles": "RoleMask",
+    "identity": "Compact<u64>",
+    "create_time": "Compact<Moment>"
+  },
+  "EvercityAccountStructOf": {
+    "roles": "RoleMask",
+    "identity": "Compact<u64>",
+    "create_time": "Compact<Moment>"
   },
   "RequiredSigner": "(AccountId, RoleMask)",
   "Standard": {
