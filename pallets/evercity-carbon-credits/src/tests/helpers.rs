@@ -11,7 +11,7 @@ pub const TEST_CARBON_CREDITS_DECIMAL: u8 = 0;
 
 pub(crate) fn create_user_with_owner_role() -> u64 {
     let new_owner_id = 555;
-    let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), new_owner_id, pallet_evercity_accounts::accounts::CC_PROJECT_OWNER_ROLE_MASK);
+    let _ = EvercityAccounts::account_add_with_role_and_data(Origin::signed(ROLES[0].0), new_owner_id, pallet_evercity_accounts::accounts::CC_PROJECT_OWNER_ROLE_MASK, 0);
     new_owner_id
 }
 

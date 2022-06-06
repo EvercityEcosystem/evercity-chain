@@ -73,9 +73,7 @@ fn it_works_buy_cc_lot() {
         let cc_holder_amount_after = Assets::balance(cc_id, cc_holder);
         let everusd_balance_after = EvercityBonds::balance_everusd(&everusd_holder);
 
-        assert!(lots.is_some());
-        let lots = lots.unwrap();
-        assert_eq!(0, lots.len());
+        assert!(lots.is_none());
         assert_eq!(cc_amount, cc_holder_amount - cc_holder_amount_after);
         assert_eq!(total_price, everusd_balance - everusd_balance_after);
     });

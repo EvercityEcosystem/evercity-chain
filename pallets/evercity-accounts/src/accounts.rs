@@ -15,7 +15,7 @@ pub const INVESTOR_ROLE_MASK: RoleMask = 8;
 pub const AUDITOR_ROLE_MASK: RoleMask = 16;
 pub const MANAGER_ROLE_MASK: RoleMask = 32;
 pub const IMPACT_REPORTER_ROLE_MASK: RoleMask = 64;
-pub const EMISSION_CREATOR_ROLE_MASK: RoleMask = 128;
+pub const BOND_EMITTER_ROLE_MASK: RoleMask = 128;
 
 // Carbon Credits Roles
 // CC_ prefix Means - Carbon Credits
@@ -32,7 +32,7 @@ pub const ALL_ROLES_MASK: RoleMask = MASTER_ROLE_MASK
     | AUDITOR_ROLE_MASK
     | MANAGER_ROLE_MASK
     | IMPACT_REPORTER_ROLE_MASK
-    | EMISSION_CREATOR_ROLE_MASK 
+    | BOND_EMITTER_ROLE_MASK 
     | CC_PROJECT_OWNER_ROLE_MASK
     | CC_AUDITOR_ROLE_MASK
     | CC_STANDARD_ROLE_MASK
@@ -48,19 +48,30 @@ pub const fn is_roles_correct(roles: RoleMask) -> bool {
 
 #[inline]
 pub const fn is_roles_mask_included(roles: RoleMask, const_mask: RoleMask) -> bool {
-    roles <= const_mask && roles > 0
+    (roles & const_mask) != 0 && roles > 0
 }
 
+/// Main structure, containing account data: roles(bit mask), identity(external id), creation_time.
+/// This structure is used to check and assign account roles
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
-pub struct AccountStruct {
+pub struct AccountStruct<Moment> {
     pub roles: RoleMask,
+    #[codec(compact)]
+    pub identity: u64,
+    #[codec(compact)]
+    pub create_time: Moment,
 }
 
-impl AccountStruct {
-    pub fn new(roles: RoleMask) -> Self {
+pub type EvercityAccountStructOf<T> =
+    AccountStruct<<T as pallet_timestamp::Config>::Moment>;
+
+impl<Moment> AccountStruct<Moment> {
+    pub fn new(roles: RoleMask, identity: u64, create_time: Moment) -> Self {
         AccountStruct{
-            roles
+            roles,
+            identity,
+            create_time
         }
     }
 }

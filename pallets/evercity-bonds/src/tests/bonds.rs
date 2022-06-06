@@ -473,7 +473,7 @@ fn bond_create_series() {
 #[test]
 // unique case scenario
 fn bond_buy_bond_uc() {
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const AUDITOR: u64 = 5;
     const INVESTOR1: u64 = 4;
@@ -491,7 +491,7 @@ fn bond_buy_bond_uc() {
             bondid,
             bond
         ));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(50_000);
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -501,11 +501,11 @@ fn bond_buy_bond_uc() {
             1000
         ));
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
-        assert_ok!(Evercity::bond_activate(Origin::signed(MASTER), bondid, 2));
+        assert_ok!(Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2));
 
         let chain_bond_item = Evercity::get_bond(&bondid);
         assert_eq!(chain_bond_item.issued_amount, 1000);
@@ -520,7 +520,7 @@ fn bond_try_create_by_nonissuer() {
     let bondid: BondId = "BOND".into();
 
     new_test_ext().execute_with(|| {
-        for acc in iter_accounts().filter(|acc| !Evercity::account_is_issuer(acc)) {
+        for acc in iter_accounts().filter(|acc| !EvercityAccounts::account_is_issuer(acc)) {
             assert_noop!(
                 Evercity::bond_add_new(Origin::signed(acc), bondid, bond.inner.clone()),
                 RuntimeError::AccountNotAuthorized
@@ -538,7 +538,7 @@ fn bond_try_create_incorrect_stable_or_unstable() {
         let bondid: BondId = "BOND".into();
     
         new_test_ext().execute_with(|| {
-            for acc in iter_accounts().filter(|acc| Evercity::account_is_issuer(acc)) {
+            for acc in iter_accounts().filter(|acc| EvercityAccounts::account_is_issuer(acc)) {
                 assert_noop!(
                     Evercity::bond_add_new(Origin::signed(acc), stable_bondid, stable_bond.inner.clone()),
                     RuntimeError::BondParamIncorrect
@@ -558,7 +558,7 @@ fn bond_try_create_incorrect_stable_or_unstable() {
 
 #[test]
 fn bond_try_activate_without_release() {
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     let bondid: BondId = "BOND".into();
@@ -579,15 +579,15 @@ fn bond_try_activate_without_release() {
         );
         // try to activate bond
         assert_noop!(
-            Evercity::bond_activate(Origin::signed(MASTER), bondid, 0),
+            Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 0),
             RuntimeError::BondStateNotPermitAction
         );
     })
 }
 
 #[test]
-fn bond_try_activate_by_nonmaster() {
-    const MASTER: u64 = 1;
+fn bond_try_activate_by_non_bond_emitter() {
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     const AUDITOR: u64 = 5;
@@ -602,7 +602,7 @@ fn bond_try_activate_by_nonmaster() {
             get_test_bond().inner
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(1));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
         // try to buy some bonds in prepare state
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -611,19 +611,19 @@ fn bond_try_activate_by_nonmaster() {
             1000
         ));
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
         // try to activate bond
-        for acc in iter_accounts().filter(|acc| !Evercity::account_is_master(acc)) {
+        for acc in iter_accounts().filter(|acc| !EvercityAccounts::account_is_bond_emitter(acc)) {
             assert_noop!(
                 Evercity::bond_activate(Origin::signed(acc), bondid, 0),
                 RuntimeError::AccountNotAuthorized
             );
         }
         // make amend
-        assert_ok!(Evercity::bond_activate(Origin::signed(MASTER), bondid, 2));
+        assert_ok!(Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2));
     })
 }
 
@@ -631,7 +631,7 @@ fn bond_try_activate_by_nonmaster() {
 fn bond_try_activate_without_auditor() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     const AUDITOR: u64 = 5;
@@ -645,7 +645,7 @@ fn bond_try_activate_without_auditor() {
             bondid,
             bond.inner
         ));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -654,16 +654,16 @@ fn bond_try_activate_without_auditor() {
             1000
         ));
         assert_noop!(
-            Evercity::bond_activate(Origin::signed(MASTER), bondid, 1),
+            Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 1),
             RuntimeError::BondIsNotConfigured
         );
         // make amends
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
-        assert_ok!(Evercity::bond_activate(Origin::signed(MASTER), bondid, 2));
+        assert_ok!(Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2));
     });
 }
 
@@ -765,7 +765,7 @@ fn bond_stable_calc_bond_interest_rate() {
 fn bond_try_withdraw_before_deadline() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
 
@@ -778,7 +778,7 @@ fn bond_try_withdraw_before_deadline() {
             bondid,
             bond.inner
         ));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -788,12 +788,12 @@ fn bond_try_withdraw_before_deadline() {
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(49000);
         assert_noop!(
-            Evercity::bond_withdraw(Origin::signed(MASTER), bondid,),
+            Evercity::bond_withdraw(Origin::signed(BOND_EMITTER), bondid,),
             RuntimeError::BondStateNotPermitAction
         );
         // make amends
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(51000);
-        assert_ok!(Evercity::bond_withdraw(Origin::signed(MASTER), bondid,));
+        assert_ok!(Evercity::bond_withdraw(Origin::signed(BOND_EMITTER), bondid,));
         let chain_bond_item = Evercity::get_bond(&bondid);
 
         assert_eq!(chain_bond_item.state, BondState::PREPARE);
@@ -805,7 +805,7 @@ fn bond_try_withdraw_before_deadline() {
 fn bond_try_withdraw_by_investor() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
 
@@ -818,7 +818,7 @@ fn bond_try_withdraw_by_investor() {
             bondid,
             bond.inner
         ));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -834,7 +834,7 @@ fn bond_try_withdraw_by_investor() {
         );
 
         // make amends
-        assert_ok!(Evercity::bond_withdraw(Origin::signed(MASTER), bondid,));
+        assert_ok!(Evercity::bond_withdraw(Origin::signed(BOND_EMITTER), bondid,));
 
         let chain_bond_item = Evercity::get_bond(&bondid);
         assert_eq!(chain_bond_item.state, BondState::PREPARE);
@@ -854,7 +854,7 @@ fn bond_try_withdraw_by_investor() {
 fn bond_try_manage_foreign_bond() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const MANAGER: u64 = 8;
 
@@ -877,7 +877,7 @@ fn bond_try_manage_foreign_bond() {
         }
         // make amend
         assert_ok!(Evercity::bond_set_manager(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             MANAGER
         ));
@@ -894,7 +894,7 @@ fn bond_try_manage_foreign_bond() {
 fn bond_try_update_after_release() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     const AUDITOR: u64 = 5;
@@ -910,7 +910,7 @@ fn bond_try_update_after_release() {
         ));
 
         // release bond
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         // hashes can be changed
         let mut update = get_test_bond().inner;
@@ -951,12 +951,12 @@ fn bond_try_update_after_release() {
             1200
         ));
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
         // activate
-        assert_ok!(Evercity::bond_activate(Origin::signed(MASTER), bondid, 3));
+        assert_ok!(Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 3));
 
         let mut update = get_test_bond().inner;
         update.docs_pack_root_hash_finance = Blake2_256::hash(b"merkle tree hash").into();
@@ -972,7 +972,7 @@ fn bond_try_update_after_release() {
 fn bond_try_activate_insufficient_fund_raising() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     const AUDITOR: u64 = 5;
@@ -989,7 +989,7 @@ fn bond_try_activate_insufficient_fund_raising() {
 
         // try activate before been issued
         assert_noop!(
-            Evercity::bond_activate(Origin::signed(MASTER), bondid, 0),
+            Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 0),
             RuntimeError::BondStateNotPermitAction
         );
         // try buy bonds before been issued
@@ -998,7 +998,7 @@ fn bond_try_activate_insufficient_fund_raising() {
             RuntimeError::BondStateNotPermitAction
         );
         // release bond
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
         // buy limited number of bonds
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -1007,13 +1007,13 @@ fn bond_try_activate_insufficient_fund_raising() {
             100
         ));
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
 
         assert_noop!(
-            Evercity::bond_activate(Origin::signed(MASTER), bondid, 2),
+            Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2),
             RuntimeError::BondParamIncorrect
         );
         // make amends
@@ -1023,7 +1023,7 @@ fn bond_try_activate_insufficient_fund_raising() {
             2,
             900
         ));
-        assert_ok!(Evercity::bond_activate(Origin::signed(MASTER), bondid, 2));
+        assert_ok!(Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2));
     });
 }
 
@@ -1031,7 +1031,7 @@ fn bond_try_activate_insufficient_fund_raising() {
 fn bond_try_activate_expired_fund_raising() {
     let mut bond = get_test_bond();
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
     const AUDITOR: u64 = 5;
@@ -1048,7 +1048,7 @@ fn bond_try_activate_expired_fund_raising() {
         ));
 
         // release bond
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
         // buy limited number of bonds
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -1057,7 +1057,7 @@ fn bond_try_activate_expired_fund_raising() {
             100
         ));
         assert_ok!(Evercity::bond_set_auditor(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             AUDITOR
         ));
@@ -1065,7 +1065,7 @@ fn bond_try_activate_expired_fund_raising() {
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(21));
 
         assert_noop!(
-            Evercity::bond_activate(Origin::signed(MASTER), bondid, 2),
+            Evercity::bond_activate(Origin::signed(BOND_EMITTER), bondid, 2),
             RuntimeError::BondParamIncorrect
         );
         // workaround
@@ -1542,7 +1542,7 @@ fn bond_try_create_arbitrary_period() {
 #[test]
 fn bond_try_release_without_fundraising_period() {
     let bondid: BondId = "BOND".into();
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
 
     new_test_ext().execute_with(|| {
@@ -1555,7 +1555,7 @@ fn bond_try_release_without_fundraising_period() {
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(100000);
         assert_noop!(
-            Evercity::bond_release(Origin::signed(MASTER), bondid, 0),
+            Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0),
             RuntimeError::BondStateNotPermitAction
         );
 
@@ -1567,7 +1567,7 @@ fn bond_try_release_without_fundraising_period() {
             0,
             bond.inner
         ));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 1));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 1));
     });
 }
 
@@ -1651,7 +1651,7 @@ fn bond_calc_redeemed_yield() {
 
 #[test]
 fn bond_try_redeem_prior_maturity() {
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;
 
@@ -1667,7 +1667,7 @@ fn bond_try_redeem_prior_maturity() {
             get_test_bond().inner
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(1));
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid1, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid1, 0));
 
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
@@ -1814,14 +1814,14 @@ fn bond_grand_everusd() {
 }
 
 fn bond_release(bondid: BondId, acc: u64, mut bond: BondInnerStruct) -> BondStruct {
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const AUDITOR: u64 = 5;
     bond.mincap_deadline = 50000;
     assert_ok!(Evercity::bond_add_new(Origin::signed(acc), bondid, bond));
     <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
-    assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+    assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
     assert_ok!(Evercity::bond_set_auditor(
-        Origin::signed(MASTER),
+        Origin::signed(BOND_EMITTER),
         bondid,
         AUDITOR
     ));
@@ -1829,10 +1829,10 @@ fn bond_release(bondid: BondId, acc: u64, mut bond: BondInnerStruct) -> BondStru
 }
 
 fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
-    const MASTER: u64 = 1;
     const AUDITOR: u64 = 5;
     const INVESTOR1: u64 = 4;
     const INVESTOR2: u64 = 6;
+    const BOND_EMITTER: u64 = 9;
 
     let investor1_balance = Evercity::balance_everusd(&INVESTOR1);
     let investor2_balance = Evercity::balance_everusd(&INVESTOR2);
@@ -1840,7 +1840,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
     bond.mincap_deadline = 50000;
     assert_ok!(Evercity::bond_add_new(Origin::signed(acc), bondid, bond));
     <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
-    assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+    assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
     let chain_bond_item = Evercity::get_bond(&bondid);
     assert_eq!(chain_bond_item.issued_amount, 0);
 
@@ -1870,7 +1870,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
     assert_eq!(chain_bond_item.bond_debit, chain_bond_item.bond_credit);
 
     assert_ok!(Evercity::bond_set_auditor(
-        Origin::signed(MASTER),
+        Origin::signed(BOND_EMITTER),
         bondid,
         AUDITOR
     ));
@@ -1878,7 +1878,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
     // Activate bond
     <pallet_timestamp::Module<TestRuntime>>::set_timestamp(30000);
     assert_ok!(Evercity::bond_activate(
-        Origin::signed(MASTER),
+        Origin::signed(BOND_EMITTER),
         bondid,
         chain_bond_item.nonce + 1
     ));
@@ -1916,7 +1916,7 @@ fn bond_create_release_update() {
     let bondid: BondId = "TEST".into();
 
     const ACCOUNT: u64 = 3;
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const MANAGER: u64 = 8;
     new_test_ext().execute_with(|| {
         assert_ok!(Evercity::bond_add_new(
@@ -1933,7 +1933,7 @@ fn bond_create_release_update() {
             RuntimeError::AccountNotAuthorized
         );
         assert_ok!(Evercity::bond_set_manager(
-            Origin::signed(MASTER),
+            Origin::signed(BOND_EMITTER),
             bondid,
             MANAGER
         ));
@@ -1949,7 +1949,7 @@ fn bond_create_release_update() {
 
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
 
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 2));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 2));
         let chain_bond_item = Evercity::get_bond(&bondid);
         assert_eq!(chain_bond_item.state, BondState::BOOKING);
         assert_eq!(chain_bond_item.booking_start_date, 10_000);
@@ -2076,7 +2076,7 @@ fn bond_try_return_foreign_bonds() {
 #[test]
 fn bond_return_bondunit_package() {
     const ACCOUNT: u64 = 3;
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
 
     const INVESTOR1: u64 = 4;
     const INVESTOR2: u64 = 6;
@@ -2096,7 +2096,7 @@ fn bond_return_bondunit_package() {
             bond
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10000);
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
         assert!(Evercity::evercity_balance().is_ok());
 
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -2140,7 +2140,7 @@ fn bond_return_bondunit_package() {
 #[test]
 fn bond_return_partial_bondunit_package() {
     const ACCOUNT: u64 = 3;
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
 
     const INVESTOR1: u64 = 4;
     const INVESTOR2: u64 = 6;
@@ -2165,7 +2165,7 @@ fn bond_return_partial_bondunit_package() {
         ));
 
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(20000);
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
         assert!(Evercity::evercity_balance().is_ok());
 
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -2247,7 +2247,7 @@ fn bond_iter_periods() {
 #[test]
 fn bond_cancel_after_release() {
     const ACCOUNT: u64 = 3;
-    const MASTER: u64 = 1;
+    const BOND_EMITTER: u64 = 9;
     const INVESTOR1: u64 = 4;
     const INVESTOR2: u64 = 6;
     let bondid: BondId = "BOND".into();
@@ -2264,7 +2264,7 @@ fn bond_cancel_after_release() {
             bond
         ));
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10000);
-        assert_ok!(Evercity::bond_release(Origin::signed(MASTER), bondid, 0));
+        assert_ok!(Evercity::bond_release(Origin::signed(BOND_EMITTER), bondid, 0));
 
         // Buy three packages
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -2320,7 +2320,7 @@ fn bond_cancel_after_release() {
 
         // We raised up less than  bond_units_mincap_amount, so we should revoke the bond
         <pallet_timestamp::Module<TestRuntime>>::set_timestamp(60000);
-        assert_ok!(Evercity::bond_withdraw(Origin::signed(MASTER), bondid));
+        assert_ok!(Evercity::bond_withdraw(Origin::signed(BOND_EMITTER), bondid));
         let chain_bond_item = Evercity::get_bond(&bondid);
 
         assert_eq!(chain_bond_item.issued_amount, 0);

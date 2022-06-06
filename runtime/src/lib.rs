@@ -278,7 +278,6 @@ impl pallet_evercity_bonds::Config for Runtime {
     type MaxMintAmount = MaxMintAmount;
     type TimeStep = TimeStep;
     type WeightInfo = ();
-    type OnAddAccount = ();
     type OnAddBond = ();
 }
 parameter_types! {
@@ -332,6 +331,7 @@ impl pallet_evercity_filesign::Config for Runtime {
 }
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
+
 	pub enum Runtime where
 		Block = Block,
 		NodeBlock = opaque::Block,
@@ -347,7 +347,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		
 		// Evercity
-        Evercity: pallet_evercity_bonds::{Module, Call, Storage, Config<T>, Event<T>},
+        Evercity: pallet_evercity_bonds::{Module, Call, Storage, Event<T>},
 		EvercityTransfer: pallet_evercity_transfer::{Module, Call, Storage, Event<T>},
         EvercityCarbonCredits: pallet_evercity_carbon_credits::{ Module, Call, Storage, Event<T>},
         EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
