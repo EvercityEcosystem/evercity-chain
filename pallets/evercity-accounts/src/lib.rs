@@ -313,13 +313,13 @@ impl<T: Config> Module<T> {
     }
 
     /// <pre>
-    /// Method: account_is_bond_emitter(acc: &T::AccountId) -> bool
+    /// Method: account_is_bond_arranger(acc: &T::AccountId) -> bool
     /// Arguments: acc: AccountId - account id to check
     ///
-    /// Checks if the acc has global Bond Emitter role (BOND_EMITTER_ROLE_MASK) 
+    /// Checks if the acc has global Bond Arranger role (BOND_ARRANGER_ROLE_MASK) 
     /// </pre>
-    pub fn account_is_bond_emitter(acc: &T::AccountId) -> bool {
-        AccountRegistry::<T>::get(acc).roles & BOND_EMITTER_ROLE_MASK != 0
+    pub fn account_is_bond_arranger(acc: &T::AccountId) -> bool {
+        AccountRegistry::<T>::get(acc).roles & BOND_ARRANGER_ROLE_MASK != 0
     }
 
     /// <pre>

@@ -21,7 +21,7 @@ Each Evercity account can can accommodate one or more roles:
 - AUDITOR: these accounts check and confirm the environmental impact data sent by Issuer, as well as certify the documents uploaded to the platform
 - MANAGER: the task of accounts with this role is to help Issuers work with projects, verify data and prepare documents
 - IMPACT_REPORTER: send impact reports
-- BOND_EMITTER: This role regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
+- BOND_ARRANGER: This role regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
 - CC_PROJECT_OWNER: the role which can create carbon projects, annual report and issue caebon credits
 - CC_AUDITOR: the role to sign project documentation and annual reports according to carbon credits standard
 - CC_STANDARD: the role to sign project documentation and annual reports according to carbon credits standard

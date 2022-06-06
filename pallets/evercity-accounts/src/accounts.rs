@@ -15,7 +15,7 @@ pub const INVESTOR_ROLE_MASK: RoleMask = 8;
 pub const AUDITOR_ROLE_MASK: RoleMask = 16;
 pub const MANAGER_ROLE_MASK: RoleMask = 32;
 pub const IMPACT_REPORTER_ROLE_MASK: RoleMask = 64;
-pub const BOND_EMITTER_ROLE_MASK: RoleMask = 128;
+pub const BOND_ARRANGER_ROLE_MASK: RoleMask = 128;
 
 // Carbon Credits Roles
 // CC_ prefix Means - Carbon Credits
@@ -32,7 +32,7 @@ pub const ALL_ROLES_MASK: RoleMask = MASTER_ROLE_MASK
     | AUDITOR_ROLE_MASK
     | MANAGER_ROLE_MASK
     | IMPACT_REPORTER_ROLE_MASK
-    | BOND_EMITTER_ROLE_MASK 
+    | BOND_ARRANGER_ROLE_MASK 
     | CC_PROJECT_OWNER_ROLE_MASK
     | CC_AUDITOR_ROLE_MASK
     | CC_STANDARD_ROLE_MASK

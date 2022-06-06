@@ -22,7 +22,7 @@ fn it_returns_true_for_correct_role_checks() {
         assert_eq!(EvercityAccounts::account_is_investor(&4), true);
         assert_eq!(EvercityAccounts::account_is_auditor(&5), true);
         assert_eq!(EvercityAccounts::account_is_manager(&6), true);
-        assert_eq!(EvercityAccounts::account_is_bond_emitter(&7), true);
+        assert_eq!(EvercityAccounts::account_is_bond_arranger(&7), true);
         assert_eq!(EvercityAccounts::account_is_impact_reporter(&8), true);
         assert_eq!(EvercityAccounts::account_is_cc_project_owner(&9), true);
         assert_eq!(EvercityAccounts::account_is_cc_auditor(&10), true);
@@ -236,7 +236,7 @@ fn it_works_roles_assigned_correctly_set_master() {
                 AUDITOR_ROLE_MASK, 
                 MANAGER_ROLE_MASK, 
                 IMPACT_REPORTER_ROLE_MASK, 
-                BOND_EMITTER_ROLE_MASK,
+                BOND_ARRANGER_ROLE_MASK,
                 CC_PROJECT_OWNER_ROLE_MASK, 
                 CC_AUDITOR_ROLE_MASK, 
                 CC_STANDARD_ROLE_MASK, 
@@ -386,5 +386,5 @@ fn it_checks_is_roles_mask_included() {
     assert!(!is_roles_mask_included(CUSTODIAN_ROLE_MASK | CC_AUDITOR_ROLE_MASK, MASTER_ROLE_MASK));
     assert!(!is_roles_mask_included(CC_INVESTOR_ROLE_MASK, MASTER_ROLE_MASK));
     assert!(!is_roles_mask_included(CC_PROJECT_OWNER_ROLE_MASK | CC_STANDARD_ROLE_MASK, MASTER_ROLE_MASK));
-    assert!(!is_roles_mask_included(BOND_EMITTER_ROLE_MASK, MASTER_ROLE_MASK));
+    assert!(!is_roles_mask_included(BOND_ARRANGER_ROLE_MASK, MASTER_ROLE_MASK));
 }
