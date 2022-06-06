@@ -141,7 +141,7 @@ Add to runtime cargo.toml
 pallet-evercity-carbon-credits = { default-features = false, version = '0.1.13', git = 'https://github.com/EvercityEcosystem/carbon-credits' }
 pallet-evercity-filesign = { default-features = false, version = '0.1.3', git = 'https://github.com/EvercityEcosystem/filesign'}
 pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
-pallet-evercity-accounts = { default-features = false, version = '0.1.7', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
+pallet-evercity-accounts = { default-features = false, version = '0.1.8', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
 #...
 [features]
 default = ['std']

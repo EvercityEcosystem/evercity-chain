@@ -51,7 +51,7 @@ make build
 ### 4.3 Add to runtime cargo.toml
 
 ```toml
-pallet-evercity-accounts = { default-features = false, version = '0.1.7', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
+pallet-evercity-accounts = { default-features = false, version = '0.1.8', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
 #...
 [features]
 default = ['std']
