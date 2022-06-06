@@ -586,7 +586,7 @@ fn bond_try_activate_without_release() {
 }
 
 #[test]
-fn bond_try_activate_by_nonBOND_EMITTER() {
+fn bond_try_activate_by_non_bond_emitter() {
     const BOND_EMITTER: u64 = 9;
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;

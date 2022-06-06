@@ -258,31 +258,31 @@ fn it_works_roles_assigned_correctly_set_master() {
     });
 }
 
-// #[test]
-// fn it_works_account_set_with_master_role() {
-//     new_test_ext().execute_with(|| {
-//         let some_new_master_account = 666;
-//         let some_new_account = 1349;
-//         let set_master_result = EvercityAccounts::set_master(Origin::signed(ROLES[0].0), some_new_master_account);
-//         let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(some_new_master_account), some_new_account, CC_PROJECT_OWNER_ROLE_MASK, 0);
+#[test]
+fn it_works_account_set_with_master_role() {
+    new_test_ext().execute_with(|| {
+        let some_new_master_account = 666;
+        let some_new_account = 1349;
+        let set_master_result = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
+        let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(some_new_master_account), some_new_account, CC_PROJECT_OWNER_ROLE_MASK, 0);
 
-//         assert_ok!(set_master_result, ());
-//         assert_ok!(assign_role_result, ());
-//         assert!(EvercityAccounts::account_is_master(&some_new_master_account));
-//         assert!(EvercityAccounts::account_is_cc_project_owner(&some_new_account));
-//     });
-// }
+        assert_ok!(set_master_result, ());
+        assert_ok!(assign_role_result, ());
+        assert!(EvercityAccounts::account_is_master(&some_new_master_account));
+        assert!(EvercityAccounts::account_is_cc_project_owner(&some_new_account));
+    });
+}
 
-// #[test]
-// fn it_fails_account_set_with_master_role_already_master() {
-//     new_test_ext().execute_with(|| {
-//         let some_new_master_account = 666;
-//         let _ = EvercityAccounts::set_master(Origin::signed(ROLES[0].0), some_new_master_account);
-//         let set_master_result = EvercityAccounts::set_master(Origin::signed(ROLES[0].0), some_new_master_account);
+#[test]
+fn it_fails_account_set_with_master_role_already_master() {
+    new_test_ext().execute_with(|| {
+        let some_new_master_account = 666;
+        let _ = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
+        let set_master_result = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
 
-//         assert_ne!(set_master_result, DispatchResult::Ok(()));
-//     });
-// }
+        assert_ne!(set_master_result, DispatchResult::Ok(()));
+    });
+}
 
 #[test]
 fn it_works_account_withraw_role() {

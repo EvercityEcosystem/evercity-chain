@@ -95,6 +95,13 @@ decl_module! {
         type Error = Error<T>;
         fn deposit_event() = default;
 
+        /// <pre>
+        /// Method: set_master()
+        /// Arguments: origin: AccountId - transaction caller
+        /// Access: anyone
+        ///
+        /// Set caller master role if master not set in chain_spec. Can be set only once.
+        /// </pre>
         #[weight = T::DbWeight::get().reads_writes(2,1)]
         fn set_master(origin) -> DispatchResult {
             let caller = ensure_signed(origin)?;
@@ -109,6 +116,18 @@ decl_module! {
             })
         }
         
+        /// <pre>
+        /// Method: account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, identity: u64)
+        /// Arguments:  origin: AccountId - transaction caller
+        ///             who: AccountId - id of account to add to accounts registry of platform
+        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
+        ///             identity: u64 - reserved field for integration with external platforms
+        /// Access: Master role
+        ///
+        /// Adds new account with given role(s). Roles are set as bitmask. Contains parameter
+        /// "identity", planned to use in the future to connect accounts with external services like
+        /// KYC providers
+        /// </pre>
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, #[compact] identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
@@ -122,6 +141,15 @@ decl_module! {
             Ok(())
         }
 
+        /// <pre>
+        /// Method: account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask)
+        /// Arguments:  origin: AccountId - transaction caller
+        ///             who: AccountId - account to modify
+        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
+        /// Access: Master role
+        ///
+        /// Modifies existing account, assigning new role(s) to it
+        /// </pre>
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
@@ -138,6 +166,14 @@ decl_module! {
             Ok(())
         }
 
+        /// <pre>
+        /// Method: add_master_role(origin, who: T::AccountId)
+        /// Arguments:  origin: AccountId - transaction caller
+        ///             who: AccountId - account to modify
+        /// Access: Master role
+        ///
+        /// Modifies existing account, assigning MASTER role(s) to it
+        /// </pre>
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn add_master_role(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
@@ -152,6 +188,15 @@ decl_module! {
             Ok(())
         }
 
+        /// <pre>
+        /// Method: account_withdraw_role(origin, who: T::AccountId, role: RoleMask)
+        /// Arguments:  origin: AccountId - transaction caller
+        ///             who: AccountId - account to modify
+        ///             role: RoleMask - role(s) of account (see ALL_ROLES_MASK for allowed roles)
+        /// Access: Master role
+        ///
+        /// Modifies existing account, removing role(s) from it
+        /// </pre>
         #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
         pub fn account_withdraw_role(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
@@ -166,8 +211,7 @@ decl_module! {
             Self::deposit_event(RawEvent::AccountWithdraw(caller, who, role));
             Ok(())
         }
-
-        
+  
         /// <pre>
         /// Method: account_disable(who: AccountId)
         /// Arguments: origin: AccountId - transaction caller
@@ -178,7 +222,6 @@ decl_module! {
         /// Accounts are not allowed to perform any actions without role,
         /// but still have its data in blockchain (to not loose related entities)
         /// </pre>
-       // #[weight = <T as Config>::WeightInfo::account_disable()]
         #[weight = 10_000 + T::DbWeight::get().reads_writes(4, 1)]
         fn account_disable(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
