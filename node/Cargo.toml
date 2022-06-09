@@ -6,7 +6,7 @@ edition = '2018'
 license = 'Apache-2.0'
 name = 'evercity-node'
 repository = 'https://github.com/EvercityEcosystem/evercity-substrate'
-version = '2.1.0'
+version = '2.1.1'
 
 [[bin]]
 name = 'evercity-node'
@@ -51,7 +51,7 @@ sp-transaction-pool = '3.0.0'
 substrate-frame-rpc-system = '3.0.0'
 
 # local dependencies
-evercity-runtime = { path = '../runtime', version = '0.1.0' }
+evercity-runtime = { path = '../runtime', version = '0.1.2' }
 
 [features]
 default = []

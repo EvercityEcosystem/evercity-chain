@@ -322,7 +322,9 @@ pub struct CarbonUnitsMetadata<AccountId> {
     /// for future use: doesn't contribute in carbon credits business logic
     pub count: u64,
     /// Carbon Credits distribution
-    pub carbon_distribution: CarbonDistribution<AccountId>
+    pub carbon_distribution: CarbonDistribution<AccountId>,
+    /// Bond unit investmets per account
+    pub account_investments: Vec<(AccountId, u32)>,
 }
 
 /// How Carbon Credits are distributed between investors, issuer and others

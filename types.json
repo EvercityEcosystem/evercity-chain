@@ -100,9 +100,8 @@
     "amount": "Compact<EverUSDBalance>"
   },
   "PeriodYield": {
-    "total_yield": "EverUSDBalance",
-    "coupon_yield_before": "EverUSDBalance",
-    "interest_rate": "BondInterest"
+    "total_yield": "Compact<EverUSDBalance>",
+    "interest_rate": "Compact<BondInterest>"
   },
   "FileId": "[u8; 16]",
   "SigStruct": {
@@ -216,7 +215,8 @@
   "CarbonCreditsId": "AssetId",
   "CarbonUnitsMetadata": {
     "count": "CarbonCreditsBalance",
-    "carbon_distribution": "CarbonDistribution"
+    "carbon_distribution": "CarbonDistribution",
+    "account_investments": "Vec<(AccountId, u32)>"
   },
   "CarbonDistribution": {
     "investors": "i32",

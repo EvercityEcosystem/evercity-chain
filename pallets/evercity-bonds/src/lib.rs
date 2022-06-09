@@ -1168,6 +1168,14 @@ decl_module! {
                     _ => return Err( Error::<T>::BondOutOfOrder.into() ),
                 };
 
+                // if bond has carbon metadata writes accounts investments in it
+                match &mut item.inner.carbon_metadata {
+                    None => (),
+                    Some(metadata) => {
+                        metadata.account_investments = Self::get_bond_account_investment(&bond);
+                    }
+                }
+
                 Self::calc_and_store_bond_coupon_yield(&bond, &mut item, now);
                 // now bond_credit has YTM ( yield to mature )
                 let amount = item.bond_credit + item.par_value( item.issued_amount ) ;

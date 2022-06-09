@@ -96,7 +96,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 0,
             evercity: None,
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata2 = crate::bond::CarbonUnitsMetadata{
         count: 100_000,
@@ -105,7 +106,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 30_000,
             evercity: None,
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata3 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -114,7 +116,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 20_000,
             evercity: Some((1, 10_000)),
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata4 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -123,7 +126,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 20_000,
             evercity: None,
             project_developer: Some((1, 10_000)),
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata5 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -132,7 +136,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 20_000,
             evercity: Some((1, 20_000)),
             project_developer: Some((2, 10_000)),
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata6 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -141,7 +146,8 @@ fn bond_with_carbon_is_valid() {
             issuer: 0,
             evercity: Some((1, 50_000)),
             project_developer: Some((2, 50_000)),
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
 
     assert!(get_test_bond_with_carbon_metadata(carbon_metadata1).inner.is_valid(DEFAULT_DAY_DURATION));
@@ -161,7 +167,8 @@ fn bond_with_carbon_is_not_valid() {
             issuer: 100_000,
             evercity: None,
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata2 = crate::bond::CarbonUnitsMetadata{
         count: 100_000,
@@ -170,7 +177,8 @@ fn bond_with_carbon_is_not_valid() {
             issuer: 30_000,
             evercity: None,
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata3 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -179,7 +187,8 @@ fn bond_with_carbon_is_not_valid() {
             issuer: 20_000,
             evercity: Some((1, 50_000)),
             project_developer: None,
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata4 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -188,7 +197,8 @@ fn bond_with_carbon_is_not_valid() {
             issuer: 20_000,
             evercity: None,
             project_developer: Some((1, 30_000)),
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
     let carbon_metadata5 = crate::bond::CarbonUnitsMetadata{
         count: 0,
@@ -197,7 +207,8 @@ fn bond_with_carbon_is_not_valid() {
             issuer: 20_000,
             evercity: Some((1, 20_000)),
             project_developer: Some((2, 20_000)),
-        }
+        },
+        account_investments: Vec::<(AccountId, u32)>::new()
     };
 
     assert!(!get_test_bond_with_carbon_metadata(carbon_metadata1).inner.is_valid(DEFAULT_DAY_DURATION));
@@ -205,6 +216,79 @@ fn bond_with_carbon_is_not_valid() {
     assert!(!get_test_bond_with_carbon_metadata(carbon_metadata3).inner.is_valid(DEFAULT_DAY_DURATION));
     assert!(!get_test_bond_with_carbon_metadata(carbon_metadata4).inner.is_valid(DEFAULT_DAY_DURATION));
     assert!(!get_test_bond_with_carbon_metadata(carbon_metadata5).inner.is_valid(DEFAULT_DAY_DURATION));
+}
+
+#[test]
+fn bond_with_carbon_redeem_ok() {
+        // YMT - yield to maturity - total coupon yield after bond redemption
+        const ACCOUNT: u64 = 3;
+        const INVESTOR1: u64 = 4;
+        const INVESTOR2: u64 = 6;
+    
+        let bondid: BondId = "BOND".into();
+    
+        new_test_ext().execute_with(|| {
+            let c_bond = get_test_bond_stable_carbon();
+
+            bond_grand_everusd();
+            assert!(Evercity::evercity_balance().is_ok());
+            let initial_balace1 = Evercity::balance_everusd(&INVESTOR1);
+            let initial_balace2 = Evercity::balance_everusd(&INVESTOR2);
+            bond_activate(bondid, ACCOUNT, c_bond.inner);
+            assert!(Evercity::evercity_balance().is_ok());
+    
+            let chain_bond_item = Evercity::get_bond(&bondid);
+            assert_eq!(chain_bond_item.active_start_date, 30000);
+            assert_eq!(chain_bond_item.issued_amount, 1200);
+    
+            let num_periods = chain_bond_item.get_periods();
+            // all period except start period will have interest rate = interest_rate_base_value
+            // for start period interest rate will be  interest_rate_start_period_value
+            for period in 0..num_periods - 1 {
+                assert_ok!(Evercity::set_impact_data(
+                    &bondid,
+                    period,
+                    chain_bond_item.inner.impact_data_baseline[period as usize].unwrap_or(0)
+                ));
+            }
+              // go to the last period
+        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+            chain_bond_item.active_start_date
+                + days2timestamp(120 + chain_bond_item.inner.bond_duration * 30 + 1),
+        );
+        // add extra everusd to pay off coupon yield
+        assert_ok!(add_token(ACCOUNT, 125_000_000_000_000));
+        assert!(Evercity::evercity_balance().is_ok());
+
+        let account_investments = Evercity::get_bond_account_investment(&bondid);
+        assert_ok!(Evercity::bond_redeem(Origin::signed(ACCOUNT), bondid));
+        assert!(Evercity::bond_check_invariant(&bondid));
+        // withdraw coupon & principal value
+        assert_ok!(Evercity::bond_withdraw_everusd(
+            Origin::signed(INVESTOR1),
+            bondid
+        ));
+        assert_ok!(Evercity::bond_withdraw_everusd(
+            Origin::signed(INVESTOR2),
+            bondid
+        ));
+
+        assert!(Evercity::evercity_balance().is_ok());
+
+        let chain_bond_item = Evercity::get_bond(&bondid);
+        let yield1 = Evercity::balance_everusd(&INVESTOR1) - initial_balace1;
+        let yield2 = Evercity::balance_everusd(&INVESTOR2) - initial_balace2;
+
+        assert_eq!(
+            yield1 + yield2 + Evercity::balance_everusd(&ACCOUNT),
+            125_000_000_000_000
+        );
+        assert_eq!(yield1, yield2);
+        assert_eq!(chain_bond_item.state, BondState::FINISHED);
+        
+        // check that carbon metadata stores bond distribution 
+        assert_eq!(account_investments, chain_bond_item.inner.carbon_metadata.unwrap().account_investments);
+    });
 }
 
 
@@ -1572,7 +1656,7 @@ fn bond_try_release_without_fundraising_period() {
 }
 
 #[test]
-fn bond_calc_redeemed_yield() {
+fn bond_calc_redeemed_yield() {  
     // YMT - yield to maturity - total coupon yield after bond redemption
     const ACCOUNT: u64 = 3;
     const INVESTOR1: u64 = 4;

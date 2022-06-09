@@ -232,8 +232,8 @@ pub mod pallet {
         ProjectIsBond,
         /// Project is not a Bond project
         ProjectIsNotBond,
-        /// Bond is not in active or finished state
-        BondNotActiveOrFinished,
+        /// Bond is not in finished state
+        BondNotFinished,
         /// Bond unit package registry balance is zero
 		BalanceIsZero,
         /// Zero investment on bond
@@ -373,7 +373,7 @@ pub mod pallet {
             }
             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
 			ensure!(bond.issuer == caller, Error::<T>::NotAnIssuer);
-			ensure!(matches!(bond.state, BondState::ACTIVE | BondState::FINISHED) , Error::<T>::BondNotActiveOrFinished);
+			ensure!(bond.state == BondState::FINISHED, Error::<T>::BondNotFinished);
             let new_id = LastID::<T>::get() + 1;
             let new_project = 
                 ProjectStruct::new_with_bond(caller.clone(), new_id, standard, file_id, bond_id);
@@ -985,7 +985,7 @@ pub mod pallet {
                             };
                             let bond = pallet_evercity_bonds::Module::<T>::get_bond(&bond_id);
                             ensure!(bond.issuer == project_owner, Error::<T>::NotAnIssuer);
-                            ensure!(matches!(bond.state, BondState::ACTIVE | BondState::FINISHED), Error::<T>::BondNotActiveOrFinished);
+                            ensure!(bond.state == BondState::FINISHED, Error::<T>::BondNotFinished);
         
                             // Check that there is at least one annual report
                             let reports_len = project.annual_reports.len();
@@ -1047,7 +1047,7 @@ pub mod pallet {
                             let check_reg = BondCarbonReleaseRegistry::<T>::get(bond_id);
                             ensure!(check_reg.is_none(), Error::<T>::AlreadyReleased);
 
-                            let bond_investment_tuples = pallet_evercity_bonds::Module::<T>::get_bond_account_investment(&bond_id);
+                            let bond_investment_tuples = carbon_metadata.account_investments;
                             ensure!(!bond_investment_tuples.is_empty(), Error::<T>::InvestmentIsZero);
 
                             let total_packages = bond_investment_tuples.iter()
