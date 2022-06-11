@@ -268,6 +268,12 @@ pub mod pallet {
         NotEnoughCarbonCreditsInLot,
         /// Lot not found
         LotNotFound,
+
+        // External Project Errors:
+        
+        /// Batch not found
+        BatchNotFound,
+        NoAccess,
     }
 
     /// Project storage
@@ -337,6 +343,15 @@ pub mod pallet {
         _,
         Blake2_128Concat, BatchAssetId,
         BatchAsset<T::AccountId>,
+        OptionQuery
+    >;
+
+    #[pallet::storage]
+    #[pallet::getter(fn external_project)]
+    pub(super) type ExternalProjectRegistry<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat, ExternalProjectId,
+        ExternalProject,
         OptionQuery
     >;
 
@@ -1345,19 +1360,48 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(0,0))]
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
         pub fn create_batch_asset(
             origin: OriginFor<T>, 
-            registry_type: RegistryType,
-            external_project_id: Vec<u8>,
-            amount: u32,
+           
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             let batch_id = Self::get_random_batch_id(&caller);
-            let batch = BatchAsset::<T::AccountId>::new(caller.clone(), registry_type, external_project_id, amount);
+            let batch = BatchAsset::<T::AccountId>::new(caller.clone());
             BatchAssetRegistry::<T>::insert(batch_id.clone(), batch);
 
             Self::deposit_event(Event::BatchAssetCreated(caller, batch_id));
+            Ok(().into())
+        }
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        pub fn update_batch_asset(
+            origin: OriginFor<T>, 
+            batch_id: BatchAssetId,
+            registry_type: RegistryType,
+            external_project_id: Vec<u8>,
+            vintage_name: Option<Vec<u8>>,
+            serial_number: Vec<u8>, 
+            amount: u32,
+        ) -> DispatchResultWithPostInfo {
+            let caller = ensure_signed(origin)?;
+
+            ensure!(BatchAssetRegistry::<T>::contains_key(batch_id), Error::<T>::BatchNotFound);
+            BatchAssetRegistry::<T>::mutate(batch_id, |batch| -> DispatchResult {
+                if let Some(batch) = batch {
+                    ensure!(batch.owner == caller, Error::<T>::NoAccess);
+                    batch.registry_type = registry_type;
+                    batch.external_project_id = external_project_id;
+                    if let Some(vintage_name) = vintage_name {
+                        batch.vintage_name = vintage_name;
+                    }
+                    batch.serial_number = serial_number;
+                    batch.amount = amount;
+                    Ok(().into())
+                } else {
+                    Err(Error::<T>::BatchNotFound.into())
+                }
+            })?;
             Ok(().into())
         }
     }

@@ -48,15 +48,15 @@ fn it_works_create_batch_asset() {
         setup_blocks(38);
         let acc = 1;
         let external_project_id: Vec<u8> = "1234v".as_bytes().to_vec();
-        let amount = 1_000;
-        assert_ok!(CarbonCredits::create_batch_asset(Origin::signed(acc), RegistryType::Cercarbono, external_project_id, amount));
+       // let amount = 1_000;
+        assert_ok!(CarbonCredits::create_batch_asset(Origin::signed(acc), RegistryType::Cercarbono, external_project_id));
         let event = System::events().pop().unwrap().event;
         let batch_id = CarbonCredits::get_random_batch_id(&acc);
         assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
 
         let asset = CarbonCredits::batch_assets(batch_id).unwrap();
         assert_eq!(acc, asset.owner);
-        assert_eq!(amount, asset.amount);
+        //assert_eq!(amount, asset.amount);
         assert_eq!(RegistryType::Cercarbono, asset.registry_type);
         assert_eq!(BatchStatus::INITIAL, asset.status);
     });
