@@ -8,6 +8,7 @@ pub mod required_signers;
 pub mod carbon_credits_passport;
 pub mod burn_certificate;
 pub mod bond_carbon_release;
+pub mod external_carbon_units;
 mod cc_package_lot;
 #[cfg(test)]    
 pub mod tests;
@@ -29,6 +30,7 @@ use pallet_evercity_accounts::accounts::RoleMask;
 use carbon_credits_passport::CarbonCreditsPassport;
 use burn_certificate::CarbonCreditsBurnCertificate;
 use pallet_evercity_accounts as accounts;
+use crate::external_carbon_units::*;
 
 pub use crate::pallet::*;
 
@@ -45,7 +47,8 @@ const MAX_CARBON_CREDITS_ZOMBIES: u32 = 5_000_000;
 pub mod pallet {
     use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::*,
+		pallet_prelude::{*, OptionQuery}, Blake2_128Concat,
+        traits::Randomness
 	};
 	use frame_system::pallet_prelude::*;
     use pallet_evercity_bonds::{bond::BondState, BondId, Expired};
@@ -69,6 +72,7 @@ pub mod pallet {
         pallet_evercity_bonds::Config
     {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type Randomness: frame_support::traits::Randomness<Self::Hash>;
     }
 
     #[pallet::hooks]
@@ -138,6 +142,11 @@ pub mod pallet {
 		CarbonCreditsLotCreated(T::AccountId, CarbonCreditsId::<T>, CarbonCreditsPackageLotOf::<T>),
 		/// \[Buyer, Seller, Amount\]
 		CarbonCreditsBought(T::AccountId, T::AccountId, CarbonCreditsBalance::<T>),
+
+        // External Project Events:
+
+        /// \[Creator, BatchAssetId\]
+        BatchAssetCreated(T::AccountId, BatchAssetId),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -319,6 +328,17 @@ pub mod pallet {
 		Vec<CarbonCreditsPackageLotOf<T>>,
 		OptionQuery
 	>;
+
+    // External Carbon storage
+
+    #[pallet::storage]
+    #[pallet::getter(fn batch_assets)]
+    pub(super) type BatchAssetRegistry<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat, BatchAssetId,
+        BatchAsset<T::AccountId>,
+        OptionQuery
+    >;
 
     // EXTRINSICS:
     #[pallet::call]
@@ -1324,6 +1344,22 @@ pub mod pallet {
 			})?;
 			Ok(().into())
 		}
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(0,0))]
+        pub fn create_batch_asset(
+            origin: OriginFor<T>, 
+            registry_type: RegistryType,
+            external_project_id: Vec<u8>,
+            amount: u32,
+        ) -> DispatchResultWithPostInfo {
+            let caller = ensure_signed(origin)?;
+            let batch_id = Self::get_random_batch_id(&caller);
+            let batch = BatchAsset::<T::AccountId>::new(caller.clone(), registry_type, external_project_id, amount);
+            BatchAssetRegistry::<T>::insert(batch_id.clone(), batch);
+
+            Self::deposit_event(Event::BatchAssetCreated(caller, batch_id));
+            Ok(().into())
+        }
     }
 
     // IMPL PALLET
@@ -1534,6 +1570,20 @@ pub mod pallet {
             transfer_call.dispatch_bypass_filter(origin)?;
             Self::deposit_event(Event::CarbonCreditsTransfered(owner, new_carbon_credits_holder, asset_id));
             Ok(().into())
+        }
+
+        pub fn get_random_batch_id(account: &T::AccountId) -> BatchAssetId {
+            let prefix = "EVERCITY-1.0-".as_bytes();
+            let seed = (account, <frame_system::Module<T>>::extrinsic_index()).encode();
+            let rand = <T as pallet::Config>::Randomness::random(&seed);
+            let rand16: [u8; 16] = codec::Encode::using_encoded(&rand, sp_io::hashing::blake2_128);
+            let payload = [prefix, &rand16].concat();
+            let mut result = [0; 32];
+            for item in payload.into_iter().enumerate() {
+                let (i, x): (usize, u8) = item;
+                result[i] = x;
+            }
+            result
         }
 
     

@@ -82,6 +82,7 @@ impl frame_system::Config for TestRuntime {
 
 impl pallet_carbon_credits::Config for TestRuntime {
 	type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
 }
 
 impl pallet_evercity_accounts::Config for TestRuntime {

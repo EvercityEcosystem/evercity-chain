@@ -12,7 +12,6 @@ use crate::tests::mock::*;
 
 use super::mock::TestRuntime;
 
-
 type RuntimeError = Error<TestRuntime>;
 
 #[test]

@@ -233,5 +233,28 @@
     "deadline": "Compact<Moment>",
     "amount": "Compact<CarbonCreditsBalance>",
     "price_per_item": "Compact<EverUSDBalance>"
-  }
+  },
+  "RegistryType": {
+    "_enum": [
+      "Cercarbono"
+    ]
+  },
+  "BatchStatus": {
+    "_enum": [
+      "INITIAL",
+      "AWAITING_VERIFICATION",
+      "VERIFIED",
+      "REJECTED"
+    ]
+  },
+  "BatchAsset": {
+    "owner": "AccountId",
+    "registry_type": "RegistryType",
+    "serial_number": "Vec<u8>",
+    "status": "BatchStatus",
+    "external_project_id": "Vec<u8>",
+    "vintage_id": "u16",
+    "amount": "u32"
+  },
+  "BatchAssetId": "[u8; 32]"
 }

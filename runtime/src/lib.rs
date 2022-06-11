@@ -294,6 +294,7 @@ impl pallet_evercity_transfer::Config for Runtime {
 pub use pallet_evercity_carbon_credits;
 impl pallet_evercity_carbon_credits::Config for Runtime {
     type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
 }
 
 pub use pallet_evercity_accounts;
