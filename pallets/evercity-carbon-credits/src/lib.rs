@@ -147,6 +147,7 @@ pub mod pallet {
 
         /// \[Creator, BatchAssetId\]
         BatchAssetCreated(T::AccountId, BatchAssetId),
+        BatchAssetUpdated(BatchAssetId),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -271,9 +272,12 @@ pub mod pallet {
 
         // External Project Errors:
         
-        /// Batch not found
+        /// BatchAsset not found
         BatchNotFound,
+        /// Account has no access to BatchAsset
         NoAccess,
+        /// Action unavailable in this status
+        InvalidBatchStatus,
     }
 
     /// Project storage
@@ -1360,10 +1364,17 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+        /// <pre>
+        /// Method: create_batch_asset
+        /// Arguments: origin: OriginFor<T> - transaction caller
+        /// Access: anyone
+        /// 
+        /// Creates BatchAsset, deposit event BatchAssetCreated(caller, batch_id)
+        /// with batch_id that can be listed in external repository
+        /// </pre>
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
         pub fn create_batch_asset(
             origin: OriginFor<T>, 
-           
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             let batch_id = Self::get_random_batch_id(&caller);
@@ -1374,6 +1385,20 @@ pub mod pallet {
             Ok(().into())
         }
 
+        /// <pre>
+        /// Method: update_batch_asset
+        /// Arguments: origin: OriginFor<T> - transaction caller
+        ///             batch_id: BatchAssetId, - batch asset id
+        ///             registry_type: RegistryType, - registry where external carbon credits retired
+        ///             external_project_id: Vec<u8>, - project id in external registry
+        ///             vintage_name: Option<Vec<u8>>, - vintage name in external registry
+        ///             serial_number: Vec<u8>, - serial number of retirement
+        ///             amount: u32, - amount of external carbon credits retired
+        /// Access: owner of batch asset
+        /// 
+        /// Updates BatchAsset with listed arguments, moves BatchAsset to status AWAITING_VERIFICATION.
+        /// Next manager role should approve all arguments is correct.
+        /// </pre>
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
         pub fn update_batch_asset(
             origin: OriginFor<T>, 
@@ -1386,10 +1411,10 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
 
-            ensure!(BatchAssetRegistry::<T>::contains_key(batch_id), Error::<T>::BatchNotFound);
             BatchAssetRegistry::<T>::mutate(batch_id, |batch| -> DispatchResult {
                 if let Some(batch) = batch {
                     ensure!(batch.owner == caller, Error::<T>::NoAccess);
+                    ensure!(matches!(batch.status, BatchStatus::INITIAL | BatchStatus::REJECTED), Error::<T>::InvalidBatchStatus);
                     batch.registry_type = registry_type;
                     batch.external_project_id = external_project_id;
                     if let Some(vintage_name) = vintage_name {
@@ -1397,11 +1422,14 @@ pub mod pallet {
                     }
                     batch.serial_number = serial_number;
                     batch.amount = amount;
+                    batch.status = BatchStatus::AWAITING_VERIFICATION;
                     Ok(().into())
                 } else {
                     Err(Error::<T>::BatchNotFound.into())
                 }
             })?;
+
+            Self::deposit_event(Event::BatchAssetUpdated(batch_id));
             Ok(().into())
         }
     }

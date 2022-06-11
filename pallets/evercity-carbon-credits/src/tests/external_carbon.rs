@@ -47,22 +47,53 @@ fn it_works_create_batch_asset() {
     new_test_ext().execute_with(|| {
         setup_blocks(38);
         let acc = 1;
-        let external_project_id: Vec<u8> = "1234v".as_bytes().to_vec();
-       // let amount = 1_000;
-        assert_ok!(CarbonCredits::create_batch_asset(Origin::signed(acc), RegistryType::Cercarbono, external_project_id));
+
+        assert_ok!(CarbonCredits::create_batch_asset(Origin::signed(acc)));
         let event = System::events().pop().unwrap().event;
         let batch_id = CarbonCredits::get_random_batch_id(&acc);
         assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
 
         let asset = CarbonCredits::batch_assets(batch_id).unwrap();
         assert_eq!(acc, asset.owner);
-        //assert_eq!(amount, asset.amount);
-        assert_eq!(RegistryType::Cercarbono, asset.registry_type);
         assert_eq!(BatchStatus::INITIAL, asset.status);
     });
 }
 
 #[test]
+fn it_works_update_batch_asset() {
+    new_test_ext().execute_with(|| {
+        setup_blocks(38);
+        let acc = 1;
+        let external_project_id: Vec<u8> = "1234v".as_bytes().to_vec();
+        let vintage_name = "1989-1990".as_bytes().to_vec();
+        let serial_number = "1-2345-901".as_bytes().to_vec();
+        let amount = 50;
+
+        assert_ok!(CarbonCredits::create_batch_asset(Origin::signed(acc)));
+        let event = System::events().pop().unwrap().event;
+        let batch_id = CarbonCredits::get_random_batch_id(&acc);
+        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
+
+        let asset = CarbonCredits::batch_assets(batch_id).unwrap();
+        assert_eq!(acc, asset.owner);
+
+        assert_ok!(CarbonCredits::update_batch_asset(Origin::signed(acc), batch_id, RegistryType::Cercarbono,
+            external_project_id.clone(), Some(vintage_name.clone()), serial_number.clone(), amount));
+        let event = System::events().pop().unwrap().event;
+        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetUpdated(batch_id)), event);
+        let asset = CarbonCredits::batch_assets(batch_id).unwrap();
+        assert_eq!(acc, asset.owner);
+        assert_eq!(BatchStatus::AWAITING_VERIFICATION, asset.status);
+        assert_eq!(external_project_id, asset.external_project_id);
+        assert_eq!(vintage_name, asset.vintage_name);
+        assert_eq!(serial_number, asset.serial_number);
+        assert_eq!(amount, asset.amount);
+    });
+}
+
+#[test]
 fn it_works_create_batch_asset_() {
-    new_test_ext().execute_with(|| {});
+    new_test_ext().execute_with(|| {
+        
+    });
 }

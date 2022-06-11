@@ -7,7 +7,7 @@ use frame_support::sp_std::{
     cmp::{PartialEq}, 
 };
 
-// #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
+/// Batch asset id to list in retirement details on external registry
 pub type BatchAssetId = [u8; 32];
 pub type ExternalProjectId = Vec<u8>;
 
@@ -25,9 +25,13 @@ impl Default for RegistryType {
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum BatchStatus {
+    /// Initial creation
     INITIAL,
+    /// All details included, awaiting verification
     AWAITING_VERIFICATION,
+    /// Verified, last status
     VERIFIED,
+    /// Rejected because details incorrect
     REJECTED,
 }
 
