@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 use frame_support::{
     codec::{Decode, Encode},
     sp_runtime::RuntimeDebug,
@@ -10,10 +12,17 @@ use frame_support::sp_std::{
 /// Batch asset id to list in retirement details on external registry
 pub type BatchAssetId = [u8; 32];
 pub type ExternalProjectId = Vec<u8>;
+pub type VintageId = Vec<u8>;
 
 #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq)]
 pub enum RegistryType {
     Cercarbono
+}
+
+impl Display for RegistryType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl Default for RegistryType {
@@ -55,7 +64,27 @@ pub struct BatchAsset<AccountId> {
 impl<AccountId> BatchAsset<AccountId> {
     pub fn new(owner: AccountId) -> Self { 
         Self { owner, registry_type: Default::default(), serial_number: Default::default(), status: BatchStatus::INITIAL,
-             external_project_id: Default::default(), vintage_name: Default::default(), amount: Default::default() } }
+             external_project_id: Default::default(), vintage_name: Default::default(), amount: Default::default() } 
+        }
+     
+    pub fn construct_external_project_id(&self) -> ExternalProjectId {
+        let prefix = self.registry_type.to_string().as_bytes().to_vec();
+        [prefix, br#"-"#.to_vec(), self.external_project_id.clone()].concat()
+    }
+
+    pub fn construct_vintage_id(&self) -> VintageId {
+        let prefix = self.registry_type.to_string().as_bytes().to_vec();
+        [prefix, br#"-"#.to_vec(), self.vintage_name.clone()].concat()
+    }
+
+    pub fn construct_carbon_asset_name(&self) -> Vec<u8> {
+        let evercity_prefix = "EVERCITY-".as_bytes().to_vec();
+        let external_id = self.construct_external_project_id();
+        match self.vintage_name.len() {
+            0 =>  [evercity_prefix, external_id].concat(),
+            _ => [evercity_prefix, external_id, br#"-"#.to_vec(), self.vintage_name.clone()].concat()
+        }
+    }
 }
 
 // external outside third-party
@@ -63,26 +92,11 @@ impl<AccountId> BatchAsset<AccountId> {
 pub struct ExternalProject {
     pub uri: Vec<u8>,
     pub hash_link: Vec<u8>,
-    pub vintages: Vec<Vintage>,
+    // pub vintages: Vec<Vintage>,
 }
 
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
 pub struct Vintage {
-    pub name: Vec<u8>,
     pub hash_link: Vec<u8>,
     pub uri: Vec<u8>,
-}
-
-impl Vintage {
-}
-
-pub fn construct_external_project_id(registry_type: RegistryType, project_id: Vec<u8>) -> ExternalProjectId {
-    todo!()
-}
-
-impl ExternalProject {
-
-    pub fn construct_carnon_asset_name(&self, vintage_id: usize) {
-        todo!()
-    }
 }

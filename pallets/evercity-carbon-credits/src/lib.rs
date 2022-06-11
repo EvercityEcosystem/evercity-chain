@@ -147,7 +147,12 @@ pub mod pallet {
 
         /// \[Creator, BatchAssetId\]
         BatchAssetCreated(T::AccountId, BatchAssetId),
+        /// \[BatchAssetId\]
         BatchAssetUpdated(BatchAssetId),
+        /// \[ExternalProjectId\]
+        ExternalProjectCreated(ExternalProjectId),
+        /// \[VintageId\]
+        ExternalVintageCreated(VintageId),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -342,7 +347,7 @@ pub mod pallet {
     // External Carbon storage
 
     #[pallet::storage]
-    #[pallet::getter(fn batch_assets)]
+    #[pallet::getter(fn batch_asset)]
     pub(super) type BatchAssetRegistry<T: Config> = StorageMap<
         _,
         Blake2_128Concat, BatchAssetId,
@@ -356,6 +361,15 @@ pub mod pallet {
         _,
         Blake2_128Concat, ExternalProjectId,
         ExternalProject,
+        OptionQuery
+    >;
+
+    #[pallet::storage]
+    #[pallet::getter(fn vintage)]
+    pub(super) type VintageRegistry<T: Config> = StorageMap<
+        _,
+        Blake2_128Concat, VintageId,
+        Vintage,
         OptionQuery
     >;
 
@@ -1365,7 +1379,7 @@ pub mod pallet {
 		}
 
         /// <pre>
-        /// Method: create_batch_asset
+        /// Method: external_create_batch_asset
         /// Arguments: origin: OriginFor<T> - transaction caller
         /// Access: anyone
         /// 
@@ -1373,7 +1387,7 @@ pub mod pallet {
         /// with batch_id that can be listed in external repository
         /// </pre>
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn create_batch_asset(
+        pub fn external_create_batch_asset(
             origin: OriginFor<T>, 
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
@@ -1386,7 +1400,7 @@ pub mod pallet {
         }
 
         /// <pre>
-        /// Method: update_batch_asset
+        /// Method: external_update_batch_asset
         /// Arguments: origin: OriginFor<T> - transaction caller
         ///             batch_id: BatchAssetId, - batch asset id
         ///             registry_type: RegistryType, - registry where external carbon credits retired
@@ -1400,7 +1414,7 @@ pub mod pallet {
         /// Next manager role should approve all arguments is correct.
         /// </pre>
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn update_batch_asset(
+        pub fn external_update_batch_asset(
             origin: OriginFor<T>, 
             batch_id: BatchAssetId,
             registry_type: RegistryType,
@@ -1430,6 +1444,68 @@ pub mod pallet {
             })?;
 
             Self::deposit_event(Event::BatchAssetUpdated(batch_id));
+            Ok(().into())
+        }
+
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        pub fn external_add_project(
+            origin: OriginFor<T>, 
+            batch_id: BatchAssetId,
+            project_uri: Vec<u8>,
+            project_hash_link: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_signed(origin)?;
+
+            match Self::batch_asset(batch_id) {
+                Some(batch) => {
+                    let project_id = batch.construct_external_project_id();
+                    let project = ExternalProject {
+                        uri: project_uri,
+                        hash_link: project_hash_link,
+                        // vintages: Default::default(),
+                    };
+                    ExternalProjectRegistry::<T>::insert(project_id.clone(), project);    
+                    Self::deposit_event(Event::ExternalProjectCreated(project_id));
+                    Ok(().into())
+                }
+                None => Err(Error::<T>::BatchNotFound.into())
+            }
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        pub fn external_add_project_vintage(
+            origin: OriginFor<T>, 
+            batch_id: BatchAssetId,
+            vintage_hash_link: Vec<u8>,
+            vintage_uri: Vec<u8>,
+        ) -> DispatchResultWithPostInfo {
+            ensure_signed(origin)?;
+            
+            match Self::batch_asset(batch_id) {
+                Some(batch) => {
+                    // let project_id = batch.construct_external_project_id();
+                    let vintage_id = batch.construct_vintage_id();
+                    let vintage = Vintage {
+                        hash_link: vintage_hash_link,
+                        uri: vintage_uri,
+                    };
+                    VintageRegistry::<T>::insert(vintage_id.clone(), vintage);    
+
+                    Self::deposit_event(Event::ExternalVintageCreated(vintage_id));
+                    Ok(().into())
+                }
+                None => Err(Error::<T>::BatchNotFound.into())
+            }     
+        }
+
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        pub fn external_verify_batch_asset(
+            origin: OriginFor<T>, 
+
+        ) -> DispatchResultWithPostInfo {
+            let caller = ensure_signed(origin)?;
+
+
             Ok(().into())
         }
     }
