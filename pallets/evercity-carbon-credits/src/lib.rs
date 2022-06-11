@@ -149,10 +149,8 @@ pub mod pallet {
         BatchAssetCreated(T::AccountId, BatchAssetId),
         /// \[BatchAssetId\]
         BatchAssetUpdated(BatchAssetId),
-        /// \[ExternalProjectId\]
-        ExternalProjectCreated(ExternalProjectId),
-        /// \[VintageId\]
-        ExternalVintageCreated(VintageId),
+        /// \[BatchAssetId, Ipfs\]
+        BatchAssetAddedIpfsLink(BatchAssetId, Vec<u8>),
     }
 
     #[deprecated(note = "use `Event` instead")]
@@ -352,24 +350,6 @@ pub mod pallet {
         _,
         Blake2_128Concat, BatchAssetId,
         BatchAsset<T::AccountId>,
-        OptionQuery
-    >;
-
-    #[pallet::storage]
-    #[pallet::getter(fn external_project)]
-    pub(super) type ExternalProjectRegistry<T: Config> = StorageMap<
-        _,
-        Blake2_128Concat, ExternalProjectId,
-        ExternalProject,
-        OptionQuery
-    >;
-
-    #[pallet::storage]
-    #[pallet::getter(fn vintage)]
-    pub(super) type VintageRegistry<T: Config> = StorageMap<
-        _,
-        Blake2_128Concat, VintageId,
-        Vintage,
         OptionQuery
     >;
 
@@ -1447,8 +1427,19 @@ pub mod pallet {
             Ok(().into())
         }
 
+        /// <pre>
+        /// Method: external_add_project_ipfs_link
+        /// Arguments: origin: OriginFor<T> - transaction caller
+        ///             batch_id: BatchAssetId, - batch asset id
+        ///             registry_type: RegistryType, - registry where external carbon credits retired
+        ///             project_uri: Vec<u8>, - uri
+        ///             project_hash_link: Vec<u8>, - ipfs hash link
+        /// Access: anyone
+        /// 
+        /// Updates BatchAsset with ipfs project data.
+        /// </pre>
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn external_add_project(
+        pub fn external_add_project_ipfs_link(
             origin: OriginFor<T>, 
             batch_id: BatchAssetId,
             project_uri: Vec<u8>,
@@ -1456,46 +1447,20 @@ pub mod pallet {
         ) -> DispatchResultWithPostInfo {
             ensure_signed(origin)?;
 
-            match Self::batch_asset(batch_id) {
-                Some(batch) => {
-                    let project_id = batch.construct_external_project_id();
-                    let project = ExternalProject {
-                        uri: project_uri,
-                        hash_link: project_hash_link,
-                        // vintages: Default::default(),
-                    };
-                    ExternalProjectRegistry::<T>::insert(project_id.clone(), project);    
-                    Self::deposit_event(Event::ExternalProjectCreated(project_id));
-                    Ok(().into())
-                }
-                None => Err(Error::<T>::BatchNotFound.into())
-            }
-        }
+            BatchAssetRegistry::<T>::mutate(batch_id, |batch| -> DispatchResult {
+                if let Some(batch) = batch {
+                    ensure!(batch.status != BatchStatus::VERIFIED, Error::<T>::InvalidBatchStatus);
+                    batch.uri = project_uri;
+                    batch.ipfs_hash = project_hash_link.clone();
 
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-        pub fn external_add_project_vintage(
-            origin: OriginFor<T>, 
-            batch_id: BatchAssetId,
-            vintage_hash_link: Vec<u8>,
-            vintage_uri: Vec<u8>,
-        ) -> DispatchResultWithPostInfo {
-            ensure_signed(origin)?;
-            
-            match Self::batch_asset(batch_id) {
-                Some(batch) => {
-                    // let project_id = batch.construct_external_project_id();
-                    let vintage_id = batch.construct_vintage_id();
-                    let vintage = Vintage {
-                        hash_link: vintage_hash_link,
-                        uri: vintage_uri,
-                    };
-                    VintageRegistry::<T>::insert(vintage_id.clone(), vintage);    
-
-                    Self::deposit_event(Event::ExternalVintageCreated(vintage_id));
                     Ok(().into())
+                } else {
+                    Err(Error::<T>::BatchNotFound.into())
                 }
-                None => Err(Error::<T>::BatchNotFound.into())
-            }     
+            })?;
+
+            Self::deposit_event(Event::BatchAssetAddedIpfsLink(batch_id, project_hash_link));
+            Ok(().into())
         }
 
         #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]

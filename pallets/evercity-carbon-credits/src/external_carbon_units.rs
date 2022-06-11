@@ -59,22 +59,20 @@ pub struct BatchAsset<AccountId> {
     pub external_project_id: Vec<u8>,
     pub vintage_name: Vec<u8>,
     pub amount: u32,
+    pub uri: Vec<u8>,
+    pub ipfs_hash: Vec<u8>,
 }
 
 impl<AccountId> BatchAsset<AccountId> {
     pub fn new(owner: AccountId) -> Self { 
         Self { owner, registry_type: Default::default(), serial_number: Default::default(), status: BatchStatus::INITIAL,
-             external_project_id: Default::default(), vintage_name: Default::default(), amount: Default::default() } 
+             external_project_id: Default::default(), vintage_name: Default::default(), amount: Default::default(),
+            uri: Default::default(), ipfs_hash: Default::default(),  } 
         }
      
     pub fn construct_external_project_id(&self) -> ExternalProjectId {
         let prefix = self.registry_type.to_string().as_bytes().to_vec();
         [prefix, br#"-"#.to_vec(), self.external_project_id.clone()].concat()
-    }
-
-    pub fn construct_vintage_id(&self) -> VintageId {
-        let prefix = self.registry_type.to_string().as_bytes().to_vec();
-        [prefix, br#"-"#.to_vec(), self.vintage_name.clone()].concat()
     }
 
     pub fn construct_carbon_asset_name(&self) -> Vec<u8> {
@@ -85,18 +83,4 @@ impl<AccountId> BatchAsset<AccountId> {
             _ => [evercity_prefix, external_id, br#"-"#.to_vec(), self.vintage_name.clone()].concat()
         }
     }
-}
-
-// external outside third-party
-#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
-pub struct ExternalProject {
-    pub uri: Vec<u8>,
-    pub hash_link: Vec<u8>,
-    // pub vintages: Vec<Vintage>,
-}
-
-#[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq)]
-pub struct Vintage {
-    pub hash_link: Vec<u8>,
-    pub uri: Vec<u8>,
 }
