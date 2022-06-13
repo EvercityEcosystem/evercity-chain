@@ -245,7 +245,7 @@ construct_runtime!(
 );
 ```
 
-Update chain spec for EvercityAccounts: [here](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts#45)
+Update chain spec for EvercityAccounts: [here](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts#45-modify-chain-spec-set-genesisconfig)
 
 
 ### 6.3 Build
