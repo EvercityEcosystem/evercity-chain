@@ -84,13 +84,57 @@ construct_runtime!(
 );
 ```
 
-### 4.5 Check on smart sustainable bond node
+### 4.5 Modify chain spec, set GenesisConfig
 
-```bash
-git clone https://github.com/EvercityEcosystem/smart-sustainable-bond.git
-cd smart-sustainable-bond
-git checkout add_carbon_credits #temporary
-make run
+With no predefined accounts (master account is set using `set_master()` extrinsic)
+
+```rust
+use node_template_runtime::EvercityAccountsConfig;
+...
+GenesisConfig {
+...
+	pallet_evercity_accounts: Some(EvercityAccountsConfig {
+            // set roles for each pre-set accounts (set role)
+            genesis_account_registry: Vec::new()
+        }),
+}
+```
+
+With predefined accounts
+
+```rust
+use node_template_runtime::EvercityAccountsConfig;
+...
+
+/// Configure initial storage state for FRAME modules.
+fn testnet_genesis(
+    wasm_binary: &[u8],
+    initial_authorities: Vec<(AuraId, GrandpaId)>,
+    root_key: AccountId,
+    /// predefined evercity accounts with roles
+    evercity_accounts: Vec<(AccountId, pallet_evercity_accounts::accounts::RoleMask)>,
+    ...
+) -> GenesisConfig {
+    GenesisConfig {
+        ...
+         pallet_evercity_accounts: Some(EvercityAccountsConfig {
+            // set roles for each pre-set accounts (set role)
+            genesis_account_registry: evercity_accounts
+                .iter()
+                .map(|(acc, role)| {
+                    (
+                        acc.clone(),
+                        AccountStruct {
+                            roles: *role,
+                            identity: 0,
+                            create_time: 0,
+                        },
+                    )
+                })
+                .collect(),
+        }),
+    }
+}
 ```
 
 ### 4.6 Run Unit Tests

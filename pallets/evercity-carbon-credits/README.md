@@ -107,15 +107,21 @@ Some other functions:
 
 - Project owner can remove account from last annual report signers if it didnt sign the document (extrinsic - remove_last_annual_report_signer())
  
- ```rust
- create_carbon_credit_lot
- ```
- Creates a lot with an expiration moment. Lot can be private - then only targer bearer can buy Carbon Credits from the lot. 
- ```
- buy_carbon_credit_lot_units
- ```
- Buys Carbon Credits from the lot. Can buy defined amount of it, or the whole lot.
+ ### 5.3 Lot system 
+ 
+ - Extrinsic: `create_carbon_credit_lot` - creates a lot with an expiration moment. Lot can be private - then only targer bearer can buy Carbon Credits from the lot. 
 
+ - Extrinsic: `buy_carbon_credit_lot_units` - buys Carbon Credits from the lot. Can buy defined amount of it, or the whole lot.
+
+### 5.4 Tokenization of external Carbon Units
+
+1) User creates `BatchAsset` calling extrinsic `external_create_batch_asset`,
+receives `BatchAssetId` from event.
+2) User buys and retires/locks carbon units on the external registry and writes `BatchAssetId` to public retirement details. The user receives a serial number of retirement.
+3) User updates `BatchAsset` calling extrinsic `external_update_batch_asset`, and list `registry_type` - registry name, `external_project_id`, `vintage_name`, `serial_number` from previous step, `amount` of bought carbon units.
+4) User/or manager puts all project information on ipfs, then calls extrinsic `external_add_project_ipfs_link`.
+5) Evercity manager verifies all information and calls extrinsic `external_verify_batch_asset`
+6) Evercity carbon credits released. The user can burn them, or sell them via the lot system.
 
 # 6. Pallet Carbon Credits documentation
 
@@ -138,10 +144,12 @@ Types are described in the types.json file
 Add to runtime cargo.toml
 
 ```toml
-pallet-evercity-carbon-credits = { default-features = false, version = '0.1.14', git = 'https://github.com/EvercityEcosystem/carbon-credits' }
-pallet-evercity-filesign = { default-features = false, version = '0.1.3', git = 'https://github.com/EvercityEcosystem/filesign'}
-pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-assets' }
-pallet-evercity-accounts = { default-features = false, version = '0.1.8', git = 'https://github.com/EvercityEcosystem/evercity-accounts' }
+pallet-evercity-carbon-credits = { default-features = false, version = '0.2.0', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
+pallet-evercity-filesign = { default-features = false, version = '0.1.4', git = 'https://github.com/EvercityEcosystem/evercity-chain'}
+pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
+pallet-evercity-accounts = { default-features = false, version = '0.1.8', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
+pallet-evercity-bonds ={ default-features = false, version = '0.1.3', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
+pallet-randomness-collective-flip = { default-features = false, version = '3.0.0' }
 #...
 [features]
 default = ['std']
@@ -151,7 +159,8 @@ std = [
     'pallet-evercity-carbon-credits/std',
     'pallet-evercity-filesign/std',
     'pallet-evercity-assets/std',
-    'pallet-evercity-accounts/std'
+    'pallet-evercity-accounts/std',
+    'pallet-evercity-bonds/std',
     #...
 ]
 ```
@@ -162,6 +171,59 @@ Add to runtime constructing
 pub use pallet_evercity_carbon_credits;
 impl pallet_evercity_carbon_credits::Config for Runtime {
     type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
+}
+// dependency configs
+const DEFAULT_DAY_DURATION: u32 = 86400; //seconds in 1 DAY
+parameter_types! {
+    pub const BurnRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MintRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MaxMintAmount: pallet_evercity_bonds::EverUSDBalance = 60_000_000_000_000_000;
+    pub const TimeStep: pallet_evercity_bonds::BondPeriod = DEFAULT_DAY_DURATION;
+}
+
+impl pallet_evercity_bonds::Config for Runtime {
+	type Event = Event;
+    type BurnRequestTtl = BurnRequestTtl;
+    type MintRequestTtl = MintRequestTtl;
+    type MaxMintAmount = MaxMintAmount;
+    type TimeStep = TimeStep;
+    type WeightInfo = ();
+    type OnAddBond = ();
+}
+
+pub use pallet_evercity_accounts;
+impl pallet_evercity_accounts::Config for Runtime {
+    type Event = Event;
+}
+
+parameter_types! {
+    pub const AssetDepositBase: Balance = 0;
+    pub const AssetDepositPerZombie: Balance = 0;
+    pub const ApprovalDeposit: Balance = 0;
+    pub const StringLimit: u32 = 50;
+    pub const MetadataDepositBase: Balance = 0;
+    pub const MetadataDepositPerByte: Balance = 0;
+}
+use pallet_evercity_assets;
+impl pallet_evercity_assets::Config for Runtime {
+    type Event = Event;
+    type ABalance = u64;
+    type AssetId = u64;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+    type AssetDepositBase = AssetDepositBase;
+    type AssetDepositPerZombie = AssetDepositPerZombie;
+    type StringLimit = StringLimit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type WeightInfo = pallet_evercity_assets::weights::SubstrateWeight<Runtime>;
+}
+
+use pallet_evercity_filesign;
+impl pallet_evercity_filesign::Config for Runtime {
+    type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
 }
 ...
 construct_runtime!(
@@ -173,14 +235,19 @@ construct_runtime!(
         ...
         EvercityCarbonCredits: pallet_evercity_carbon_credits::{ Module, Call, Storage, Event<T>},
         ...
-        // Add dependent pallets:
+        // Add dependency pallets:
+        Evercity: pallet_evercity_bonds::{Module, Call, Storage, Event<T>},
         EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
         EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
         EvercityAssets: pallet_evercity_assets::{ Module, Storage, Event<T> },
-        ...
+	    ...
     }
 );
 ```
+
+Update chain spec for EvercityAccounts: [here](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts#45)
+
+
 ### 6.3 Build
 
 ```bash
