@@ -180,7 +180,8 @@
   "CarbonCreditsOrigin": {
     "_enum":{
       "CarbonProject": "ProjectId",
-      "Bond": "[u8; 16]"
+      "Bond": "[u8; 16]",
+      "BatchAsset": "BatchAssetId"
     }
   },
   "CarbonCreditsBurnCertificate": {
@@ -258,5 +259,6 @@
     "uri": "Vec<u8>",
     "ipfs_hash": "Vec<u8>"
   },
-  "BatchAssetId": "[u8; 32]"
+  "BatchAssetId": "[u8; 32]",
+  "ExternalProjectId": "Vec<u8>"
 }

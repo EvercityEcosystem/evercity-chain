@@ -1,4 +1,4 @@
-use crate::project::ProjectId;
+use crate::{project::ProjectId, external_carbon_units::BatchAssetId};
 use frame_support::{
     codec::{Decode, Encode},
     sp_runtime::RuntimeDebug,
@@ -34,10 +34,24 @@ impl<AssetId> CarbonCreditsPassport<AssetId> {
         }
     }
 
+    pub fn external_new(asset_id: AssetId, batch_id: BatchAssetId) -> Self {
+        Self { asset_id,
+            project_id: CarbonCreditsOrigin::BatchAsset(batch_id),
+            annual_report_index: 0 }
+    }
+
     pub fn get_project_id(&self) -> ProjectId { 
         match self.project_id {
             CarbonCreditsOrigin::CarbonProject(p_id) => p_id,
             CarbonCreditsOrigin::Bond(_) => ProjectId::default(),
+            _ => ProjectId::default(),
+        }
+    }
+
+    pub fn get_batch_asset_id(&self) -> Option<BatchAssetId> {
+        match self.project_id {
+            CarbonCreditsOrigin::BatchAsset(id) => Some(id),
+            _ => None,
         }
     }
 
@@ -65,6 +79,8 @@ pub enum CarbonCreditsOrigin {
     CarbonProject(ProjectId),
     /// Bond that releases Carbon Credits
     Bond([u8; 16]),
+    /// Batch Asset for external Carbon Credits
+    BatchAsset(BatchAssetId),
 }
 
 impl Default for CarbonCreditsOrigin {

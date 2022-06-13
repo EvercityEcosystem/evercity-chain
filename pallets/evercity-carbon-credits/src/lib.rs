@@ -27,7 +27,7 @@ use project::{ProjectStruct, ProjectId};
 use standard::Standard;
 use pallet_evercity_filesign::file::{FileId};
 use pallet_evercity_accounts::accounts::RoleMask;
-use carbon_credits_passport::CarbonCreditsPassport;
+use carbon_credits_passport::*;
 use burn_certificate::CarbonCreditsBurnCertificate;
 use pallet_evercity_accounts as accounts;
 use crate::external_carbon_units::*;
@@ -281,6 +281,8 @@ pub mod pallet {
         NoAccess,
         /// Action unavailable in this status
         InvalidBatchStatus,
+        /// Ipfs data should be present
+        NoIpfsData,
     }
 
     /// Project storage
@@ -972,7 +974,7 @@ pub mod pallet {
                                 let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
                                 Error::<T>::ErrorMintingAsset
                             });
-        
+                            
                             // Create passport
                             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, project_id, project.annual_reports.len()));
                             Ok(())
@@ -1463,14 +1465,74 @@ pub mod pallet {
             Ok(().into())
         }
 
-        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+        /// <pre>
+        /// Method: external_verify_batch_asset
+        /// Arguments: origin: OriginFor<T> - transaction caller
+        ///             batch_id: BatchAssetId, - batch asset id
+        ///             asset_id: AssetId, - id of a new asset to create
+        ///             min_balance: ABalance, - minimal existing balance of a new asset
+        /// Access: manager role
+        /// 
+        /// Verifies the BatchAsset and creates a new asset and mints this cc asset to batch owner 
+        /// in the amount specified in the batch.
+        /// </pre>
+        #[pallet::weight(10_000 + T::DbWeight::get().reads_writes(2,5))]
         pub fn external_verify_batch_asset(
             origin: OriginFor<T>, 
-
+            batch_id: BatchAssetId,
+            asset_id: <T as pallet_evercity_assets::Config>::AssetId,
+            min_balance: <T as pallet_evercity_assets::Config>::ABalance,
         ) -> DispatchResultWithPostInfo {
-            let caller = ensure_signed(origin)?;
+            let caller = ensure_signed(origin.clone())?;
 
+            ensure!(accounts::Module::<T>::account_is_manager(&caller), Error::<T>::AccountIncorrectRole);
+            BatchAssetRegistry::<T>::try_mutate(batch_id, |batch| -> DispatchResult {
+                if let Some(batch) = batch {
+                    ensure!(batch.status == BatchStatus::AWAITING_VERIFICATION, Error::<T>::InvalidBatchStatus);
+                    ensure!(batch.uri.len() != 0, Error::<T>::NoIpfsData);
+                    ensure!(batch.ipfs_hash.len() != 0, Error::<T>::NoIpfsData);
+                    batch.status = BatchStatus::VERIFIED;
+                    // Create Asset:
+                    let holder = <T::Lookup as StaticLookup>::unlookup(batch.owner.clone());
+                    // let admin = 
+                    let create_asset_call = 
+                        pallet_evercity_assets::Call::<T>::create(asset_id, holder.clone(), MAX_CARBON_CREDITS_ZOMBIES, min_balance);
+                    let create_asset_result = create_asset_call.dispatch_bypass_filter(origin.clone());
+                    ensure!(!create_asset_result.is_err(), Error::<T>::ErrorCreatingAsset);
 
+                    // Set metadata 
+                    let set_metadata_call = pallet_evercity_assets::Call::<T>::set_metadata(asset_id, 
+                                            batch.construct_carbon_asset_name(), 
+                                            batch.construct_carbon_asset_symbol(), 
+                                            0
+                                        );
+
+                    let result = set_metadata_call.dispatch_bypass_filter(origin.clone());
+                    ensure!(!result.is_err(), {
+                        // destroy if failed
+                        let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
+                        Error::<T>::SetMetadataFailed
+                    });
+ 
+                    // Mint Carbon Credits
+                    let cc_amount = batch.amount.into();
+                    let holder_origin: OriginFor<T> = frame_system::RawOrigin::Signed(batch.owner.clone()).into();
+                    let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, holder, cc_amount);
+                    let result = mint_call.dispatch_bypass_filter(holder_origin);
+                    ensure!(!result.is_err(), {
+                        // destroy if failed
+                        let _ = pallet_evercity_assets::Call::<T>::destroy(asset_id, 0);
+                        Error::<T>::ErrorMintingAsset
+                    });
+
+                    // Create passport
+                    <CarbonCreditPassportRegistry<T>>::insert(asset_id, 
+                        CarbonCreditsPassport::external_new(asset_id, batch_id));
+                    Ok(())
+                } else {
+                    Err(Error::<T>::BatchNotFound.into())
+                }
+            })?;
             Ok(().into())
         }
     }

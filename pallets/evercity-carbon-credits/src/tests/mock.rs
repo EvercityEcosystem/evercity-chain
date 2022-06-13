@@ -150,13 +150,14 @@ impl pallet_evercity_filesign::Config for TestRuntime {
 }
 
 // (AccountId, role)
-pub static ROLES: [(u64, RoleMask); 6] = [
+pub static ROLES: [(u64, RoleMask); 7] = [
     (1_u64, MASTER_ROLE_MASK),
     (2_u64, CC_PROJECT_OWNER_ROLE_MASK),
     (3_u64, CC_AUDITOR_ROLE_MASK),
     (4_u64, CC_STANDARD_ROLE_MASK),
     (5_u64, CC_INVESTOR_ROLE_MASK),
     (6_u64, CC_REGISTRY_ROLE_MASK),
+    (7_u64, MANAGER_ROLE_MASK),
 ];
 
 // Build genesis storage according to the mock runtime.
