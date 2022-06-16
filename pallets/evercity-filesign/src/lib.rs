@@ -6,167 +6,168 @@ mod mock;
 #[cfg(test)]    
 mod tests;
 pub mod file;
-
-use crate::sp_api_hidden_includes_decl_storage::hidden_include::traits::Randomness;
-use crate::sp_api_hidden_includes_decl_storage::hidden_include::traits::Get;
-use codec::Encode;
-use frame_support::{
-    ensure,
-    decl_event,
-    decl_error, 
-    decl_module, 
-    decl_storage,
-    dispatch::{
-        DispatchResult,
-        Vec,
-    },
-};
-use frame_system::{
-    ensure_signed,
-};
-use frame_support::sp_std::{
-    cmp::{
-        Eq, 
-        PartialEq}, 
-};
 use file::{FileStruct, H256, FileId};
+use frame_support::traits::Randomness;
+use codec::Encode;
+use frame_support::traits::Vec;
 
-pub trait Config: frame_system::Config {
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-    type Randomness: frame_support::traits::Randomness<Self::Hash>;
-}
+pub use pallet::*;
 
-decl_storage! {
-    trait Store for Module<T: Config> as Filesign {
+#[frame_support::pallet]
+pub mod pallet {
+        use frame_support::{pallet_prelude::*, dispatch::DispatchResultWithPostInfo};
+        use frame_system::pallet_prelude::*;
+        use super::*;
+
+        #[pallet::config]
+        pub trait Config: frame_system::Config {
+		    type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+            type Randomness: frame_support::traits::Randomness<Self::Hash>;
+        }
+
+        #[pallet::pallet]
+        #[pallet::generate_store(pub(super) trait Store)]
+        pub struct Pallet<T>(PhantomData<T>);
+
+        #[pallet::hooks]
+        impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> { }
+
+        #[pallet::call]
+        impl<T: Config> Pallet<T>
+        {
+            #[pallet::weight (T::DbWeight::get().reads_writes(2, 1) + 10_000)]
+            pub fn create_new_file(origin: OriginFor<T>, tag: Vec<u8>, filehash: H256, file_id_option: Option<FileId>) 
+                -> DispatchResultWithPostInfo {
+                ensure!(!tag.is_empty(), Error::<T>::EmptyTag);
+                let caller = ensure_signed(origin)?;
+                
+                // Update last created file ID
+                let file_id = match file_id_option {
+                    Some(id) => id,
+                    None => Self::get_random_id()
+                };
+                ensure!(<FileByID<T>>::get(file_id).is_none(), Error::<T>::IdAlreadyExists);
+                let new_file = FileStruct::<<T as frame_system::Config>::AccountId>::new(caller.clone(), file_id, tag, &filehash);
+                <FileByID<T>>::insert(file_id, new_file);
+                Self::deposit_event(Event::<T>::FileCreated(caller, file_id));
+                Ok(().into())
+            }
+
+            #[pallet::weight(T::DbWeight::get().reads_writes(1, 1) + 10_000)]
+            pub fn sign_latest_version(origin: OriginFor<T>, id: FileId) 
+                -> DispatchResultWithPostInfo {
+                let caller = ensure_signed(origin)?;
+                FileByID::<T>::try_mutate(
+                    id, |file_option| -> DispatchResultWithPostInfo {
+                        match file_option {
+                            None => return Err(Error::<T>::FileNotFound.into()),
+                            Some(file) => {
+                                ensure!(file.signers.iter().any(|x| *x == caller), Error::<T>::AddressNotSigner);
+                                file.sign_latest_version(caller.clone());
+                            }
+                        }
+                        Ok(().into())
+                    })?;
+
+                Self::deposit_event(Event::<T>::FileSigned(caller, id));
+                Ok(().into())
+            }
+
+            #[pallet::weight(T::DbWeight::get().reads_writes(1, 1) + 10_000)]
+            pub fn delete_signer(origin: OriginFor<T>, id: FileId, signer: T::AccountId)
+                -> DispatchResultWithPostInfo  {
+                let caller = ensure_signed(origin)?;
+
+                FileByID::<T>::try_mutate(
+                    id, |file_option| -> DispatchResultWithPostInfo {
+                        match file_option {
+                            None => return Err(Error::<T>::FileNotFound.into()),
+                            Some(file) => {
+                                ensure!(file.owner == caller, Error::<T>::AddressNotOwner);
+                                ensure!(file.signers.iter().any(|x| *x == signer), Error::<T>::AddressNotSigner);
+                                ensure!(file.delete_signer_from_file(signer.clone()).is_ok(), 
+                                    Error::<T>::AddressNotSigner);
+                            }
+                        }
+                        Ok(().into())
+                    }
+                )?;
+
+                Self::deposit_event(Event::<T>::SignerDeleted(caller, id, signer));
+                Ok(().into())
+            }
+
+            #[pallet::weight(T::DbWeight::get().reads_writes(1, 1) + 10_000)]
+            pub fn assign_signer(origin: OriginFor<T>, id: FileId, signer: T::AccountId)
+                -> DispatchResultWithPostInfo {
+                let caller = ensure_signed(origin)?;
+    
+                FileByID::<T>::try_mutate(
+                    id, |file_option| -> DispatchResultWithPostInfo {
+                        match file_option {
+                            None => return Err(Error::<T>::FileNotFound.into()),
+                            Some(file) => {
+                                ensure!(file.owner == caller, Error::<T>::AddressNotOwner);
+                                file.assign_signer_to_file(signer.clone());
+                            }
+                        }
+                        Ok(().into())
+                    }
+                )?;
+    
+                Self::deposit_event(Event::<T>::SignerAssigned(caller, id, signer));
+                Ok(().into())
+            }
+        }
+
+        #[pallet::event]
+        #[pallet::generate_deposit(pub(super) fn deposit_event)]
+	    #[pallet::metadata(T::AccountId = "AccountId")]
+        pub enum Event<T: Config> {
+            /// \[account, fileid, signer\]
+            SignerAssigned(T::AccountId, FileId, T::AccountId),
+            /// \[account, fileid\]
+            FileCreated(T::AccountId, FileId),
+            /// \[account, fileid, signer\]
+            SignerDeleted(T::AccountId, FileId, T::AccountId),
+            /// \[account, fileid\]
+            FileSigned(T::AccountId, FileId),
+        }
+
+        /// Old name generated by `decl_event`.
+        #[deprecated(note="use `Event` instead")]
+        pub type RawEvent<T> = Event<T>;
+
+        #[pallet::error]
+        pub enum Error<T> {
+            /// Address is not a signer 
+            AddressNotSigner,
+            /// Address is not an owner of a file
+            AddressNotOwner,
+            /// No such file in storage
+            FileNotFound,
+            /// Validation error - no tag
+            EmptyTag,
+            /// Validation error - no tag
+            FileHasNoSigners,
+            /// File id is busy
+            IdAlreadyExists,
+        }
+
+
         /// Storage map for file IDs
-        FileByID
-            get(fn file_by_id):
-            map hasher(blake2_128_concat) FileId => Option<FileStruct<T::AccountId>>;
+        #[pallet::storage]
+        #[pallet::getter(fn file_by_id)]
+        pub(super) type FileByID<T: Config> = StorageMap<_, Blake2_128Concat, FileId, FileStruct<T::AccountId>>;
 
-        /// Nonce for random file id generating 
-        NonceId: u64;
-    }
+        /// Nonce for random file id generating
+        #[pallet::storage]
+        pub(super) type NonceId<T: Config> = StorageValue<_, u64, ValueQuery>;
+
 }
 
-decl_event! (
-    pub enum Event<T>
-    where 
-        AccountId = <T as frame_system::Config>::AccountId,
-    {
-        /// \[account, fileid, signer\]
-        SignerAssigned(AccountId, FileId, AccountId),
-        /// \[account, fileid\]
-        FileCreated(AccountId, FileId),
-        /// \[account, fileid, signer\]
-        SignerDeleted(AccountId, FileId, AccountId),
-        /// \[account, fileid\]
-        FileSigned(AccountId, FileId),
-    }
-);
 
-decl_error! {
-    pub enum Error for Module<T: Config> {
-        /// Address is not a signer 
-        AddressNotSigner,
-        /// Address is not an owner of a file
-        AddressNotOwner,
-        /// No such file in storage
-        FileNotFound,
-        /// Validation error - no tag
-        EmptyTag,
-        /// Validation error - no tag
-        FileHasNoSigners,
-        /// File id is busy
-        IdAlreadyExists,
-    }
-}
-
-decl_module! {
-    pub struct Module<T: Config> for enum Call where origin: T::Origin {
-        // Events must be initialized if they are used by the pallet.
-        fn deposit_event() = default;
-        type Error = Error<T>;
-
-        #[weight = T::DbWeight::get().reads_writes(2, 1) + 10_000]
-        pub fn create_new_file(origin, tag: Vec<u8>, filehash: H256, file_id_option: Option<FileId>) -> DispatchResult {
-            ensure!(!tag.is_empty(), Error::<T>::EmptyTag);
-            let caller = ensure_signed(origin)?;
-            
-            // Update last created file ID
-            let file_id = match file_id_option {
-                Some(id) => id,
-                None => Self::get_random_id()
-            };
-            ensure!(<FileByID<T>>::get(file_id).is_none(), Error::<T>::IdAlreadyExists);
-            let new_file = FileStruct::<<T as frame_system::Config>::AccountId>::new(caller.clone(), file_id, tag, &filehash);
-            <FileByID<T>>::insert(file_id, new_file);
-            Self::deposit_event(RawEvent::FileCreated(caller, file_id));
-            Ok(())
-        }
-
-        #[weight = T::DbWeight::get().reads_writes(1, 1) + 10_000]
-		pub fn sign_latest_version(origin, id: FileId) {
-			let caller = ensure_signed(origin)?;
-            FileByID::<T>::try_mutate(
-                id, |file_option| -> DispatchResult {
-                    match file_option {
-                        None => return Err(Error::<T>::FileNotFound.into()),
-                        Some(file) => {
-                            ensure!(file.signers.iter().any(|x| *x == caller), Error::<T>::AddressNotSigner);
-                            file.sign_latest_version(caller.clone());
-                        }
-                    }
-                    Ok(())
-                })?;
-
-            Self::deposit_event(RawEvent::FileSigned(caller, id));
-		}
-        
-        #[weight = T::DbWeight::get().reads_writes(1, 1) + 10_000]
-        pub fn delete_signer(origin, id: FileId, signer: T::AccountId)  {
-            let caller = ensure_signed(origin)?;
-
-            FileByID::<T>::try_mutate(
-                id, |file_option| -> DispatchResult {
-                    match file_option {
-                        None => return Err(Error::<T>::FileNotFound.into()),
-                        Some(file) => {
-                            ensure!(file.owner == caller, Error::<T>::AddressNotOwner);
-                            ensure!(file.signers.iter().any(|x| *x == signer), Error::<T>::AddressNotSigner);
-                            ensure!(file.delete_signer_from_file(signer.clone()).is_ok(), 
-                                   Error::<T>::AddressNotSigner);
-                        }
-                    }
-                    Ok(())
-                }
-            )?;
-
-            Self::deposit_event(RawEvent::SignerDeleted(caller, id, signer));
-        }
-
-        #[weight = T::DbWeight::get().reads_writes(1, 1) + 10_000]
-        pub fn assign_signer(origin, id: FileId, signer: T::AccountId) {
-            let caller = ensure_signed(origin)?;
-
-            FileByID::<T>::try_mutate(
-                id, |file_option| -> DispatchResult {
-                    match file_option {
-                        None => return Err(Error::<T>::FileNotFound.into()),
-                        Some(file) => {
-                            ensure!(file.owner == caller, Error::<T>::AddressNotOwner);
-                            file.assign_signer_to_file(signer.clone());
-                        }
-                    }
-                    Ok(())
-                }
-            )?;
-
-            Self::deposit_event(RawEvent::SignerAssigned(caller, id, signer));
-        }
-    }
-}
-
-impl<T: Config> Module<T> {
+impl<T: Config> Pallet<T> {
     /// <pre>
     /// Method: address_is_auditor_for_file(id: u32, address: &T::AccountId) -> bool
     /// Arguments: id: FileId, address: &T::AccountId - file ID, address
@@ -229,8 +230,8 @@ impl<T: Config> Module<T> {
     }
 
     fn get_and_increment_nonce() -> Vec<u8> {
-        let nonce = NonceId::get();
-        NonceId::put(nonce.wrapping_add(1));
+        let nonce = NonceId::<T>::get();
+        NonceId::<T>::put(nonce.wrapping_add(1));
         nonce.encode()
     }
 }
