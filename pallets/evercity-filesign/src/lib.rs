@@ -15,7 +15,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-        use frame_support::{pallet_prelude::*, dispatch::DispatchResultWithPostInfo};
+        use frame_support::{pallet_prelude::*, dispatch::{DispatchResultWithPostInfo, DispatchResult}};
         use frame_system::pallet_prelude::*;
         use super::*;
 
@@ -58,7 +58,7 @@ pub mod pallet {
                 -> DispatchResultWithPostInfo {
                 let caller = ensure_signed(origin)?;
                 FileByID::<T>::try_mutate(
-                    id, |file_option| -> DispatchResultWithPostInfo {
+                    id, |file_option| -> DispatchResult {
                         match file_option {
                             None => return Err(Error::<T>::FileNotFound.into()),
                             Some(file) => {
@@ -66,7 +66,7 @@ pub mod pallet {
                                 file.sign_latest_version(caller.clone());
                             }
                         }
-                        Ok(().into())
+                        Ok(())
                     })?;
 
                 Self::deposit_event(Event::<T>::FileSigned(caller, id));
@@ -79,7 +79,7 @@ pub mod pallet {
                 let caller = ensure_signed(origin)?;
 
                 FileByID::<T>::try_mutate(
-                    id, |file_option| -> DispatchResultWithPostInfo {
+                    id, |file_option| -> DispatchResult {
                         match file_option {
                             None => return Err(Error::<T>::FileNotFound.into()),
                             Some(file) => {
@@ -89,7 +89,7 @@ pub mod pallet {
                                     Error::<T>::AddressNotSigner);
                             }
                         }
-                        Ok(().into())
+                        Ok(())
                     }
                 )?;
 
@@ -103,7 +103,7 @@ pub mod pallet {
                 let caller = ensure_signed(origin)?;
     
                 FileByID::<T>::try_mutate(
-                    id, |file_option| -> DispatchResultWithPostInfo {
+                    id, |file_option| -> DispatchResult {
                         match file_option {
                             None => return Err(Error::<T>::FileNotFound.into()),
                             Some(file) => {
@@ -111,7 +111,7 @@ pub mod pallet {
                                 file.assign_signer_to_file(signer.clone());
                             }
                         }
-                        Ok(().into())
+                        Ok(())
                     }
                 )?;
     

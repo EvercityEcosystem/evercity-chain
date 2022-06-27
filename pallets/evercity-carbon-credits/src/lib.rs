@@ -473,7 +473,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             ensure!(pallet_evercity_accounts::Module::<T>::account_is_selected_role(&signer, role), Error::<T>::AccountIncorrectRole);
             ProjectById::<T>::try_mutate(
-                project_id, |project_to_mutate| -> DispatchResult {
+                project_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate  {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(project) => {
@@ -486,7 +486,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::assign_signer(origin, file_id, signer.clone())?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
                 })?;
             Self::deposit_event(Event::ProjectSignerAdded(caller, signer, role, project_id));
             Ok(().into())
@@ -515,7 +515,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             ensure!(pallet_evercity_accounts::Module::<T>::account_is_selected_role(&signer, role), Error::<T>::AccountIncorrectRole);
             ProjectById::<T>::try_mutate(
-                project_id, |project_to_mutate| -> DispatchResult {
+                project_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate  {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(project) => {
@@ -533,7 +533,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::delete_signer(origin, file_id, signer.clone())?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
             })?;
             Self::deposit_event(Event::ProjectSignerRemoved(caller, signer, role, project_id));
             Ok(().into())
@@ -554,7 +554,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             let mut event_opt: Option<Event<T>> = None;
             ProjectById::<T>::try_mutate(
-                project_id, |project_option| -> DispatchResult {
+                project_id, |project_option| -> DispatchResultWithPostInfo {
                     match project_option {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(project) => {
@@ -568,7 +568,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::sign_latest_version(origin, project_documentation_file_id)?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
                 })?;
             if let Some(event) = event_opt {
                 Self::deposit_event(event);
@@ -664,7 +664,7 @@ pub mod pallet {
             let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
             ProjectById::<T>::try_mutate(
-                project_id, |project_option| -> DispatchResult {
+                project_id, |project_option| -> DispatchResultWithPostInfo {
                     match project_option {
                         None => Err(Error::<T>::ProjectNotExist.into()),
                         Some(project) => {
@@ -677,7 +677,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::create_new_file(origin, tag, filehash, Some(file_id))?;
                             project.annual_reports
                                         .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
-                            Ok(())
+                            Ok(().into())
                         }
                     }
              })?;
@@ -789,7 +789,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             ensure!(pallet_evercity_accounts::Module::<T>::account_is_selected_role(&signer, role), Error::<T>::AccountIncorrectRole);
             ProjectById::<T>::try_mutate(
-                project_id, |project_to_mutate| -> DispatchResult {
+                project_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate  {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(proj) => {
@@ -801,7 +801,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::assign_signer(origin.clone(), proj.annual_reports[len - 1].file_id, signer.clone())?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
              })?;
             Self::deposit_event(Event::AnnualReportSignerAdded(caller, signer, role, project_id));
             Ok(().into())
@@ -830,7 +830,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             ensure!(pallet_evercity_accounts::Module::<T>::account_is_selected_role(&signer, role), Error::<T>::AccountIncorrectRole);
             ProjectById::<T>::try_mutate(
-                project_id, |project_to_mutate| -> DispatchResult {
+                project_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate  {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(proj) => {
@@ -846,7 +846,7 @@ pub mod pallet {
                             pallet_evercity_filesign::Module::<T>::delete_signer(origin.clone(), proj.annual_reports[len - 1].file_id, signer.clone())?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
              })?;
             Self::deposit_event(Event::AnnualReportSignerRemoved(caller, signer, role, project_id));
             Ok(().into())
@@ -866,7 +866,7 @@ pub mod pallet {
             let caller = ensure_signed(origin.clone())?;
             let mut event_opt: Option<Event<T>> = None;
             ProjectById::<T>::try_mutate(
-                project_id, |project_to_mutate| -> DispatchResult {
+                project_id, |project_to_mutate| -> DispatchResultWithPostInfo {
                     match project_to_mutate {
                         None => return Err(Error::<T>::ProjectNotExist.into()),
                         Some(project) => {
@@ -880,7 +880,7 @@ pub mod pallet {
                                 annual_report_file_id)?;
                         }
                     }
-                    Ok(())
+                    Ok(().into())
             })?;
             if let Some(event) = event_opt {
                 Self::deposit_event(event);
