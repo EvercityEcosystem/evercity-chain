@@ -5,7 +5,6 @@ authors = ["Parity Technologies <admin@parity.io>, Evercity <Dima Bushuev diman1
 edition = "2018"
 license = "Apache-2.0"
 homepage = "https://substrate.dev"
-# repository = "https://github.com/paritytech/substrate/"
 description = "FRAME asset management pallet"
 readme = "README.md"
 

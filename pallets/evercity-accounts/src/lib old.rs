@@ -1,3 +1,4 @@
+#![allow(clippy::unused_unit)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod accounts;
@@ -6,32 +7,94 @@ pub mod mock;
 #[cfg(test)]    
 pub mod tests;
 
+use crate::sp_api_hidden_includes_decl_storage::hidden_include::traits::Get;
+use frame_support::{
+    ensure,
+    decl_error, 
+    decl_module, 
+    decl_storage,
+    decl_event,
+    dispatch::{
+        DispatchResult,
+        Vec,
+    },
+};
+use frame_system::{
+    ensure_signed,
+};
+use frame_support::sp_std::{
+    cmp::{
+        Eq, 
+        PartialEq}, 
+};
 use accounts::*;
+
 type Timestamp<T> = pallet_timestamp::Module<T>;
 
-pub use pallet::*;
+pub trait Config: frame_system::Config + pallet_timestamp::Config  {
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+}
 
-#[frame_support::pallet]
-pub mod pallet {
-    use frame_support::pallet_prelude::*;
-    use frame_system::pallet_prelude::*;
-    use super::*;
+decl_storage! {
+    trait Store for Module<T: Config> as CarbonCredits {
+        Fuse get(fn fuse)
+            build(|config| !config.genesis_account_registry.is_empty()):
+            bool;
+        /// Storage map for accounts, their roles and corresponding info
+        AccountRegistry
+            get(fn account_registry)
+            config(genesis_account_registry):
+            map hasher(blake2_128_concat) T::AccountId => EvercityAccountStructOf<T> ;
 
-    #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_timestamp::Config {
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        LastID: u32;
     }
+}
 
-    #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
-    pub struct Pallet<T>(PhantomData<T>);
+decl_event!(
+    pub enum Event<T>
+    where
+        AccountId = <T as frame_system::Config>::AccountId,
+    {
+        /// \[master, account, role, identity\]
+        AccountAdd(AccountId, AccountId, RoleMask, u64),
 
-    #[pallet::hooks]
-    impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
-    { }
+        /// \[master, account, role\]
+        AccountSet(AccountId, AccountId, RoleMask),
 
-    #[pallet::call]
-    impl<T: Config> Pallet<T> {
+        /// \[master, account, role\]
+        AccountWithdraw(AccountId, AccountId, RoleMask),
+
+        /// \[master, account\]
+        MasterSet(AccountId, AccountId),
+        /// \[master, account\]
+        AccountDisable(AccountId, AccountId),
+    }
+);
+
+decl_error! {
+    pub enum Error for Module<T: Config> {
+        
+        AccountNotAuditor,
+        AccountNotOwner,
+        AccountNotStandard,
+        AccountNotRegistry,
+        AccountNotInvestor,
+        AccountToAddAlreadyExists,
+        AccountRoleParamIncorrect,
+        AccountNotExist,
+        AccountRoleMasterIncluded,
+
+        InvalidAction,
+        /// Account not authorized(doesn't have a needed role, or doesnt present in AccountRegistry at all)
+        AccountNotAuthorized,
+    }
+}
+
+decl_module! {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
+        type Error = Error<T>;
+        fn deposit_event() = default;
+
         /// <pre>
         /// Method: set_master()
         /// Arguments: origin: AccountId - transaction caller
@@ -39,18 +102,16 @@ pub mod pallet {
         ///
         /// Set caller master role if master not set in chain_spec. Can be set only once.
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        fn set_master(
-            origin: OriginFor<T>,
-        ) -> DispatchResultWithPostInfo {
+        #[weight = T::DbWeight::get().reads_writes(2,1)]
+        fn set_master(origin) -> DispatchResult {
             let caller = ensure_signed(origin)?;
-            Fuse::<T>::try_mutate(|fuse|->DispatchResultWithPostInfo{
+            Fuse::try_mutate(|fuse|->DispatchResult{
                 if *fuse {
                     Err( Error::<T>::InvalidAction.into() )
                 }else{
                     AccountRegistry::<T>::insert(&caller, AccountStruct::new(MASTER_ROLE_MASK, 0, Timestamp::<T>::get()));
                     *fuse = true;
-                    Ok(().into())
+                    Ok(())
                 }
             })
         }
@@ -67,13 +128,8 @@ pub mod pallet {
         /// "identity", planned to use in the future to connect accounts with external services like
         /// KYC providers
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        pub fn account_add_with_role_and_data(
-            origin: OriginFor<T>,
-            who: T::AccountId, 
-            role: RoleMask, 
-            #[pallet::compact] identity: u64
-        ) -> DispatchResultWithPostInfo {
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        pub fn account_add_with_role_and_data(origin, who: T::AccountId, role: RoleMask, #[compact] identity: u64) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(!AccountRegistry::<T>::contains_key(&who), Error::<T>::AccountToAddAlreadyExists);
@@ -81,8 +137,8 @@ pub mod pallet {
             ensure!(!is_roles_mask_included(role, MASTER_ROLE_MASK), Error::<T>::AccountRoleMasterIncluded);
 
             AccountRegistry::<T>::insert(who.clone(), AccountStruct::new(role, identity, Timestamp::<T>::get()));
-            Self::deposit_event(Event::<T>::AccountAdd(caller, who, role, identity));
-            Ok(().into())
+            Self::deposit_event(RawEvent::AccountAdd(caller, who, role, identity));
+            Ok(())
         }
 
         /// <pre>
@@ -94,12 +150,8 @@ pub mod pallet {
         ///
         /// Modifies existing account, assigning new role(s) to it
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        pub fn account_set_with_role_and_data(
-            origin: OriginFor<T>, 
-            who: T::AccountId, 
-            role: RoleMask
-        ) -> DispatchResultWithPostInfo {
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        pub fn account_set_with_role_and_data(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
@@ -110,8 +162,8 @@ pub mod pallet {
             AccountRegistry::<T>::mutate(who.clone(),|acc|{
                 acc.roles |= role;
             });
-            Self::deposit_event(Event::<T>::AccountSet(caller, who, role));
-            Ok(().into())
+            Self::deposit_event(RawEvent::AccountSet(caller, who, role));
+            Ok(())
         }
 
         /// <pre>
@@ -122,10 +174,8 @@ pub mod pallet {
         ///
         /// Modifies existing account, assigning MASTER role(s) to it
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        pub fn add_master_role(
-            origin: OriginFor<T>,
-            who: T::AccountId) -> DispatchResultWithPostInfo {
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        pub fn add_master_role(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
@@ -134,8 +184,8 @@ pub mod pallet {
             AccountRegistry::<T>::mutate(who.clone(),|acc|{
                 acc.roles |= MASTER_ROLE_MASK;
             });
-            Self::deposit_event(Event::<T>::MasterSet(caller, who));
-            Ok(().into())
+            Self::deposit_event(RawEvent::MasterSet(caller, who));
+            Ok(())
         }
 
         /// <pre>
@@ -147,12 +197,8 @@ pub mod pallet {
         ///
         /// Modifies existing account, removing role(s) from it
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        pub fn account_withdraw_role(
-            origin: OriginFor<T>,
-            who: T::AccountId, 
-            role: RoleMask
-        ) -> DispatchResultWithPostInfo {
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(2, 1)]
+        pub fn account_withdraw_role(origin, who: T::AccountId, role: RoleMask) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(caller != who, Error::<T>::InvalidAction);
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
@@ -162,10 +208,10 @@ pub mod pallet {
             AccountRegistry::<T>::mutate(who.clone(),|acc|{
                 acc.roles ^= role;
             });
-            Self::deposit_event(Event::<T>::AccountWithdraw(caller, who, role));
-            Ok(().into())
+            Self::deposit_event(RawEvent::AccountWithdraw(caller, who, role));
+            Ok(())
         }
-
+  
         /// <pre>
         /// Method: account_disable(who: AccountId)
         /// Arguments: origin: AccountId - transaction caller
@@ -176,11 +222,8 @@ pub mod pallet {
         /// Accounts are not allowed to perform any actions without role,
         /// but still have its data in blockchain (to not loose related entities)
         /// </pre>
-        #[pallet::weight(T::DbWeight::get().reads_writes(4, 1) + 10_000)]
-        fn account_disable(
-            origin: OriginFor<T>,
-            who: T::AccountId
-        ) -> DispatchResultWithPostInfo {
+        #[weight = 10_000 + T::DbWeight::get().reads_writes(4, 1)]
+        fn account_disable(origin, who: T::AccountId) -> DispatchResult {
             let caller = ensure_signed(origin)?;
             ensure!(Self::account_is_master(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(caller != who, Error::<T>::InvalidAction);
@@ -190,101 +233,13 @@ pub mod pallet {
                 acc.roles = 0; // set no roles
             });
 
-            Self::deposit_event(Event::<T>::AccountDisable(caller, who));
-            Ok(().into())
-        }
-    }
-
-    #[pallet::event]
-    #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    pub enum Event<T: Config> {
-        /// \[master, account, role, identity\]
-        AccountAdd(T::AccountId, T::AccountId, RoleMask, u64),
-
-        /// \[master, account, role\]
-        AccountSet(T::AccountId, T::AccountId, RoleMask),
-
-        /// \[master, account, role\]
-        AccountWithdraw(T::AccountId, T::AccountId, RoleMask),
-
-        /// \[master, account\]
-        MasterSet(T::AccountId, T::AccountId),
-        /// \[master, account\]
-        AccountDisable(T::AccountId, T::AccountId),
-    }
-
-    /// Old name generated by `decl_event`.
-    #[deprecated(note="use `Event` instead")]
-    pub type RawEvent<T> = Event<T>;
-
-    #[pallet::error]
-    pub enum Error<T> {
-        AccountNotAuditor,
-        AccountNotOwner,
-        AccountNotStandard,
-        AccountNotRegistry,
-        AccountNotInvestor,
-        AccountToAddAlreadyExists,
-        AccountRoleParamIncorrect,
-        AccountNotExist,
-        AccountRoleMasterIncluded,
-        InvalidAction,
-        /// Account not authorized(doesn't have a needed role, or doesnt present in AccountRegistry at all)
-        AccountNotAuthorized,
-    }
-
-    #[pallet::storage]
-    #[pallet::getter(fn fuse)]
-    pub(super) type Fuse<T: Config> = StorageValue<_, bool, ValueQuery>;
-
-    /// Storage map for accounts, their roles and corresponding info
-    #[pallet::storage]
-    #[pallet::getter(fn account_registry)]
-    pub(super) type AccountRegistry<T: Config> = StorageMap<
-        _, 
-        Blake2_128Concat, 
-        T::AccountId, 
-        EvercityAccountStructOf<T>, 
-        ValueQuery>;
-
-    #[pallet::genesis_config]
-    pub struct GenesisConfig<T: Config> {
-            // Storage map for accounts, their roles and corresponding info
-            pub genesis_account_registry: Vec<(T::AccountId, RoleMask, u64)>,
-    }
-
-    #[cfg(feature = "std")]
-    impl<T: Config> Default for GenesisConfig<T> {
-        fn default() -> Self {
-            Self {
-                genesis_account_registry: Default::default(),
-            }
-        }
-    }
-
-
-    #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-        fn build(&self) { 
-            let builder : fn(&Self) -> _ = | config |!
-            config.genesis_account_registry.is_empty(); 
-            let data = &builder(self);
-            let v : &bool = data;
-            <Fuse<T> as frame_support::storage::StorageValue<bool>>::put::<&bool>(v);
-             
-            let data = &self.genesis_account_registry; 
-            let data : &frame_support::sp_std::vec::Vec<(T::AccountId, RoleMask, u64)> = data;
-            data.iter().for_each(|(k, roles, identity) |{
-                let acc = EvercityAccountStructOf::<T> { roles: *roles, identity: *identity, create_time: Default::default() };
-                <AccountRegistry<T,> as frame_support::storage::StorageMap<T
-                ::AccountId, EvercityAccountStructOf<T>>>::insert::<&T::
-                    AccountId, &EvercityAccountStructOf<T>>(k, &acc);
-            });
+            Self::deposit_event(RawEvent::AccountDisable(caller, who));
+            Ok(())
         }
     }
 }
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> Module<T> {
 
     /// <pre>
     /// Method: account_is_master(acc: &T::AccountId) -> bool
