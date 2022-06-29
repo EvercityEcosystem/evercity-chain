@@ -1,9 +1,9 @@
 #![allow(clippy::from_over_into)]
 
-use frame_support::sp_runtime::{
+use frame_support::{sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
-};
+}, traits::GenesisBuild};
 use frame_support::parameter_types;
 use pallet_evercity_bonds::{bond::BondInnerStructOf, BondStructOf};
 use sp_core::H256;
@@ -150,14 +150,14 @@ impl pallet_evercity_filesign::Config for TestRuntime {
 }
 
 // (AccountId, role)
-pub static ROLES: [(u64, RoleMask); 7] = [
-    (1_u64, MASTER_ROLE_MASK),
-    (2_u64, CC_PROJECT_OWNER_ROLE_MASK),
-    (3_u64, CC_AUDITOR_ROLE_MASK),
-    (4_u64, CC_STANDARD_ROLE_MASK),
-    (5_u64, CC_INVESTOR_ROLE_MASK),
-    (6_u64, CC_REGISTRY_ROLE_MASK),
-    (7_u64, MANAGER_ROLE_MASK),
+pub static ROLES: [(u64, RoleMask, u64); 7] = [
+    (1_u64, MASTER_ROLE_MASK, 0),
+    (2_u64, CC_PROJECT_OWNER_ROLE_MASK, 0),
+    (3_u64, CC_AUDITOR_ROLE_MASK, 0),
+    (4_u64, CC_STANDARD_ROLE_MASK, 0),
+    (5_u64, CC_INVESTOR_ROLE_MASK, 0),
+    (6_u64, CC_REGISTRY_ROLE_MASK, 0),
+    (7_u64, MANAGER_ROLE_MASK, 0),
 ];
 
 // Build genesis storage according to the mock runtime.
@@ -175,19 +175,7 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
 
 	pallet_evercity_accounts::GenesisConfig::<TestRuntime> {
         // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct {
-                        roles: *role,
-                        identity: 0,
-                        create_time: 0,
-                    },
-                )
-            })
-            .collect(),
+        genesis_account_registry: ROLES.to_vec()
     }
     .assimilate_storage(&mut t)
     .unwrap();
@@ -209,19 +197,7 @@ pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
 
 	pallet_evercity_accounts::GenesisConfig::<TestRuntime> {
         // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct {
-                        roles: *role,
-                        identity: 0,
-                        create_time: 0,
-                    },
-                )
-            })
-            .collect(),
+        genesis_account_registry: ROLES.to_vec()
     }
     .assimilate_storage(&mut t)
     .unwrap();

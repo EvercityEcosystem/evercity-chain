@@ -1,7 +1,5 @@
 use crate::mock::*;
-use frame_support::{assert_ok, assert_noop, dispatch::{
-    DispatchResult, 
-}};
+use frame_support::{assert_ok, assert_noop};
 use crate::accounts::*;
 use crate::Error;
 type RuntimeError = Error<TestRuntime>;
@@ -162,7 +160,7 @@ fn it_works_account_add_with_role_and_data() {
         let some_new_account = 666;
         let assign_role_result = EvercityAccounts::account_add_with_role_and_data(
             Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
-        assert_ok!(assign_role_result, ());
+        assert_ok!(assign_role_result);
     });
 }
 
@@ -172,7 +170,7 @@ fn it_fails_account_add_with_role_and_data_not_master() {
         let some_new_account = 666;
         let assign_role_result = EvercityAccounts::account_add_with_role_and_data(
             Origin::signed(ROLES[1].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
-        assert_ne!(assign_role_result, DispatchResult::Ok(()));
+        assert_noop!(assign_role_result, Error::<TestRuntime>::AccountNotAuthorized);
     });
 }
 
@@ -182,7 +180,7 @@ fn it_fails_account_set_with_role_and_data_not_exits() {
         let some_new_account = 666;
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(
             Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
-        assert_ne!(assign_role_result, DispatchResult::Ok(()));
+        assert_noop!(assign_role_result, Error::<TestRuntime>::AccountNotExist);
     });
 }
 
@@ -195,7 +193,7 @@ fn it_works_account_set_with_role_and_data() {
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(
             Origin::signed(ROLES[0].0), some_new_account, CC_AUDITOR_ROLE_MASK);
         assert!(EvercityAccounts::account_is_cc_investor(&some_new_account));
-        assert_ok!(assign_role_result, ());
+        assert_ok!(assign_role_result);
     });
 }
 
@@ -207,7 +205,7 @@ fn it_fails_account_set_with_role_and_data_not_master() {
             Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(
             Origin::signed(ROLES[1].0), some_new_account, CC_AUDITOR_ROLE_MASK);
-        assert_ne!(assign_role_result, DispatchResult::Ok(()));
+        assert_noop!(assign_role_result, Error::<TestRuntime>::AccountNotAuthorized);
     });
 }
 
@@ -219,7 +217,7 @@ fn it_fails_account_set_with_master_role() {
             Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK, 0);
         let assign_role_result = EvercityAccounts::account_set_with_role_and_data(
             Origin::signed(ROLES[0].0), some_new_account, MASTER_ROLE_MASK);
-        assert_ne!(assign_role_result, DispatchResult::Ok(()));
+        assert_noop!(assign_role_result, Error::<TestRuntime>::AccountRoleMasterIncluded);
     });
 }
 
@@ -247,7 +245,7 @@ fn it_works_roles_assigned_correctly_set_master() {
         all_roles.iter().for_each(|x| {
             let assign_role_result = EvercityAccounts::account_set_with_role_and_data(
                 Origin::signed(ROLES[0].0), some_new_account, *x);
-            assert_ok!(assign_role_result,());
+            assert_ok!(assign_role_result);
         });
 
         assert!(EvercityAccounts::account_is_cc_project_owner(&some_new_account));
@@ -266,8 +264,8 @@ fn it_works_account_set_with_master_role() {
         let set_master_result = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
         let assign_role_result = EvercityAccounts::account_add_with_role_and_data(Origin::signed(some_new_master_account), some_new_account, CC_PROJECT_OWNER_ROLE_MASK, 0);
 
-        assert_ok!(set_master_result, ());
-        assert_ok!(assign_role_result, ());
+        assert_ok!(set_master_result);
+        assert_ok!(assign_role_result);
         assert!(EvercityAccounts::account_is_master(&some_new_master_account));
         assert!(EvercityAccounts::account_is_cc_project_owner(&some_new_account));
     });
@@ -280,7 +278,7 @@ fn it_fails_account_set_with_master_role_already_master() {
         let _ = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
         let set_master_result = EvercityAccounts::add_master_role(Origin::signed(ROLES[0].0), some_new_master_account);
 
-        assert_ne!(set_master_result, DispatchResult::Ok(()));
+        assert_noop!(set_master_result, Error::<TestRuntime>::InvalidAction);
     });
 }
 
@@ -296,8 +294,8 @@ fn it_works_account_withraw_role() {
         let withdraw_role_result = EvercityAccounts::account_withdraw_role(
             Origin::signed(ROLES[0].0), some_new_account, CC_INVESTOR_ROLE_MASK);
 
-        assert_ok!(assign_role_result, ());
-        assert_ok!(withdraw_role_result, ());
+        assert_ok!(assign_role_result);
+        assert_ok!(withdraw_role_result);
         assert!(!EvercityAccounts::account_is_cc_investor(&some_new_account));
     });
 }
@@ -320,12 +318,12 @@ fn it_works_check_events() {
         let _ = EvercityAccounts::account_withdraw_role(Origin::signed(ROLES[0].0), some_new_account, CC_AUDITOR_ROLE_MASK);
         let withdraw_account_event = last_event().unwrap();
 
-        assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::AccountAdd(ROLES[0].0, some_new_account, CC_INVESTOR_ROLE_MASK, 0)),
+        assert_eq!(Event::pallet_evercity_accounts(crate::Event::AccountAdd(ROLES[0].0, some_new_account, CC_INVESTOR_ROLE_MASK, 0)),
              add_account_event);
-        assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::AccountSet(ROLES[0].0, some_new_account, CC_AUDITOR_ROLE_MASK)),
+        assert_eq!(Event::pallet_evercity_accounts(crate::Event::AccountSet(ROLES[0].0, some_new_account, CC_AUDITOR_ROLE_MASK)),
              set_account_event);
         // assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::MasterSet(ROLES[0].0, some_new_account)), set_master_event);
-        assert_eq!(Event::pallet_evercity_accounts(crate::RawEvent::AccountWithdraw(ROLES[0].0, some_new_account, CC_AUDITOR_ROLE_MASK)),
+        assert_eq!(Event::pallet_evercity_accounts(crate::Event::AccountWithdraw(ROLES[0].0, some_new_account, CC_AUDITOR_ROLE_MASK)),
              withdraw_account_event);
     });
 }

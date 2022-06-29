@@ -40,7 +40,7 @@ pub mod pallet {
         /// Set caller master role if master not set in chain_spec. Can be set only once.
         /// </pre>
         #[pallet::weight(T::DbWeight::get().reads_writes(2, 1) + 10_000)]
-        fn set_master(
+        pub fn set_master(
             origin: OriginFor<T>,
         ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
@@ -177,7 +177,7 @@ pub mod pallet {
         /// but still have its data in blockchain (to not loose related entities)
         /// </pre>
         #[pallet::weight(T::DbWeight::get().reads_writes(4, 1) + 10_000)]
-        fn account_disable(
+        pub fn account_disable(
             origin: OriginFor<T>,
             who: T::AccountId
         ) -> DispatchResultWithPostInfo {

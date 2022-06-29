@@ -7,11 +7,11 @@ use frame_support::sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
 };
+use frame_support::traits::GenesisBuild;
 use sp_core::H256;
 use pallet_evercity_accounts::accounts::{
     RoleMask, ISSUER_ROLE_MASK, MASTER_ROLE_MASK, BOND_ARRANGER_ROLE_MASK,
-    AUDITOR_ROLE_MASK, MANAGER_ROLE_MASK, INVESTOR_ROLE_MASK, CUSTODIAN_ROLE_MASK,
-    AccountStruct
+    AUDITOR_ROLE_MASK, MANAGER_ROLE_MASK, INVESTOR_ROLE_MASK, CUSTODIAN_ROLE_MASK
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<TestRuntime>;
@@ -114,16 +114,16 @@ impl pallet_balances::Config for TestRuntime {
     type MaxLocks = MaxLocks;
 }
 // (AccountId, role)
-static ROLES: [(u64, RoleMask); 9] = [
-    (1_u64, MASTER_ROLE_MASK),
-    (2_u64, CUSTODIAN_ROLE_MASK),
-    (3_u64, ISSUER_ROLE_MASK),
-    (4_u64, INVESTOR_ROLE_MASK),
-    (5_u64, AUDITOR_ROLE_MASK),
-    (6_u64, INVESTOR_ROLE_MASK),
-    (7_u64, ISSUER_ROLE_MASK | INVESTOR_ROLE_MASK),
-    (8_u64, MANAGER_ROLE_MASK),
-    (9_u64, BOND_ARRANGER_ROLE_MASK),
+static ROLES: [(u64, RoleMask, u64); 9] = [
+    (1_u64, MASTER_ROLE_MASK, 0),
+    (2_u64, CUSTODIAN_ROLE_MASK, 0),
+    (3_u64, ISSUER_ROLE_MASK, 0),
+    (4_u64, INVESTOR_ROLE_MASK, 0),
+    (5_u64, AUDITOR_ROLE_MASK, 0),
+    (6_u64, INVESTOR_ROLE_MASK, 0),
+    (7_u64, ISSUER_ROLE_MASK | INVESTOR_ROLE_MASK, 0),
+    (8_u64, MANAGER_ROLE_MASK, 0),
+    (9_u64, BOND_ARRANGER_ROLE_MASK, 0),
 ];
 
 // Build genesis storage according to the mock runtime.
@@ -140,19 +140,7 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
 
     pallet_evercity_accounts::GenesisConfig::<TestRuntime> {
         // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct::<u64> {
-                        roles: *role,
-                        identity: 0,
-                        create_time: 0,
-                    },
-                )
-            })
-            .collect(),
+        genesis_account_registry: ROLES.to_vec()
     }
     .assimilate_storage(&mut t)
     .unwrap();

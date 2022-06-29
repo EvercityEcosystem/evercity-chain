@@ -1,9 +1,9 @@
 #![allow(clippy::from_over_into)]
 
-use frame_support::sp_runtime::{
+use frame_support::{sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
-};
+}, traits::GenesisBuild};
 use sp_core::H256;
 use crate as pallet_evercity_accounts;
 use crate::accounts::*;
@@ -85,20 +85,20 @@ impl pallet_balances::Config for TestRuntime {
 }
 
 // (AccountId, role)
-pub static ROLES: [(u64, RoleMask); 13] = [
-    (1_u64, MASTER_ROLE_MASK),
-    (2_u64, CUSTODIAN_ROLE_MASK),
-    (3_u64, ISSUER_ROLE_MASK),
-    (4_u64, INVESTOR_ROLE_MASK),
-    (5_u64, AUDITOR_ROLE_MASK),
-    (6_u64, MANAGER_ROLE_MASK),
-    (7_u64, BOND_ARRANGER_ROLE_MASK),
-    (8_u64, IMPACT_REPORTER_ROLE_MASK),
-    (9_u64, CC_PROJECT_OWNER_ROLE_MASK),
-    (10_u64, CC_AUDITOR_ROLE_MASK),
-    (11_u64, CC_STANDARD_ROLE_MASK),
-    (12_u64, CC_INVESTOR_ROLE_MASK),
-    (13_u64, CC_REGISTRY_ROLE_MASK),
+pub static ROLES: [(u64, RoleMask, u64); 13] = [
+    (1_u64, MASTER_ROLE_MASK, 0),
+    (2_u64, CUSTODIAN_ROLE_MASK, 0),
+    (3_u64, ISSUER_ROLE_MASK, 0),
+    (4_u64, INVESTOR_ROLE_MASK, 0),
+    (5_u64, AUDITOR_ROLE_MASK, 0),
+    (6_u64, MANAGER_ROLE_MASK, 0),
+    (7_u64, BOND_ARRANGER_ROLE_MASK, 0),
+    (8_u64, IMPACT_REPORTER_ROLE_MASK, 0),
+    (9_u64, CC_PROJECT_OWNER_ROLE_MASK, 0),
+    (10_u64, CC_AUDITOR_ROLE_MASK, 0),
+    (11_u64, CC_STANDARD_ROLE_MASK, 0),
+    (12_u64, CC_INVESTOR_ROLE_MASK, 0),
+    (13_u64, CC_REGISTRY_ROLE_MASK, 0),
 ];
 
 //Build genesis storage according to the mock runtime.
@@ -113,23 +113,10 @@ pub fn new_test_ext() -> frame_support::sp_io::TestExternalities {
     .assimilate_storage(&mut t)
     .unwrap();
 
-    super::GenesisConfig::<TestRuntime> {
+    frame_support::traits::GenesisBuild::assimilate_storage(&super::GenesisConfig::<TestRuntime> {
         // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct {
-                        roles: *role,
-                        identity: 0,
-                        create_time: 0,
-                    },
-                )
-            })
-            .collect(),
-    }
-    .assimilate_storage(&mut t)
+        genesis_account_registry: ROLES.to_vec()
+    }, &mut t)
     .unwrap();
 
     t.into()
@@ -149,19 +136,7 @@ pub fn new_test_ext_with_event() -> frame_support::sp_io::TestExternalities {
 
     super::GenesisConfig::<TestRuntime> {
         // Accounts for tests
-        genesis_account_registry: ROLES
-            .iter()
-            .map(|(acc, role)| {
-                (
-                    *acc,
-                    AccountStruct {
-                        roles: *role,
-                        identity: 0,
-                        create_time: 0,
-                    },
-                )
-            })
-            .collect(),
+        genesis_account_registry: ROLES.to_vec()
     }
     .assimilate_storage(&mut t)
     .unwrap();
