@@ -1,4 +1,4 @@
-use crate::{EverUSDBalance, Expired};
+use crate::bond::{EverUSDBalance, Expired};
 use frame_support::{
     codec::{Decode, Encode},
     sp_runtime::{

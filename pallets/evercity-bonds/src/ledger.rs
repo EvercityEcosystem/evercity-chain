@@ -1,4 +1,4 @@
-use crate::EverUSDBalance;
+use crate::bond::EverUSDBalance;
 
 pub struct EvercityBalance {
     /// custodian supply

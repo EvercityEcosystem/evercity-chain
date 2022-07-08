@@ -1,8 +1,7 @@
 use crate::period::{PeriodDescr, PeriodIterator};
-use crate::{EverUSDBalance, Expired, MIN_BOND_DURATION};
 use frame_support::{
     codec::{Decode, Encode, EncodeLike},
-    dispatch::{DispatchResult, Vec},
+    dispatch::{Vec},
     sp_runtime::{
         traits::{AtLeast32Bit, SaturatedConversion, UniqueSaturatedInto},
         RuntimeDebug,
@@ -14,6 +13,13 @@ use frame_support::{
 };
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+
+pub trait Expired<Moment> {
+    fn is_expired(&self, now: Moment) -> bool;
+}
+pub type EverUSDBalance = u64;
+///  Bond must have as least this amount of periods
+pub const MIN_BOND_DURATION: BondPeriodNumber = 1;
 
 /// Amount of seconds in 1 "DAY". Every period duration for Evercity bonds
 /// should be a multiple of this constant. This constant can be changed in
@@ -623,52 +629,7 @@ pub type BondUnitSaleLotStructOf<T> = BondUnitSaleLotStruct<
     <T as pallet_timestamp::Config>::Moment,
 >;
 
-// @TESTME try to compare sort performance with binaryheap
-// @TODO try to find the package with exact match at fist
 
-/// <pre>
-/// Method: transfer_bond_units(from_packages, to_packages, lot_bond_units)
-/// Arguments: from_packages: &mut Vec<BondUnitPackage> - pack of BU packages(seller), BUs should be transfered "from"
-///            to_packages: &mut Vec<BondUnitPackage> - pack of BU packages(buyer), BUs should be transfered "to"
-///            lot_bond_units: BondUnitAmount -  amount of BUs to transfer
-///
-/// Internal function, called when a lot with given amount of BUs is sold, and "lot_bond_units" should be transfered from
-/// seller's BUs packages pack to buyer's BUs packages. Functions accumulates needed amount of BUs,
-/// by removing and modifying seller's packages, beginning from last package
-/// </pre>
-pub(crate) fn transfer_bond_units<T: crate::Config>(
-    from_packages: &mut Vec<BondUnitPackage>,
-    to_packages: &mut Vec<BondUnitPackage>,
-    mut lot_bond_units: BondUnitAmount,
-) -> DispatchResult {
-    from_packages.sort_by_key(|package| core::cmp::Reverse(package.bond_units));
-
-    while lot_bond_units > 0 {
-        // last element has smallest number of bond units
-        let mut last = from_packages
-            .pop()
-            .ok_or(crate::Error::<T>::BondParamIncorrect)?;
-        let (bond_units, acquisition, coupon_yield) = if last.bond_units > lot_bond_units {
-            last.bond_units -= lot_bond_units;
-            let bond_units = lot_bond_units;
-            let acquisition = last.acquisition;
-            lot_bond_units = 0;
-            from_packages.push(last);
-            (bond_units, acquisition, 0)
-        } else {
-            lot_bond_units -= last.bond_units;
-            (last.bond_units, last.acquisition, last.coupon_yield)
-        };
-
-        to_packages.push(BondUnitPackage {
-            bond_units,
-            acquisition,
-            coupon_yield,
-        });
-    }
-    from_packages.shrink_to_fit();
-    Ok(())
-}
 
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 pub trait OnAddBond<AccountId, Moment, Hash> {

@@ -1,5 +1,5 @@
 use crate::bond::{BondInterest, BondPeriod, BondPeriodNumber, BondStruct};
-use crate::EverUSDBalance;
+use crate::bond::EverUSDBalance;
 use frame_support::{
     codec::{Decode, Encode},
     sp_runtime::RuntimeDebug,
