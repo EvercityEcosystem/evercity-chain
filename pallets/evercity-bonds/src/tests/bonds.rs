@@ -4,7 +4,6 @@ use frame_support::{
     Blake2_256, StorageHasher,
 };
 
-use crate::bond::transfer_bond_units;
 use crate::tests::mock::*;
 use crate::{
     BondId, BondImpactReportStruct, BondPeriodNumber, BondState, BondStructOf,
@@ -18,7 +17,7 @@ fn bond_transfer_units() {
     new_test_ext().execute_with(|| {
         let mut from_package = create_bond_unit_package(vec![5, 2, 10, 1]);
         let mut to_package = create_bond_unit_package(vec![]);
-        assert_ok!(transfer_bond_units::<TestRuntime>(
+        assert_ok!(Evercity::transfer_bond_units(
             &mut from_package,
             &mut to_package,
             3
@@ -30,7 +29,7 @@ fn bond_transfer_units() {
         let mut from_package = create_bond_unit_package(vec![5, 2, 10, 1]);
         let mut to_package = create_bond_unit_package(vec![]);
 
-        assert_ok!(transfer_bond_units::<TestRuntime>(
+        assert_ok!(Evercity::transfer_bond_units(
             &mut from_package,
             &mut to_package,
             10
@@ -42,7 +41,7 @@ fn bond_transfer_units() {
         let mut from_package = create_bond_unit_package(vec![5, 2, 10, 1]);
         let mut to_package = create_bond_unit_package(vec![]);
 
-        assert_ok!(transfer_bond_units::<TestRuntime>(
+        assert_ok!(Evercity::transfer_bond_units(
             &mut from_package,
             &mut to_package,
             2
@@ -55,7 +54,7 @@ fn bond_transfer_units() {
         let mut to_package = create_bond_unit_package(vec![]);
 
         assert_noop!(
-            transfer_bond_units::<TestRuntime>(&mut from_package, &mut to_package, 20),
+            Evercity::transfer_bond_units(&mut from_package, &mut to_package, 20),
             RuntimeError::BondParamIncorrect
         );
     });

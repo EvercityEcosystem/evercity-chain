@@ -400,7 +400,7 @@ pub mod pallet {
         /// and becomes invalidated after it.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_mint_request_create_everusd())]
-        fn token_mint_request_create_everusd(origin: OriginFor<T>, #[pallet::compact] amount_to_mint: EverUSDBalance) -> DispatchResultWithPostInfo {
+        pub fn token_mint_request_create_everusd(origin: OriginFor<T>, #[pallet::compact] amount_to_mint: EverUSDBalance) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(amount_to_mint <= T::MaxMintAmount::get(), Error::<T>::MintRequestParamIncorrect);
@@ -429,7 +429,7 @@ pub mod pallet {
         /// Revokes and deletes currently existing mint request, created by caller's account
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_mint_request_revoke_everusd())]
-        fn token_mint_request_revoke_everusd(origin: OriginFor<T>,) -> DispatchResultWithPostInfo {
+        pub fn token_mint_request_revoke_everusd(origin: OriginFor<T>,) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(MintRequestEverUSD::<T>::contains_key(&caller), Error::<T>::MintRequestDoesntExist);
             let _amount = MintRequestEverUSD::<T>::get(&caller).amount;
@@ -451,7 +451,7 @@ pub mod pallet {
         /// while Custodian makes a decision
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_mint_request_confirm_everusd())]
-        fn token_mint_request_confirm_everusd(origin: OriginFor<T>, who: T::AccountId, #[pallet::compact] amount: EverUSDBalance) -> DispatchResultWithPostInfo {
+        pub fn token_mint_request_confirm_everusd(origin: OriginFor<T>, who: T::AccountId, #[pallet::compact] amount: EverUSDBalance) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(MintRequestEverUSD::<T>::contains_key(&who), Error::<T>::MintRequestDoesntExist);
@@ -485,7 +485,7 @@ pub mod pallet {
         /// Declines and deletes the mint request of account (Custodian)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_mint_request_decline_everusd())]
-        fn token_mint_request_decline_everusd(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn token_mint_request_decline_everusd(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(MintRequestEverUSD::<T>::contains_key(&who), Error::<T>::MintRequestDoesntExist);
@@ -507,7 +507,7 @@ pub mod pallet {
         /// and becomes invalidated after it.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_burn_request_create_everusd())]
-        fn token_burn_request_create_everusd(origin: OriginFor<T>, #[pallet::compact]  amount_to_burn: EverUSDBalance) -> DispatchResultWithPostInfo {
+        pub fn token_burn_request_create_everusd(origin: OriginFor<T>, #[pallet::compact]  amount_to_burn: EverUSDBalance) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_token_mint_burn_allowed(&caller), Error::<T>::AccountNotAuthorized);
 
@@ -538,7 +538,7 @@ pub mod pallet {
         /// Revokes and deletes currently existing burn request, created by caller's account
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_burn_request_revoke_everusd())]
-        fn token_burn_request_revoke_everusd(origin: OriginFor<T>,) -> DispatchResultWithPostInfo {
+        pub fn token_burn_request_revoke_everusd(origin: OriginFor<T>,) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(BurnRequestEverUSD::<T>::contains_key(&caller), Error::<T>::BurnRequestDoesntExist);
             let amount = BurnRequestEverUSD::<T>::get(&caller).amount;
@@ -557,7 +557,7 @@ pub mod pallet {
         /// Confirms the burn request of account, destroying "amount" of tokens on its balance.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_burn_request_confirm_everusd())]
-        fn token_burn_request_confirm_everusd(origin: OriginFor<T>, who: T::AccountId, #[pallet::compact]  amount: EverUSDBalance) -> DispatchResultWithPostInfo {
+        pub fn token_burn_request_confirm_everusd(origin: OriginFor<T>, who: T::AccountId, #[pallet::compact]  amount: EverUSDBalance) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(BurnRequestEverUSD::<T>::contains_key(&who), Error::<T>::BurnRequestDoesntExist);
@@ -589,7 +589,7 @@ pub mod pallet {
         /// Declines and deletes the burn request of account (Custodian)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::token_burn_request_decline_everusd())]
-        fn token_burn_request_decline_everusd(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn token_burn_request_decline_everusd(origin: OriginFor<T>, who: T::AccountId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_custodian(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(BurnRequestEverUSD::<T>::contains_key(&who), Error::<T>::BurnRequestDoesntExist);
@@ -620,7 +620,7 @@ pub mod pallet {
         /// and awaits when account with Bond Arranger role allows it to be moved to state BOOKING
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_add_new())]
-        fn bond_add_new(origin: OriginFor<T>, bond: BondId, body: BondInnerStructOf<T> ) -> DispatchResultWithPostInfo {
+        pub fn bond_add_new(origin: OriginFor<T>, bond: BondId, body: BondInnerStructOf<T> ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_issuer(&caller),Error::<T>::AccountNotAuthorized);
             ensure!(body.is_valid(T::TimeStep::get()), Error::<T>::BondParamIncorrect );
@@ -657,7 +657,7 @@ pub mod pallet {
         /// is not reached)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_set())]
-        fn bond_set_manager(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn bond_set_manager(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond Auxiliary roles can be set only by Bond Arranger role
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -688,7 +688,7 @@ pub mod pallet {
         /// confirmed only by assigned Auditor.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_set())]
-        fn bond_set_auditor(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn bond_set_auditor(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond auxiliary roles can be set only by Bond Arranger role
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -717,7 +717,7 @@ pub mod pallet {
         /// by Bond Arranger, target account must have IMPACT_REPORTER role.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_set())]
-        fn bond_set_impact_reporter(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
+        pub fn bond_set_impact_reporter(origin: OriginFor<T>, bond: BondId, acc: T::AccountId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond auxiliary roles can be set only by Bond Arranger role
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -747,7 +747,7 @@ pub mod pallet {
         /// changed (calling "is_financial_options_eq()" with previous version of bond)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_update())]
-        fn bond_update(origin: OriginFor<T>, bond: BondId,#[pallet::compact] nonce: u64, body: BondInnerStructOf<T>) -> DispatchResultWithPostInfo {
+        pub fn bond_update(origin: OriginFor<T>, bond: BondId,#[pallet::compact] nonce: u64, body: BondInnerStructOf<T>) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(body.is_valid(T::TimeStep::get()), Error::<T>::BondParamIncorrect );
             // Bond can be update only by Owner or assigned Manager
@@ -792,7 +792,7 @@ pub mod pallet {
         /// </pre>
 
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_release())]
-        fn bond_release(origin: OriginFor<T>, bond: BondId, #[pallet::compact]  nonce: u64) -> DispatchResultWithPostInfo {
+        pub fn bond_release(origin: OriginFor<T>, bond: BondId, #[pallet::compact]  nonce: u64) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond can be released only by Bond Arranger role
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -835,7 +835,7 @@ pub mod pallet {
         /// should not except "bond_units_maxcap_amount"
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_unit_package_buy())]
-        fn bond_unit_package_buy(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  nonce: u64,#[pallet::compact] unit_amount: BondUnitAmount ) -> DispatchResultWithPostInfo {
+        pub fn bond_unit_package_buy(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  nonce: u64,#[pallet::compact] unit_amount: BondUnitAmount ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             Self::with_bond(&bond, |mut item|{
@@ -915,7 +915,7 @@ pub mod pallet {
         /// </pre>
         // Investor gives back bond units and withdraw tokens
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_unit_package_return())]
-        fn bond_unit_package_return(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  unit_amount: BondUnitAmount ) -> DispatchResultWithPostInfo {
+        pub fn bond_unit_package_return(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  unit_amount: BondUnitAmount ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             ensure!(unit_amount > 0, Error::<T>::BondParamIncorrect);
@@ -964,7 +964,7 @@ pub mod pallet {
         /// </pre>
         // Called after the Bond was released but not raised enough tokens until the deadline
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_withdraw())]
-        fn bond_withdraw(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_withdraw(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond issuer, bond Manager, or Bond Arranger can do it
             Self::with_bond(&bond, |item|{
@@ -1024,7 +1024,7 @@ pub mod pallet {
         /// "bond_units_mincap_amount" was reached.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_activate())]
-        fn bond_activate(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  nonce: u64) -> DispatchResultWithPostInfo {
+        pub fn bond_activate(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  nonce: u64) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             //Bond can be activated only by Bond Arranger
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -1077,7 +1077,7 @@ pub mod pallet {
         /// properties of bond). Also, impact_data for this period must be not confirmed by Auditor yet.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_impact_report_send())]
-        fn bond_impact_report_send(origin: OriginFor<T>, bond: BondId,#[pallet::compact] period: BondPeriodNumber,#[pallet::compact] impact_data: u64 ) -> DispatchResultWithPostInfo {
+        pub fn bond_impact_report_send(origin: OriginFor<T>, bond: BondId,#[pallet::compact] period: BondPeriodNumber,#[pallet::compact] impact_data: u64 ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             let now = Timestamp::<T>::get();
             let moment = {
@@ -1116,7 +1116,7 @@ pub mod pallet {
         /// </pre>
         // Auditor signs impact report
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_impact_report_approve())]
-        fn bond_impact_report_approve(origin: OriginFor<T>, bond: BondId,#[pallet::compact] period: BondPeriodNumber,#[pallet::compact]  impact_data: u64 ) -> DispatchResultWithPostInfo {
+        pub fn bond_impact_report_approve(origin: OriginFor<T>, bond: BondId,#[pallet::compact] period: BondPeriodNumber,#[pallet::compact]  impact_data: u64 ) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_auditor(&caller), Error::<T>::AccountNotAuthorized);
             let now = Timestamp::<T>::get();
@@ -1163,7 +1163,7 @@ pub mod pallet {
         /// Bond becomes FINISHED.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_redeem())]
-        fn bond_redeem(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_redeem(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             let now = Timestamp::<T>::get();
             Self::with_bond(&bond, |mut item|{
@@ -1216,7 +1216,7 @@ pub mod pallet {
         /// Then function calculates and stores all accumulated coupon_yield and marks bond as BANKRUPT
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_declare_bankrupt())]
-        fn bond_declare_bankrupt(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_declare_bankrupt(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Only Bond Arranger role can declare bankrupt
             ensure!(accounts::Module::<T>::account_is_bond_arranger(&caller), Error::<T>::AccountNotAuthorized);
@@ -1248,7 +1248,7 @@ pub mod pallet {
         /// Have the complexity O(N), where N - amount of BondUnitsPackage-s
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_accrue_coupon_yield())]
-        fn bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let _ = ensure_signed(origin)?;
 
             Self::with_bond(&bond, |mut item|->DispatchResultWithPostInfo {
@@ -1267,7 +1267,7 @@ pub mod pallet {
         /// Totally removes bond from BondsRegistry before it was issued(in PREPARE state)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_revoke())]
-        fn bond_revoke(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_revoke(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             // Bond can be revoked only by Owner or by Manager assigned to the Bond
             // Bond should be in Prepare state, so no bids can exist at this time
@@ -1301,7 +1301,7 @@ pub mod pallet {
         //  @TODO add parameter beneficiary:T::AccountId  who will receive coupon yield
         //  @TODO consider separate functions for Issuer and Investor
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_withdraw_everusd())]
-        fn bond_withdraw_everusd(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
+        pub fn bond_withdraw_everusd(origin: OriginFor<T>, bond: BondId) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             Self::with_bond(&bond, |mut item|{
                 ensure!( matches!(item.state , BondState::ACTIVE | BondState::BANKRUPT | BondState::FINISHED), Error::<T>::BondStateNotPermitAction);
@@ -1354,7 +1354,7 @@ pub mod pallet {
         /// coupon yield amounts for each payment_period, where it's possible
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_deposit_everusd())]
-        fn bond_deposit_everusd(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  amount: EverUSDBalance) -> DispatchResultWithPostInfo {
+        pub fn bond_deposit_everusd(origin: OriginFor<T>, bond: BondId,#[pallet::compact]  amount: EverUSDBalance) -> DispatchResultWithPostInfo {
             let caller = ensure_signed(origin)?;
             Self::with_bond(&bond, |mut item|{
                 ensure!(
@@ -1397,7 +1397,7 @@ pub mod pallet {
         /// Also, function purges expired lots for this bond and seller from BondUnitPackageLot storage.
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_unit_lot_bid())]
-        fn bond_unit_lot_bid(origin: OriginFor<T>, bond: BondId, lot: BondUnitSaleLotStructOf<T>) -> DispatchResultWithPostInfo{
+        pub fn bond_unit_lot_bid(origin: OriginFor<T>, bond: BondId, lot: BondUnitSaleLotStructOf<T>) -> DispatchResultWithPostInfo{
             let caller = ensure_signed(origin)?;
             let now = Timestamp::<T>::get();
             // @TODO - maybe restrict this operation only to Investors?
@@ -1447,7 +1447,7 @@ pub mod pallet {
         /// (buyer receives "newer" BondUnitsPackage, that buyer owned)
         /// </pre>
         #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_unit_lot_settle())]
-        fn bond_unit_lot_settle(origin: OriginFor<T>, bond: BondId, bondholder: T::AccountId, lot: BondUnitSaleLotStructOf<T>)->DispatchResultWithPostInfo{
+        pub fn bond_unit_lot_settle(origin: OriginFor<T>, bond: BondId, bondholder: T::AccountId, lot: BondUnitSaleLotStructOf<T>)->DispatchResultWithPostInfo{
             let caller = ensure_signed(origin)?;
             ensure!(accounts::Module::<T>::account_is_investor(&caller), Error::<T>::AccountNotAuthorized);
             let now = Timestamp::<T>::get();
@@ -1602,7 +1602,7 @@ pub mod pallet {
         }
     
         #[cfg(test)]
-        fn bond_packages(id: &BondId) -> std::collections::HashMap<T::AccountId, Vec<BondUnitPackage>>
+        pub fn bond_packages(id: &BondId) -> std::collections::HashMap<T::AccountId, Vec<BondUnitPackage>>
         where
             <T as frame_system::Config>::AccountId: std::hash::Hash,
         {
@@ -1614,7 +1614,7 @@ pub mod pallet {
         /// Unlike BondRegistry::<T>::mutate(bond, f) `with_bond` doesn't write to storage
         /// if call returns error or bond key doesn't exist in the registry
         /// </pre>
-        fn with_bond<R, E: From<Error<T>>, F: FnOnce(&mut BondStructOf<T>) -> Result<R, E>>(
+        pub fn with_bond<R, E: From<Error<T>>, F: FnOnce(&mut BondStructOf<T>) -> Result<R, E>>(
             bond: &BondId,
             f: F,
         ) -> Result<R, E> {
@@ -1629,7 +1629,7 @@ pub mod pallet {
         /// <pre>
         /// Increase account balance by `amount` EverUSD
         /// </pre>
-        fn balance_add(who: &T::AccountId, amount: EverUSDBalance) -> DispatchResult {
+        pub fn balance_add(who: &T::AccountId, amount: EverUSDBalance) -> DispatchResult {
             BalanceEverUSD::<T>::try_mutate(who, |balance| -> DispatchResult {
                 *balance = balance
                     .checked_add(amount)
@@ -1641,7 +1641,7 @@ pub mod pallet {
         /// <pre>
         /// Decrease account balance by `amount` EverUSD
         /// </pre>
-        fn balance_sub(who: &T::AccountId, amount: EverUSDBalance) -> DispatchResult {
+        pub fn balance_sub(who: &T::AccountId, amount: EverUSDBalance) -> DispatchResult {
             BalanceEverUSD::<T>::try_mutate(who, |balance| -> DispatchResult {
                 *balance = balance
                     .checked_sub(amount)
@@ -1676,7 +1676,7 @@ pub mod pallet {
         /// Deletes expired burn requests.
         /// Process less or equal than MAX_PURGE_REQUESTS expired requests
         /// </pre>
-        fn purge_expired_burn_requests(before: T::Moment) {
+        pub fn purge_expired_burn_requests(before: T::Moment) {
             let to_purge: Vec<_> = BurnRequestEverUSD::<T>::iter()
                 .filter(|(_, request)| request.is_expired(before))
                 .map(|(acc, _)| acc)
@@ -1692,7 +1692,7 @@ pub mod pallet {
         /// Deletes expired mint requests from the queue.
         /// Process less or equal than MAX_PURGE_REQUESTS expired requests
         /// </pre>
-        fn purge_expired_mint_requests(before: T::Moment) {
+        pub fn purge_expired_mint_requests(before: T::Moment) {
             let to_purge: Vec<_> = MintRequestEverUSD::<T>::iter()
                 .filter(|(_, request)| request.is_expired(before))
                 .map(|(acc, _)| acc)
@@ -1745,7 +1745,7 @@ pub mod pallet {
         /// the "package_yield" is calculated (yield per one bond unit), and then used to summarise
         /// yields of all bond's BondUnitsPackages.
         /// </pre>
-        fn calc_and_store_bond_coupon_yield(
+        pub fn calc_and_store_bond_coupon_yield(
             id: &BondId,
             bond: &mut BondStructOf<T>,
             now: <T as pallet_timestamp::Config>::Moment,
@@ -2076,7 +2076,7 @@ pub mod pallet {
         /// after "impact_data_send_period" seconds before end of a payment_period
         /// and before end of a payment_period.
         /// </pre>
-        fn is_report_in_time(
+        pub fn is_report_in_time(
             bond: &BondStructOf<T>,
             now: <T as pallet_timestamp::Config>::Moment,
             period: BondPeriodNumber,
@@ -2096,7 +2096,7 @@ pub mod pallet {
         /// Payment must be sent before "interest_pay_period" seconds are passed
         /// after payment_period beginning
         /// </pre>
-        fn is_interest_pay_period(
+        pub fn is_interest_pay_period(
             bond: &BondStructOf<T>,
             now: <T as pallet_timestamp::Config>::Moment,
         ) -> bool {
@@ -2113,7 +2113,7 @@ pub mod pallet {
         }
     
         #[cfg(test)]
-        fn set_impact_data(
+        pub fn set_impact_data(
             bond: &BondId,
             period: BondPeriodNumber,
             impact_data: u64,
@@ -2126,12 +2126,12 @@ pub mod pallet {
                 reports[index].create_period = 1; //dirty hack. test require nonzero value
     
                 Ok(())
-            });
+            })?;
             Ok(().into())
         }
     
         #[cfg(test)]
-        fn evercity_balance() -> ledger::EvercityBalance {
+        pub fn evercity_balance() -> ledger::EvercityBalance {
             let account: EverUSDBalance = BalanceEverUSD::<T>::iter_values().sum();
             let bond_fund: EverUSDBalance = BondRegistry::<T>::iter_values()
                 .map(|bond| bond.bond_debit - bond.coupon_yield)

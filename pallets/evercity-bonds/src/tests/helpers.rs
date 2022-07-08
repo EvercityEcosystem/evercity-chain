@@ -1,6 +1,7 @@
 #![allow(clippy::from_over_into)]
+use frame_support::dispatch::DispatchResultWithPostInfo;
 use frame_support::{
-     dispatch::DispatchResult, sp_std::ops::RangeInclusive,
+     sp_std::ops::RangeInclusive,
 };
 use crate::tests::mock::*;
 use crate::{
@@ -34,7 +35,7 @@ pub fn bond_current_period(bond: &BondStruct, now: Moment) -> u32 {
 }
 
 /// Auxiliary function that replenish account balance
-pub fn add_token(id: AccountId, amount: EverUSDBalance) -> DispatchResult {
+pub fn add_token(id: AccountId, amount: EverUSDBalance) -> DispatchResultWithPostInfo {
     Evercity::token_mint_request_create_everusd(Origin::signed(id), amount)?;
     Evercity::token_mint_request_confirm_everusd(Origin::signed(CUSTODIAN_ID), id, amount)
 }
