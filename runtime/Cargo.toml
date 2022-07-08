@@ -4,7 +4,7 @@ edition = '2018'
 license = 'Apache-2.0'
 name = 'evercity-runtime'
 repository = 'https://github.com/EvercityEcosystem/evercity-chain'
-version = '0.2.0'
+version = '0.2.1'
 resolver = "2"
 
 [package.metadata.docs.rs]
@@ -46,12 +46,12 @@ sp-transaction-pool = { default-features = false, version = '3.0.0' }
 sp-version = { default-features = false, version = '3.0.0' }
 
 # local dependencies
-pallet-evercity-bonds = { default-features = false, version = '0.1.3', path = '../pallets/evercity-bonds' }
+pallet-evercity-bonds = { default-features = false, version = '0.1.4', path = '../pallets/evercity-bonds' }
 pallet-evercity-transfer = { default-features = false, version = '0.1.1', path = '../pallets/evercity-bonds/transfer' }
-pallet-evercity-carbon-credits = { default-features = false, version = '0.2.0', path = '../pallets/evercity-carbon-credits' }
-pallet-evercity-accounts = { default-features = false, version = '0.1.8', path = '../pallets/evercity-accounts' }
+pallet-evercity-carbon-credits = { default-features = false, version = '0.2.1', path = '../pallets/evercity-carbon-credits' }
+pallet-evercity-accounts = { default-features = false, version = '0.1.9', path = '../pallets/evercity-accounts' }
 pallet-assets = { default-features = false, version = '3.0.0' }
-pallet-evercity-filesign = { default-features = false, version = '0.1.4', path = '../pallets/evercity-filesign' }
+pallet-evercity-filesign = { default-features = false, version = '0.1.5', path = '../pallets/evercity-filesign' }
 pallet-evercity-assets = { default-features = false, version = '0.1.0', path = '../pallets/evercity-assets' }
 
 getrandom = {version = "0.2.3", features = ['js']}
