@@ -1,12 +1,12 @@
 [workspace]
 members = [
     'node',
-    'pallets/evercity-bonds',
-    'pallets/evercity-accounts',
-    'pallets/evercity-filesign',
-    'pallets/evercity-assets',
-    'pallets/evercity-carbon-credits',
-    'pallets/evercity-bonds/transfer',
+    # 'pallets/evercity-bonds',
+    # 'pallets/evercity-accounts',
+    # 'pallets/evercity-filesign',
+    # 'pallets/evercity-assets',
+    # 'pallets/evercity-carbon-credits',
+    # 'pallets/evercity-bonds/transfer',
     'runtime',
 ]
 [profile.release]

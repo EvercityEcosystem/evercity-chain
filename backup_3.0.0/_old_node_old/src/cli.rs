@@ -1,20 +1,19 @@
+use structopt::StructOpt;
 use sc_cli::RunCmd;
 
-#[derive(Debug, clap::Parser)]
+#[derive(Debug, StructOpt)]
 pub struct Cli {
-	#[clap(subcommand)]
+	#[structopt(subcommand)]
 	pub subcommand: Option<Subcommand>,
 
-	#[clap(flatten)]
+	#[structopt(flatten)]
 	pub run: RunCmd,
 }
 
-#[derive(Debug, clap::Subcommand)]
+#[derive(Debug, StructOpt)]
 pub enum Subcommand {
 	/// Key management cli utilities
-	#[clap(subcommand)]
 	Key(sc_cli::KeySubcommand),
-
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -36,18 +35,7 @@ pub enum Subcommand {
 	/// Revert the chain to a previous state.
 	Revert(sc_cli::RevertCmd),
 
-	/// Sub-commands concerned with benchmarking.
-	#[clap(subcommand)]
+	/// The custom benchmark subcommmand benchmarking runtime pallets.
+	#[structopt(name = "benchmark", about = "Benchmark runtime pallets.")]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
-
-	/// Try some command against runtime state.
-	#[cfg(feature = "try-runtime")]
-	TryRuntime(try_runtime_cli::TryRuntimeCmd),
-
-	/// Try some command against runtime state. Note: `try-runtime` feature must be enabled.
-	#[cfg(not(feature = "try-runtime"))]
-	TryRuntime,
-
-	/// Db meta columns information.
-	ChainInfo(sc_cli::ChainInfoCmd),
 }

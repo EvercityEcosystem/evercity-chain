@@ -89,7 +89,7 @@ construct_runtime!(
 With no predefined accounts (master account is set using `set_master()` extrinsic)
 
 ```rust
-use node_template_runtime::EvercityAccountsConfig;
+use evercity_runtime::EvercityAccountsConfig;
 ...
 GenesisConfig {
 ...
@@ -103,7 +103,7 @@ GenesisConfig {
 With predefined accounts
 
 ```rust
-use node_template_runtime::EvercityAccountsConfig;
+use evercity_runtime::EvercityAccountsConfig;
 ...
 
 /// Configure initial storage state for FRAME modules.
