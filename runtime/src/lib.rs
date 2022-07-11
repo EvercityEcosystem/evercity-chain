@@ -142,11 +142,22 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
+/// Filters Calls to pallet-evercity-assets
+pub struct EvercityAssetsFilter;
+impl frame_support::traits::Contains<Call> for EvercityAssetsFilter {
+	fn contains(call: &Call) -> bool {
+		match call {
+			Call::EvercityAssets(_) => false,
+			_ => true,
+		}
+	}
+}
+
 // Configure FRAME pallets to include in runtime.
 
 impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = frame_support::traits::Everything;
+	type BaseCallFilter = EvercityAssetsFilter;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = BlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -259,6 +270,31 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
+
+parameter_types! {
+    pub const AssetDepositBase: Balance = 0;
+    pub const AssetDepositPerZombie: Balance = 0;
+    pub const ApprovalDeposit: Balance = 0;
+    pub const StringLimit: u32 = 150;
+    pub const MetadataDepositBase: Balance = 0;
+    pub const MetadataDepositPerByte: Balance = 0;
+}
+
+use pallet_evercity_assets;
+impl pallet_evercity_assets::Config for Runtime {
+    type Event = Event;
+    type ABalance = u64;
+    type AssetId = u64;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+    type AssetDepositBase = AssetDepositBase;
+    type AssetDepositPerZombie = AssetDepositPerZombie;
+    type StringLimit = StringLimit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type WeightInfo = pallet_evercity_assets::weights::SubstrateWeight<Runtime>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -274,7 +310,7 @@ construct_runtime!(
 		Balances: pallet_balances,
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
-		
+		EvercityAssets: pallet_evercity_assets,
 	}
 );
 
