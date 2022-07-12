@@ -17,7 +17,6 @@ default-features = false
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-serde = { version = "1.0.136", optional = true, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 
@@ -34,7 +33,6 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 [features]
 default = ['std']
 std = [
-    'serde',
     'codec/std',
 	"scale-info/std",
     'frame-support/std',
