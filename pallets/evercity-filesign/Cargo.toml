@@ -1,0 +1,45 @@
+[package]
+name = 'pallet-evercity-filesign'
+authors = ["Lana Ivina lanaconstanceives@gmail.com"]
+description = 'Pallet for file signatures'
+edition = '2021'
+homepage = 'https://evercity.io'
+license = 'Apache-2.0'
+readme = '../README.md'
+repository = 'https://github.com/EvercityEcosystem/filesign'
+version = '0.2.0'
+
+[dependencies.fixed-hash]
+version = "0.7"
+default-features = false 
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+serde = { version = "1.0.136", optional = true, features = ["derive"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+
+[dev-dependencies]
+pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
+
+[features]
+default = ['std']
+std = [
+    'serde',
+    'codec/std',
+	"scale-info/std",
+    'frame-support/std',
+    'frame-system/std',
+    'sp-api/std',
+    'sp-io/std',
+    'pallet-timestamp/std',
+]

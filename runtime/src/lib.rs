@@ -300,6 +300,12 @@ impl pallet_evercity_accounts::Config for Runtime {
     type Event = Event;
 }
 
+use pallet_evercity_filesign;
+impl pallet_evercity_filesign::Config for Runtime {
+    type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -317,6 +323,8 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		EvercityAssets: pallet_evercity_assets,
 		EvercityAccounts: pallet_evercity_accounts,
+		EvercityFilesign: pallet_evercity_filesign,
+
 	}
 );
 
