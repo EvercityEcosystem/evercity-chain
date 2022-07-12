@@ -295,6 +295,11 @@ impl pallet_evercity_assets::Config for Runtime {
     type WeightInfo = pallet_evercity_assets::weights::SubstrateWeight<Runtime>;
 }
 
+pub use pallet_evercity_accounts;
+impl pallet_evercity_accounts::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -311,6 +316,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		EvercityAssets: pallet_evercity_assets,
+		EvercityAccounts: pallet_evercity_accounts,
 	}
 );
 

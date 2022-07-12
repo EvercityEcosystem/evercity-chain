@@ -1411,6 +1411,7 @@ dependencies = [
  "hex-literal",
  "pallet-aura",
  "pallet-balances",
+ "pallet-evercity-accounts",
  "pallet-evercity-assets",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
@@ -4014,6 +4015,22 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-evercity-accounts"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-io",
 ]
 
 [[package]]

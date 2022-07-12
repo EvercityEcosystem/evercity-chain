@@ -1,12 +1,16 @@
 use evercity_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-	SystemConfig, WASM_BINARY,
+	SystemConfig, WASM_BINARY, 
+	pallet_evercity_accounts::{accounts::{MASTER_ROLE_MASK, CUSTODIAN_ROLE_MASK, CC_PROJECT_OWNER_ROLE_MASK, 
+		ISSUER_ROLE_MASK, CC_AUDITOR_ROLE_MASK, INVESTOR_ROLE_MASK, CC_STANDARD_ROLE_MASK, AUDITOR_ROLE_MASK, 
+		CC_REGISTRY_ROLE_MASK, MANAGER_ROLE_MASK, IMPACT_REPORTER_ROLE_MASK}, self}, 
+	EvercityAccountsConfig,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_runtime::{traits::{IdentifyAccount, Verify}, app_crypto::Ss58Codec};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -54,10 +58,34 @@ pub fn development_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
 				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Alice"),
+                        MASTER_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Bob"),
+                        CUSTODIAN_ROLE_MASK|CC_PROJECT_OWNER_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                        ISSUER_ROLE_MASK|CC_AUDITOR_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Dave"),
+                        INVESTOR_ROLE_MASK|CC_STANDARD_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Eve"),
+                        AUDITOR_ROLE_MASK|CC_REGISTRY_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                        MANAGER_ROLE_MASK, 0
+                    ),
+                    (
+                        get_account_id_from_seed::<sr25519::Public>("Evercity"),
+                        IMPACT_REPORTER_ROLE_MASK, 0
+                    ),
 				],
 				true,
 			)
@@ -86,6 +114,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		"local_testnet",
 		ChainType::Local,
 		move || {
+			let master_account_id: AccountId =
+                Ss58Codec::from_ss58check("5DJBx8EcrJqWqDQDe3xPd7Bw2zL3obvHigdLZKVGDHx7GRwW")
+                    .unwrap();
+
 			testnet_genesis(
 				wasm_binary,
 				// Initial PoA authorities
@@ -93,20 +125,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
+                vec![(master_account_id.clone(), MASTER_ROLE_MASK, 0)],
 				true,
 			)
 		},
@@ -129,7 +148,7 @@ fn testnet_genesis(
 	wasm_binary: &[u8],
 	initial_authorities: Vec<(AuraId, GrandpaId)>,
 	root_key: AccountId,
-	endowed_accounts: Vec<AccountId>,
+    evercity_accounts_roles: Vec<(AccountId, pallet_evercity_accounts::accounts::RoleMask, u64)>,
 	_enable_println: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -139,7 +158,10 @@ fn testnet_genesis(
 		},
 		balances: BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+			balances: evercity_accounts_roles
+			.iter()
+			.map(|x| (x.0.clone(), 1 << 60))
+			.collect(),
 		},
 		aura: AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -152,5 +174,9 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		transaction_payment: Default::default(),
+		evercity_accounts: EvercityAccountsConfig {
+            // set roles for each pre-set accounts (set role)
+            genesis_account_registry: evercity_accounts_roles
+        },
 	}
 }
