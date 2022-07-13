@@ -381,11 +381,11 @@ pub struct BondStruct<AccountId, Moment, Hash> {
 
     //#Auxiliary roles
     /// bond manager account
-    pub manager: AccountId,
+    pub manager: Option<AccountId>,
     /// bond auditor
-    pub auditor: AccountId,
+    pub auditor: Option<AccountId>,
     /// bond impact data reporter
-    pub impact_reporter: AccountId,
+    pub impact_reporter: Option<AccountId>,
     /// total amount of issued bond units
     #[codec(compact)]
     pub issued_amount: BondUnitAmount,

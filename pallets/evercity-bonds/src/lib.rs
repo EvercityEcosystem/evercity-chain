@@ -629,18 +629,16 @@ pub mod pallet {
 
             let now = Timestamp::<T>::get();
 
-            // // let mut bytes= [0u8; 32];
-            // let default_account_id = 0; // T::AccountId::decode(&mut bytes).unwrap_or_default();
             let mut item = BondStruct{
                     inner: body,
                     creation_date: now,
                     issuer: caller.clone(),
-                    manager: caller.clone(),
-                    auditor: caller.clone(),
-                    impact_reporter: caller.clone(),
+                    manager: None,
+                    auditor: None,
+                    impact_reporter: None,
                     issued_amount: 0,
-                    booking_start_date: now,
-                    active_start_date: now,
+                    booking_start_date: Default::default(),
+                    active_start_date: Default::default(),
                     state: BondState::PREPARE, 
                     bond_debit: 0, 
                     bond_credit: 0,
@@ -682,7 +680,7 @@ pub mod pallet {
                             matches!(item.state, BondState::PREPARE),
                             Error::<T>::BondStateNotPermitAction
                         );
-                        item.manager = acc;
+                        item.manager = Some(acc);
                         item.nonce += 1;
                         Self::deposit_event(Event::<T>::BondChanged(caller, bond));
                         Ok(().into())
@@ -718,7 +716,7 @@ pub mod pallet {
                             matches!(item.state, BondState::PREPARE | BondState::BOOKING),
                             Error::<T>::BondStateNotPermitAction
                         );
-                        item.auditor = acc;
+                        item.auditor = Some(acc);
                         item.nonce += 1;
                         Self::deposit_event(Event::<T>::BondChanged(caller, bond));
                         Ok(().into())
@@ -748,7 +746,7 @@ pub mod pallet {
             BondRegistry::<T>::try_mutate(&bond, |maybe_item|{
                 match maybe_item {
                     Some(item) => {
-                        item.impact_reporter = acc;
+                        item.impact_reporter = Some(acc);
                         item.nonce += 1;
                         Self::deposit_event(Event::<T>::BondChanged(caller, bond));
                         Ok(().into())
@@ -788,7 +786,7 @@ pub mod pallet {
                             Error::<T>::BondStateNotPermitAction
                         );
                         ensure!(
-                            item.issuer == caller || item.manager == caller ,
+                            item.issuer == caller || item.manager == Some(caller.clone()) ,
                             Error::<T>::BondAccessDenied
                         );
                         // Financial data shall not be changed after release
@@ -1021,7 +1019,7 @@ pub mod pallet {
                         // Ensure the Bond raises less then bond_units_mincap_amount bond units
                         ensure!(item.inner.bond_units_mincap_amount > item.issued_amount, Error::<T>::BondParamIncorrect);
                         ensure!(
-                            item.issuer == caller || item.manager == caller || accounts::Pallet::<T>::account_is_bond_arranger(&caller) ,
+                            item.issuer == caller || item.manager == Some(caller.clone()) || accounts::Pallet::<T>::account_is_bond_arranger(&caller) ,
                             Error::<T>::BondAccessDenied
                         );
                         let now = Timestamp::<T>::get();
@@ -1088,7 +1086,7 @@ pub mod pallet {
                         ensure!(item.state == BondState::BOOKING, Error::<T>::BondStateNotPermitAction);
                         ensure!(item.inner.bond_units_mincap_amount <= item.issued_amount, Error::<T>::BondParamIncorrect);
                         // auditor should be assigned before
-                        // ensure!(item.auditor != Default::default(), Error::<T>::BondIsNotConfigured);
+                        ensure!(item.auditor.is_some(), Error::<T>::BondIsNotConfigured);
         
                         let now = Timestamp::<T>::get();
                         item.state = BondState::ACTIVE;
@@ -1139,7 +1137,7 @@ pub mod pallet {
             let now = Timestamp::<T>::get();
             let moment = {
                 let item = BondRegistry::<T>::get(bond).ok_or(Error::<T>::BondNotFound)?;
-                ensure!(item.issuer == caller || item.impact_reporter == caller, Error::<T>::BondAccessDenied );
+                ensure!(item.issuer == caller || item.impact_reporter == Some(caller.clone()), Error::<T>::BondAccessDenied );
                 ensure!(Self::is_report_in_time(&item, now, period), Error::<T>::BondOutOfOrder );
                 item.time_passed_after_activation(now).map(|(moment, _period)| moment ).unwrap()
             };
@@ -1179,7 +1177,7 @@ pub mod pallet {
             let now = Timestamp::<T>::get();
             {
                 let item = BondRegistry::<T>::get(bond).ok_or(Error::<T>::BondNotFound)?;
-                ensure!(item.auditor == caller, Error::<T>::BondAccessDenied );
+                ensure!(item.auditor == Some(caller.clone()), Error::<T>::BondAccessDenied );
                 ensure!(Self::is_report_in_time(&item, now, period), Error::<T>::BondOutOfOrder );
             }
 
@@ -1302,18 +1300,18 @@ pub mod pallet {
             })
         }
 
-        /// <pre>
-        /// Method: bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId)
-        /// Arguments: origin: T::AccountId - transaction caller
-        ///            bond: BondId - bond identifier
-        /// Access: any account
-        ///
-        /// Calculates total bond coupon yield(EverUSD) and stores it in "bond_credit"
-        /// by calculating effective interest rates for each passed payment_period.
-        /// This function is a call to "lazy" function "calc_and_store_bond_coupon_yield()"
-        /// that is called in many operations, changing Investors BondUnitsPackage-s (like buy/sell BUs).
-        /// Have the complexity O(N), where N - amount of BondUnitsPackage-s
-        /// </pre>
+        // / <pre>
+        // / Method: bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId)
+        // / Arguments: origin: T::AccountId - transaction caller
+        // /            bond: BondId - bond identifier
+        // / Access: any account
+        // /
+        // / Calculates total bond coupon yield(EverUSD) and stores it in "bond_credit"
+        // / by calculating effective interest rates for each passed payment_period.
+        // / This function is a call to "lazy" function "calc_and_store_bond_coupon_yield()"
+        // / that is called in many operations, changing Investors BondUnitsPackage-s (like buy/sell BUs).
+        // / Have the complexity O(N), where N - amount of BondUnitsPackage-s
+        // / </pre>
         // #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_accrue_coupon_yield())]
         // pub fn bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId) -> DispatchResult {
         //     let _ = ensure_signed(origin)?;
@@ -1345,7 +1343,7 @@ pub mod pallet {
             // Bond should be in Prepare state, so no bids can exist at this time
             // ensure!( BondRegistry::<T>::contains_key(&bond), Error::<T>::BondNotFound );
             let item = BondRegistry::<T>::get(bond).ok_or(Error::<T>::BondNotFound)?;
-            ensure!(item.issuer == caller || item.manager == caller, Error::<T>::BondAccessDenied);
+            ensure!(item.issuer == caller || item.manager == Some(caller.clone()), Error::<T>::BondAccessDenied);
             ensure!(item.state == BondState::PREPARE, Error::<T>::BondStateNotPermitAction);
             assert!( BondRegistry::<T>::contains_key(bond) );
             BondRegistry::<T>::remove( &bond );

@@ -1882,9 +1882,7 @@ fn bond_create_delete() {
         assert_eq!(bond.inner, chain_bond_item.inner);
 
         assert_ok!(Evercity::bond_revoke(Origin::signed(ACCOUNT), bondid));
-        let chain_bond_item = Evercity::get_bond(&bondid);
-        assert_ne!(bond.inner, chain_bond_item.inner);
-        assert_eq!(chain_bond_item.inner, Default::default());
+        assert_eq!(None, Evercity::bond_registry(&bondid));
     });
 }
 
@@ -2036,7 +2034,7 @@ fn bond_create_release_update() {
         let chain_bond_item = Evercity::get_bond(&bondid);
         assert_eq!(chain_bond_item.state, BondState::BOOKING);
         assert_eq!(chain_bond_item.booking_start_date, 10_000);
-        assert_eq!(chain_bond_item.manager, MANAGER);
+        assert_eq!(chain_bond_item.manager, Some(MANAGER));
         assert_eq!(chain_bond_item.inner.bond_units_base_price, 100_000);
     });
 }

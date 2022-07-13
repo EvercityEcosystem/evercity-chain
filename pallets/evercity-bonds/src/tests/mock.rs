@@ -189,9 +189,9 @@ pub fn get_test_bond() -> BondStruct {
         },
 
         issuer: 0,
-        manager: 0,
-        auditor: 0,
-        impact_reporter: 0,
+        manager: None,
+        auditor: None,
+        impact_reporter: None,
 
         issued_amount: 0,
         booking_start_date: Default::default(),
@@ -240,9 +240,9 @@ pub fn get_test_bond_stable() -> BondStruct {
         },
 
         issuer: 0,
-        manager: 0,
-        auditor: 0,
-        impact_reporter: 0,
+        manager: None,
+        auditor: None,
+        impact_reporter: None,
 
         issued_amount: 0,
         booking_start_date: Default::default(),
@@ -300,9 +300,9 @@ pub fn get_test_bond_stable_carbon() -> BondStruct {
         },
 
         issuer: 0,
-        manager: 0,
-        auditor: 0,
-        impact_reporter: 0,
+        manager: None,
+        auditor: None,
+        impact_reporter: None,
 
         issued_amount: 0,
         booking_start_date: Default::default(),
