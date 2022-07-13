@@ -1685,7 +1685,7 @@ dependencies = [
  "bitflags",
  "frame-metadata",
  "frame-support-procedural",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "k256",
  "log",
  "once_cell",
@@ -2351,6 +2351,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4551f042f3438e64dbd6226b20527fc84a6e1fe65688b58746a2f53623f25f5c"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "impl-trait-for-tuples"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ef5550a42e3740a0e71f909d4c861056a284060af885ae7aa6242820f920d9d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -3995,7 +4006,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.2
 dependencies = [
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "parity-scale-codec",
  "scale-info",
  "sp-authorship",
@@ -4047,6 +4058,25 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-evercity-bonds"
+version = "0.2.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples 0.1.3",
+ "pallet-balances",
+ "pallet-evercity-accounts",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
  "sp-std",
 ]
 
@@ -4110,7 +4140,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.2
 dependencies = [
  "frame-support",
  "frame-system",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "log",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -4226,7 +4256,7 @@ dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
  "byte-slice-cast",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "parity-scale-codec-derive",
  "serde",
 ]
@@ -4257,7 +4287,7 @@ checksum = "c32561d248d352148124f036cac253a644685a21dc9fea383eb4907d7bd35a8f"
 dependencies = [
  "cfg-if",
  "hashbrown 0.12.1",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
  "primitive-types",
@@ -5322,7 +5352,7 @@ name = "sc-chain-spec"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.25#3348e144f0a2b39ce08bd8e3b976c42fe0c990b9"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "memmap2 0.5.4",
  "parity-scale-codec",
  "sc-chain-spec-derive",
@@ -6802,7 +6832,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.25#3348e144f0a2b39ce08bd8e3b976c42fe0c990b9"
 dependencies = [
  "async-trait",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -6909,7 +6939,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.2
 dependencies = [
  "either",
  "hash256-std-hasher",
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "log",
  "parity-scale-codec",
  "parity-util-mem",
@@ -6929,7 +6959,7 @@ name = "sp-runtime-interface"
 version = "6.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.25#3348e144f0a2b39ce08bd8e3b976c42fe0c990b9"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "parity-scale-codec",
  "primitive-types",
  "sp-externalities",
@@ -7156,7 +7186,7 @@ name = "sp-wasm-interface"
 version = "6.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.25#3348e144f0a2b39ce08bd8e3b976c42fe0c990b9"
 dependencies = [
- "impl-trait-for-tuples",
+ "impl-trait-for-tuples 0.2.2",
  "log",
  "parity-scale-codec",
  "sp-std",

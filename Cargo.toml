@@ -1,7 +1,7 @@
 [workspace]
 members = [
     'node',
-    # 'pallets/evercity-bonds',
+    'pallets/evercity-bonds',
     'pallets/evercity-accounts',
     'pallets/evercity-filesign',
     'pallets/evercity-assets',
