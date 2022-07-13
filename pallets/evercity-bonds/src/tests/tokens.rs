@@ -99,7 +99,7 @@ fn it_token_mint_create_hasty() {
 
         // make amend
         let ttl: u32 = <TestRuntime as crate::Config>::MintRequestTtl::get();
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(ttl.into());
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(ttl.into());
 
         assert_ok!(Evercity::token_mint_request_create_everusd(
             Origin::signed(ACCOUNT),
@@ -162,7 +162,7 @@ fn it_token_mint_try_confirm_expired() {
             Origin::signed(ACCOUNT), // INVESTOR
             1000
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(10));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(10));
         assert_noop!(
             Evercity::token_mint_request_confirm_everusd(
                 Origin::signed(CUSTODIAN_ID),
@@ -260,7 +260,7 @@ fn it_token_burn_try_confirm_expired() {
             Origin::signed(ACCOUNT), // INVESTOR
             1000
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(10));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(10));
         assert_noop!(
             Evercity::token_burn_request_confirm_everusd(
                 Origin::signed(CUSTODIAN_ID),
@@ -290,7 +290,7 @@ fn it_token_burn_hasty() {
 
         // make amend
         let ttl: u32 = <TestRuntime as crate::Config>::BurnRequestTtl::get();
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(ttl.into());
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(ttl.into());
 
         assert_ok!(Evercity::token_burn_request_create_everusd(
             Origin::signed(ACCOUNT),

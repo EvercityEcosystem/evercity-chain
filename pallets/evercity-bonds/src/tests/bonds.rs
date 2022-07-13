@@ -251,7 +251,7 @@ fn bond_with_carbon_redeem_ok() {
                 ));
             }
               // go to the last period
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + days2timestamp(120 + chain_bond_item.inner.bond_duration * 30 + 1),
         );
@@ -576,7 +576,7 @@ fn bond_buy_bond_uc() {
         ));
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(50_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(50_000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
             bondid,
@@ -654,7 +654,7 @@ fn bond_try_activate_without_release() {
             bondid,
             get_test_bond().inner
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(1));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(1));
         // try to buy some bonds in prepare state
         assert_noop!(
             Evercity::bond_unit_package_buy(Origin::signed(INVESTOR1), bondid, 0, 600),
@@ -684,7 +684,7 @@ fn bond_try_activate_by_non_bond_arranger() {
             bondid,
             get_test_bond().inner
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(1));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(1));
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
         // try to buy some bonds in prepare state
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -869,13 +869,13 @@ fn bond_try_withdraw_before_deadline() {
             1,
             100
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(49000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(49000);
         assert_noop!(
             Evercity::bond_withdraw(Origin::signed(BOND_ARRANGER), bondid,),
             RuntimeError::BondStateNotPermitAction
         );
         // make amends
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(51000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(51000);
         assert_ok!(Evercity::bond_withdraw(Origin::signed(BOND_ARRANGER), bondid,));
         let chain_bond_item = Evercity::get_bond(&bondid);
 
@@ -910,7 +910,7 @@ fn bond_try_withdraw_by_investor() {
             100
         ));
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(51000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(51000);
         assert_noop!(
             Evercity::bond_withdraw(Origin::signed(INVESTOR1), bondid,),
             RuntimeError::BondAccessDenied
@@ -1145,7 +1145,7 @@ fn bond_try_activate_expired_fund_raising() {
             AUDITOR
         ));
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(21));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(21));
 
         assert_noop!(
             Evercity::bond_activate(Origin::signed(BOND_ARRANGER), bondid, 2),
@@ -1185,7 +1185,7 @@ fn bond_try_buy_unit_with_overflow() {
         let amount = bond.bond_units_maxcap_amount;
         bond_release(bondid, ACCOUNT, bond);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(100_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(100_000);
         assert_noop!(
             Evercity::bond_unit_package_buy(
                 Origin::signed(INVESTOR1),
@@ -1213,7 +1213,7 @@ fn bond_calc_coupon_yield_basic() {
         // pass first (index=0) period
         let mut moment: Moment =
             30000_u64 + (chain_bond_item.inner.start_period.unwrap_or(0)) as u64 * 1000_u64 + 1_u64;
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(moment);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(moment);
 
         assert_eq!(bond_current_period(&chain_bond_item, moment), 1);
         assert!(
@@ -1345,7 +1345,7 @@ fn bond_calc_coupon_yield_advanced() {
         let bond_yield = Evercity::get_coupon_yields(&bondid2);
         println!("bond 2 = {:?}", bond_yield);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
 
         assert_ok!(Evercity::bond_withdraw_everusd(
             Origin::signed(INVESTOR1),
@@ -1398,7 +1398,7 @@ fn bond_calc_coupon_yield_advanced() {
         println!("{:?}", chain_bond_item1);
 
         let now = start_moment + ((12 * 30 + 120) * DEFAULT_DAY_DURATION) as u64 * 1000 + 100;
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
         assert_ok!(Evercity::bond_redeem(Origin::signed(ACCOUNT1), bondid1));
         assert_ok!(Evercity::bond_redeem(Origin::signed(ACCOUNT2), bondid2));
 
@@ -1464,7 +1464,7 @@ fn bond_restore_from_bankrupt() {
 
         let mut now = start_moment + (160 * DEFAULT_DAY_DURATION) as u64 * 1000;
         for _ in 0..11_usize {
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
             deposit(ACCOUNT1, bondid1, 10000 * UNIT);
 
             assert_ok!(Evercity::bond_withdraw_everusd(
@@ -1482,7 +1482,7 @@ fn bond_restore_from_bankrupt() {
         }
 
         deposit(ACCOUNT1, bondid1, 50000 * UNIT);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
 
         let chain_bond_item1 = Evercity::get_bond(&bondid1);
         assert_eq!(chain_bond_item1.state, BondState::ACTIVE);
@@ -1528,7 +1528,7 @@ fn bond_withdraw_everusd() {
         Evercity::set_balance(&ACCOUNT1, 124668493149600 + 4000 * 600 * 2 * UNIT);
 
         let mut now = start_moment + (130 * DEFAULT_DAY_DURATION) as u64 * 1000;
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
         // 29983 UNIT in start period
         deposit(ACCOUNT1, bondid1, 30000 * UNIT);
         assert_ok!(Evercity::bond_withdraw_everusd(
@@ -1543,7 +1543,7 @@ fn bond_withdraw_everusd() {
 
         for m in 0..11_usize {
             // 7891 UNIT every payment period that is paid by two payments
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(now);
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(now);
             deposit(ACCOUNT1, bondid1, 5891 * UNIT);
 
             assert_ok!(Evercity::bond_withdraw_everusd(
@@ -1636,7 +1636,7 @@ fn bond_try_release_without_fundraising_period() {
             bondid,
             bond.inner
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(100000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(100000);
         assert_noop!(
             Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0),
             RuntimeError::BondStateNotPermitAction
@@ -1691,7 +1691,7 @@ fn bond_calc_redeemed_yield() {
             ));
         }
         // go to the last period
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + days2timestamp(120 + chain_bond_item.inner.bond_duration * 30 + 1),
         );
@@ -1749,7 +1749,7 @@ fn bond_try_redeem_prior_maturity() {
             bondid1,
             get_test_bond().inner
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(1));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(1));
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid1, 0));
 
         assert_ok!(Evercity::bond_unit_package_buy(
@@ -1767,7 +1767,7 @@ fn bond_try_redeem_prior_maturity() {
         bond_activate(bondid2, ACCOUNT, get_test_bond().inner);
 
         // go to the end of the first period. n
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(days2timestamp(120 + 1));
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(days2timestamp(120 + 1));
 
         assert_ok!(add_token(ACCOUNT, 200_000_000_000_000));
         assert_noop!(
@@ -1901,7 +1901,7 @@ fn bond_release(bondid: BondId, acc: u64, mut bond: BondInnerStruct) -> BondStru
     const AUDITOR: u64 = 5;
     bond.mincap_deadline = 50000;
     assert_ok!(Evercity::bond_add_new(Origin::signed(acc), bondid, bond));
-    <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
+    <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(10_000);
     assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
     assert_ok!(Evercity::bond_set_auditor(
         Origin::signed(BOND_ARRANGER),
@@ -1922,7 +1922,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
 
     bond.mincap_deadline = 50000;
     assert_ok!(Evercity::bond_add_new(Origin::signed(acc), bondid, bond));
-    <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
+    <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(10_000);
     assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
     let chain_bond_item = Evercity::get_bond(&bondid);
     assert_eq!(chain_bond_item.issued_amount, 0);
@@ -1937,7 +1937,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
 
     assert!(Evercity::bond_check_invariant(&bondid));
 
-    <pallet_timestamp::Module<TestRuntime>>::set_timestamp(20_000);
+    <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(20_000);
     assert_ok!(Evercity::bond_unit_package_buy(
         Origin::signed(INVESTOR2),
         bondid,
@@ -1959,7 +1959,7 @@ fn bond_activate(bondid: BondId, acc: u64, mut bond: BondInnerStruct) {
     ));
 
     // Activate bond
-    <pallet_timestamp::Module<TestRuntime>>::set_timestamp(30000);
+    <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(30000);
     assert_ok!(Evercity::bond_activate(
         Origin::signed(BOND_ARRANGER),
         bondid,
@@ -2030,7 +2030,7 @@ fn bond_create_release_update() {
             new_bond
         ));
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(10_000);
 
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 2));
         let chain_bond_item = Evercity::get_bond(&bondid);
@@ -2090,7 +2090,7 @@ fn bond_buy_bond_units_after_activation() {
     new_test_ext().execute_with(|| {
         bond_grand_everusd();
         bond_activate(bondid, ACCOUNT, get_test_bond().inner);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(600_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(600_000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
             bondid,
@@ -2122,7 +2122,7 @@ fn bond_try_return_foreign_bonds() {
         bond_release(bondid1, ACCOUNT1, get_test_bond().inner);
         bond_release(bondid2, ACCOUNT2, get_test_bond().inner);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(600_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(600_000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR1),
             bondid1,
@@ -2178,7 +2178,7 @@ fn bond_return_bondunit_package() {
             bondid,
             bond
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(10000);
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
         assert!(Evercity::evercity_balance().is_ok());
 
@@ -2188,7 +2188,7 @@ fn bond_return_bondunit_package() {
             1,
             600
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(20000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(20000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR2),
             bondid,
@@ -2247,7 +2247,7 @@ fn bond_return_partial_bondunit_package() {
             bond
         ));
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(20000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(20000);
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
         assert!(Evercity::evercity_balance().is_ok());
 
@@ -2346,7 +2346,7 @@ fn bond_cancel_after_release() {
             bondid,
             bond
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(10000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(10000);
         assert_ok!(Evercity::bond_release(Origin::signed(BOND_ARRANGER), bondid, 0));
 
         // Buy three packages
@@ -2356,14 +2356,14 @@ fn bond_cancel_after_release() {
             1,
             400
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(20_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(20_000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR2),
             bondid,
             1,
             200
         ));
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(30_000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(30_000);
         assert_ok!(Evercity::bond_unit_package_buy(
             Origin::signed(INVESTOR2),
             bondid,
@@ -2402,7 +2402,7 @@ fn bond_cancel_after_release() {
         assert_eq!(packages2[1].acquisition, 0);
 
         // We raised up less than  bond_units_mincap_amount, so we should revoke the bond
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(60000);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(60000);
         assert_ok!(Evercity::bond_withdraw(Origin::signed(BOND_ARRANGER), bondid));
         let chain_bond_item = Evercity::get_bond(&bondid);
 
@@ -2447,7 +2447,7 @@ fn bond_impact_report_missing_data() {
             ));
         }
         let chain_bond_item = Evercity::get_bond(&bondid1);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period + 1) as u64,
@@ -2481,7 +2481,7 @@ fn bond_impact_report_no_data() {
         bond_activate(bondid1, ACCOUNT1, bond.clone());
 
         let chain_bond_item = Evercity::get_bond(&bondid1);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period + 1) as u64,
@@ -2539,7 +2539,7 @@ fn bond_interest_rate_rnd() {
         }
         // force impact interesting rate calculation
         let chain_bond_item = Evercity::get_bond(&bondid);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (chain_bond_item.inner.start_period.unwrap_or(0)
@@ -2611,7 +2611,7 @@ fn bond_impact_report_interest_rate() {
             ));
         }
         let chain_bond_item = Evercity::get_bond(&bondid);
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period + 1) as u64,
@@ -2657,7 +2657,7 @@ fn bond_impact_report_send_approve() {
 
         for period in 0..bond.bond_duration {
             // day before end of the period
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
                 chain_bond_item.active_start_date
                     + 1000_u64 * (bond.start_period.unwrap_or(0) + period * bond.payment_period - 1) as u64,
             );
@@ -2674,7 +2674,7 @@ fn bond_impact_report_send_approve() {
                 bond.impact_data_baseline[period as usize].unwrap_or(0)
             ));
         }
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period + 1) as u64,
@@ -2718,7 +2718,7 @@ fn bond_impact_report_try_approve_unauthorized() {
 
         let chain_bond_item = Evercity::get_bond(&bondid);
         // first period
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date + 1000_u64 * (bond.start_period.unwrap_or(0) - 1) as u64,
         );
 
@@ -2761,7 +2761,7 @@ fn bond_impact_report_try_approve_unattended() {
 
         let chain_bond_item = Evercity::get_bond(&bondid);
         // first period
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date + 1000_u64 * (bond.start_period.unwrap_or(0) - 1) as u64,
         );
         // try approve without report
@@ -2802,7 +2802,7 @@ fn bond_impact_report_outof_order() {
 
         for period in 0..bond.bond_duration {
             // before start of the report period
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
                 chain_bond_item.active_start_date
                     + 1000_u64
                         * (bond.start_period.unwrap_or(0) + period * bond.payment_period
@@ -2820,7 +2820,7 @@ fn bond_impact_report_outof_order() {
             );
 
             // after current period end
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
                 chain_bond_item.active_start_date
                     + 1000_u64 * (bond.start_period.unwrap_or(0) + period * bond.payment_period + 1) as u64,
             );
@@ -2836,7 +2836,7 @@ fn bond_impact_report_outof_order() {
             );
 
             // between report period start and  current period end
-            <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+            <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
                 chain_bond_item.active_start_date
                     + 1000_u64 * (bond.start_period.unwrap_or(0) + period * bond.payment_period - 1000) as u64,
             );
@@ -2935,7 +2935,7 @@ fn bond_acquire_try_after_redemption() {
         bond_activate(bondid, ACCOUNT, bond.clone());
         let chain_bond_item = Evercity::get_bond(&bondid);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period + 1) as u64,
@@ -2965,7 +2965,7 @@ fn bond_deposit_bond() {
         bond_activate(bondid, ACCOUNT, bond.clone());
         let chain_bond_item = Evercity::get_bond(&bondid);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date + 1000_u64 * (bond.start_period.unwrap_or(0) + 1) as u64,
         );
 
@@ -3021,7 +3021,7 @@ fn bond_deposit_return_after_redemption() {
         bond_activate(bondid, ACCOUNT, bond.clone());
         let chain_bond_item = Evercity::get_bond(&bondid);
 
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(
             chain_bond_item.active_start_date
                 + 1000_u64
                     * (bond.start_period.unwrap_or(0) + bond.bond_duration * bond.payment_period+ 1) as u64,
@@ -3135,7 +3135,7 @@ fn bond_lot_paid_coupon() {
         assert!(Evercity::bond_check_invariant(&bondid));
         // first period
         let moment = chain_bond_item.active_start_date + 1000_u64 * (bond.start_period.unwrap_or(0) + 1) as u64;
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(moment);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(moment);
 
         let (_, period) = chain_bond_item
             .time_passed_after_activation(moment)
@@ -3209,7 +3209,7 @@ fn bond_lot_try_buy_foreign() {
 
         let lot = BondUnitSaleLotStruct {
             deadline: 100000,
-            new_bondholder: 7,
+            new_bondholder: Some(7),
             bond_units: 600,
             amount: 600 * 3_000_000_000_000,
         };
@@ -3244,7 +3244,7 @@ fn bond_lot_try_create_expired() {
             amount: 600 * 3_000_000_000_000,
         };
         // move forward
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(1000000 + 1);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(1000000 + 1);
         assert_noop!(
             Evercity::bond_unit_lot_bid(Origin::signed(INVESTOR1), bondid, lot),
             RuntimeError::LotParamIncorrect
@@ -3278,7 +3278,7 @@ fn bond_lot_try_buy_expired() {
         ));
 
         // move forward
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(1000000 + 1);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(1000000 + 1);
 
         assert_noop!(
             Evercity::bond_unit_lot_settle(Origin::signed(INVESTOR2), bondid, INVESTOR1, lot),
@@ -3315,7 +3315,7 @@ fn bond_lot_try_exceed_portfolio() {
             RuntimeError::BalanceOverdraft
         );
         // make amend. make prior lots expired
-        <pallet_timestamp::Module<TestRuntime>>::set_timestamp(100000 + 1);
+        <pallet_timestamp::Pallet<TestRuntime>>::set_timestamp(100000 + 1);
         let mut lot = lot;
         lot.deadline = 100000 + 2;
         assert_ok!(Evercity::bond_unit_lot_bid(

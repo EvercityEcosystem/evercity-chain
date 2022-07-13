@@ -1662,10 +1662,10 @@ pub mod pallet {
         ///
         ///  Returns bond structure if it was found in BondRegistry by given BondId
         /// </pre>
-        // #[cfg(test)]
-        // pub fn get_bond(bond: &BondId) -> BondStructOf<T> {
-        //     BondRegistry::<T>::get(bond).ok_or(Error::<T>::BondNotFound)
-        // }
+        #[cfg(test)]
+        pub fn get_bond(bond: &BondId) -> BondStructOf<T> {
+            BondRegistry::<T>::get(bond).unwrap()
+        }
     
         #[cfg(test)]
         pub fn bond_check_invariant(bond: &BondId) -> bool {
@@ -1675,7 +1675,7 @@ pub mod pallet {
                         (acc.0 + package.bond_units, acc.1 + package.coupon_yield)
                     })
                 });
-            let bond = BondRegistry::<T>::get(bond).ok_or(Error::<T>::BondNotFound)?;
+            let bond = BondRegistry::<T>::get(bond).unwrap();
     
             bond.issued_amount == bond_units && bond.coupon_yield == coupon_yield
         }
