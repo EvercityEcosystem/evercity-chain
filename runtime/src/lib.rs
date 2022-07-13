@@ -306,6 +306,25 @@ impl pallet_evercity_filesign::Config for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
+const DEFAULT_DAY_DURATION: u32 = 60; // 86400; seconds in 1 DAY
+
+parameter_types! {
+    pub const BurnRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MintRequestTtl: u32 = DEFAULT_DAY_DURATION as u32 * 7 * 1000;
+    pub const MaxMintAmount: pallet_evercity_bonds::EverUSDBalance = 60_000_000_000_000_000;
+    pub const TimeStep: pallet_evercity_bonds::BondPeriod = DEFAULT_DAY_DURATION;
+}
+
+impl pallet_evercity_bonds::Config for Runtime {
+	type Event = Event;
+    type BurnRequestTtl = BurnRequestTtl;
+    type MintRequestTtl = MintRequestTtl;
+    type MaxMintAmount = MaxMintAmount;
+    type TimeStep = TimeStep;
+    type WeightInfo = ();
+    type OnAddBond = ();
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -324,6 +343,7 @@ construct_runtime!(
 		EvercityAssets: pallet_evercity_assets,
 		EvercityAccounts: pallet_evercity_accounts,
 		EvercityFilesign: pallet_evercity_filesign,
+		Evercity: pallet_evercity_bonds,
 
 	}
 );

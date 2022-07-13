@@ -7,7 +7,7 @@ use frame_support::sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, IdentityLookup},
 };
-use frame_support::traits::GenesisBuild;
+use frame_support::traits::{GenesisBuild, Everything};
 use sp_core::H256;
 use pallet_evercity_accounts::accounts::{
     RoleMask, ISSUER_ROLE_MASK, MASTER_ROLE_MASK, BOND_ARRANGER_ROLE_MASK,
@@ -23,11 +23,11 @@ frame_support::construct_runtime!(
             NodeBlock = Block,
             UncheckedExtrinsic = UncheckedExtrinsic,
         {
-            System: frame_system::{Module, Call, Config, Storage, Event<T>},
-            Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-            Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-            Evercity: pallet_evercity::{Module, Call, Storage, Event<T>},
-            EvercityAccounts: pallet_evercity_accounts::{Module, Call, Storage, Event<T>},
+            System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+            Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+            Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+            Evercity: pallet_evercity::{Pallet, Call, Storage, Event<T>},
+            EvercityAccounts: pallet_evercity_accounts::{Pallet, Call, Storage, Event<T>},
         }
 );
 
@@ -59,11 +59,13 @@ impl frame_system::Config for TestRuntime {
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type DbWeight = ();
-    type BaseCallFilter = ();
+    type BaseCallFilter = Everything;
     type SystemWeightInfo = ();
     type BlockWeights = ();
     type BlockLength = ();
     type SS58Prefix = ();
+    type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 parameter_types! {
@@ -106,6 +108,8 @@ parameter_types! {
 
 impl pallet_balances::Config for TestRuntime {
     type Balance = u64;
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
     type Event = Event;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;

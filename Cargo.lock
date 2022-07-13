@@ -1413,6 +1413,7 @@ dependencies = [
  "pallet-balances",
  "pallet-evercity-accounts",
  "pallet-evercity-assets",
+ "pallet-evercity-bonds",
  "pallet-evercity-filesign",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
