@@ -132,7 +132,6 @@ pub use crate::bond::{
 };
 
 pub use default_weight::WeightInfo;
-// use frame_support::debug::native;
 use frame_support::{
     dispatch::Vec,
     sp_std::cmp::{min,},
@@ -352,9 +351,7 @@ pub mod pallet {
     /// BondId is now a ticker [u8; 8]: 8-bytes unique identifier like "MUSKPWR1" or "WINDGEN2"
     #[pallet::storage]
     #[pallet::getter(fn bond_registry)]
-    pub(super) type BondRegistry<T: Config> = StorageMap<_, Blake2_128Concat, BondId, BondStructOf<T>
-    // , ValueQuery
-    >;
+    pub(super) type BondRegistry<T: Config> = StorageMap<_, Blake2_128Concat, BondId, BondStructOf<T>>;
 
     /// Investor's Bond units (packs of bond_units, received at the same time, belonging to Investor)
     #[pallet::storage]
@@ -385,7 +382,6 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T>
-            // TODO_MAYBE_WHERE_CLAUSE
     {
         // Token balances manipulation functions
 
@@ -1300,34 +1296,6 @@ pub mod pallet {
             })
         }
 
-        // / <pre>
-        // / Method: bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId)
-        // / Arguments: origin: T::AccountId - transaction caller
-        // /            bond: BondId - bond identifier
-        // / Access: any account
-        // /
-        // / Calculates total bond coupon yield(EverUSD) and stores it in "bond_credit"
-        // / by calculating effective interest rates for each passed payment_period.
-        // / This function is a call to "lazy" function "calc_and_store_bond_coupon_yield()"
-        // / that is called in many operations, changing Investors BondUnitsPackage-s (like buy/sell BUs).
-        // / Have the complexity O(N), where N - amount of BondUnitsPackage-s
-        // / </pre>
-        // #[pallet::weight(<T as pallet::Config>::WeightInfo::bond_accrue_coupon_yield())]
-        // pub fn bond_accrue_coupon_yield(origin: OriginFor<T>, bond: BondId) -> DispatchResult {
-        //     let _ = ensure_signed(origin)?;
-
-        //     BondRegistry::<T>::try_mutate(&bond, |mut maybe_item| {
-        //         match maybe_item {
-        //             Some(item) => {
-        //                 let now = Timestamp::<T>::get();
-        //                 let processed: u64 = Self::calc_and_store_bond_coupon_yield(&bond, &mut item, now) as u64;
-        //                 Ok(Some( T::DbWeight::get().reads_writes(processed+2, processed+1) ))
-        //             },
-        //             None => Err(Error::<T>::BondNotFound.into())
-        //         }
-        //     })
-        // }
-
         /// <pre>
         /// Method: bond_revoke(origin: OriginFor<T>, bond: BondId)
         /// Arguments: origin: T::AccountId - transaction caller
@@ -1694,25 +1662,6 @@ pub mod pallet {
         {
             BondUnitPackageRegistry::<T>::iter_prefix(id).collect()
         }
-    
-        /// <pre>
-        /// Same as BondRegistry::<T>::mutate(bond, f).
-        /// Unlike BondRegistry::<T>::mutate(bond, f) `with_bond` doesn't write to storage
-        /// if call returns error or bond key doesn't exist in the registry
-        /// </pre>
-        // pub fn with_bond<R, E: From<Error<T>>, F: FnOnce(&mut BondStructOf<T>) -> Result<R, E>>(
-        //     bond: &BondId,
-        //     f: F,
-        // ) -> Result<R, E> {
-        //     ensure!(
-        //         BondRegistry::<T>::contains_key(bond),
-        //         Error::<T>::BondNotFound
-        //     );
-    
-        //     BondRegistry::<T>::try_mutate(bond, |mut item| {
-        //         let mut item = item.ok_or(Error::<T>::BondNotFound)?;
-        //         f(&mut item)})
-        // }
     
         /// <pre>
         /// Increase account balance by `amount` EverUSD
@@ -2232,89 +2181,5 @@ pub mod pallet {
                 bond_fund,
             }
         }
-    
-        // #[cfg(debug_assertions)]
-        // pub fn create_test_finished_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
-        //     let now = Timestamp::<T>::get();
-        //     let item = BondStruct {
-        //             inner,
-        //             creation_date: now,
-        //             issuer,
-        //             manager: 0,
-        //             auditor: 0,
-        //             impact_reporter: 0,
-        //             issued_amount: 0,
-        //             booking_start_date: now,
-        //             active_start_date: now,
-        //             state: BondState::FINISHED, 
-        //             bond_debit: 0, 
-        //             bond_credit: 0,
-        //             coupon_yield: 0,
-        //             nonce: 0,
-        //     };
-        //     BondRegistry::<T>::insert(&bond_id, item);
-        //     Ok(().into())
-        // }
-    
-        // #[cfg(debug_assertions)]
-        // pub fn create_test_active_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
-        //     let now = Timestamp::<T>::get();
-        //     let item = BondStruct {
-        //             inner,
-        //             creation_date: now,
-        //             issuer,
-        //             manager: 0,
-        //             auditor: 0,
-        //             impact_reporter: 0,
-        //             issued_amount: 0,
-        //             booking_start_date: now,
-        //             active_start_date: now,
-        //             state: BondState::ACTIVE, 
-        //             bond_debit: 0, 
-        //             bond_credit: 0,
-        //             coupon_yield: 0,
-        //             nonce: 0,
-        //     };
-        //     BondRegistry::<T>::insert(&bond_id, item);
-        //     Ok(().into())
-        // }
-    
-        // #[cfg(debug_assertions)]
-        // pub fn create_test_not_finished_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
-        //     let now = Timestamp::<T>::get();
-        //     let item = BondStruct {
-        //             inner,
-        //             creation_date: now,
-        //             issuer,
-        //             manager: 0,
-        //             auditor: 0,
-        //             impact_reporter: 0,
-        //             issued_amount: 0,
-        //             booking_start_date: now,
-        //             active_start_date: now,
-        //             state: BondState::PREPARE, 
-        //             bond_debit: 0, 
-        //             bond_credit: 0,
-        //             coupon_yield: 0,
-        //             nonce: 0,
-        //     };
-        //     BondRegistry::<T>::insert(&bond_id, item);
-        //     Ok(().into())
-        // }
-    
-        // #[cfg(debug_assertions)]
-        // pub fn add_test_bond_unit_packages(bond_id: &BondId, units: Vec<(T::AccountId, BondUnitAmount)>) {
-        //     for (acc, unit_amount) in units {
-        //         BondUnitPackageRegistry::<T>::mutate(bond_id, &acc, |packages|{
-        //             packages.push(
-        //                 BondUnitPackage{
-        //                      bond_units: unit_amount,
-        //                      acquisition: 0,
-        //                      coupon_yield: 0,
-        //                 }
-        //             );
-        //         })
-        //     }
-        // }
     }
 }
