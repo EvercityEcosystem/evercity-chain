@@ -4082,6 +4082,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evercity-carbon-credits"
+version = "0.3.0"
+dependencies = [
+ "fixed-hash",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-evercity-accounts",
+ "pallet-evercity-assets",
+ "pallet-evercity-bonds",
+ "pallet-evercity-filesign",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-evercity-filesign"
 version = "0.2.0"
 dependencies = [

@@ -1,0 +1,57 @@
+[package]
+authors = ["Dima Bushuev diman1ghtly@gmail.com"]
+name = "pallet-evercity-carbon-credits"
+description = 'Pallet for evercity carbon credits'
+version = "0.3.0"
+edition = "2021"
+homepage = 'https://evercity.io'
+license = 'Apache-2.0'
+
+[dependencies.serde]
+optional = true
+features = ['derive']
+version = '1.0.124'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+
+# local
+pallet-evercity-bonds ={ default-features = false, version = '0.2.0', path = '../evercity-bonds' }
+pallet-evercity-assets = { default-features = false, version = '0.2.0', path = '../evercity-assets' }
+pallet-evercity-accounts = { default-features = false, version = '0.2.0', path = '../evercity-accounts'  }
+pallet-evercity-filesign = { default-features = false, version = '0.2.0', path = '../evercity-filesign' }
+
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25" }
+
+[features]
+default = ['std']
+std = [
+    'serde',
+    'codec/std',
+    'sp-api/std',
+    'frame-support/std',
+    'frame-system/std',
+    'pallet-timestamp/std',
+    'pallet-evercity-accounts/std',
+    'pallet-evercity-filesign/std',
+    'pallet-evercity-bonds/std'
+]
+
+[dependencies.fixed-hash]
+version = "0.7"
+default-features = false 

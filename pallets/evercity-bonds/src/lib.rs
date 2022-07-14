@@ -1629,7 +1629,7 @@ pub mod pallet {
         ///  Returns bond structure if it was found in BondRegistry by given BondId
         /// </pre>
         #[cfg(test)]
-        pub fn get_bond(bond: &BondId) -> BondStructOf<T> {
+        pub(crate) fn get_bond(bond: &BondId) -> BondStructOf<T> {
             BondRegistry::<T>::get(bond).unwrap()
         }
     
