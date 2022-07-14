@@ -29,11 +29,11 @@ pub const REPORT_ISSUED: AnnualReportStateMask = 32;
 pub const REPORT_EVERCITY_SIGN_PENDING: AnnualReportStateMask = 64;
 
 /// Generic annual report implementation
-pub type AnnualReportStruct<AccountId, T, Balance> = AnnualReportStructT<AccountId, <T as pallet_timestamp::Config>::Moment, Balance>;
+pub type AnnualReportStructOf<AccountId, T, Balance> = AnnualReportStruct<AccountId, <T as pallet_timestamp::Config>::Moment, Balance>;
 
 /// Main annual report implementation
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug, PartialEq, TypeInfo)]
-pub struct AnnualReportStructT<AccountId, Moment, Balance> where Balance: Clone, AccountId: PartialEq {
+pub struct AnnualReportStruct<AccountId, Moment, Balance> where Balance: Clone, AccountId: PartialEq {
     /// Id of annual report file (stored in filesign)
     pub file_id: FileId,
     /// Sign state of annual report 
@@ -51,9 +51,9 @@ pub struct AnnualReportStructT<AccountId, Moment, Balance> where Balance: Clone,
     required_signers: Vec<RequiredSigner<AccountId>>,
 }
 
-impl<AccountId, Moment, Balance> AnnualReportStructT<AccountId, Moment, Balance> where Balance: Clone, AccountId: PartialEq {
+impl<AccountId, Moment, Balance> AnnualReportStruct<AccountId, Moment, Balance> where Balance: Clone, AccountId: PartialEq {
     pub fn new(file_id: FileId, carbon_credits_count: Balance, create_time: Moment, carbon_credits_meta: CarbonCreditsMeta) -> Self {
-        AnnualReportStructT{
+        AnnualReportStruct{
             file_id,
             state: REPORT_PROJECT_OWNER_SIGN_PENDING,
             carbon_credits_meta,

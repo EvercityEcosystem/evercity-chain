@@ -290,7 +290,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         u32,
-        ProjectStruct<T::AccountId, T, T::ABalance>,
+        ProjectStruct<T::AccountId, T::Moment, T::ABalance>,
         OptionQuery
     >;
 
@@ -374,7 +374,7 @@ pub mod pallet {
                 ensure!(pallet_evercity_filesign::Pallet::<T>::address_is_owner_for_file(id, &caller), Error::<T>::AccountNotFileOwner);
             }
             let new_id = LastID::<T>::get() + 1;
-            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, T, T::ABalance>::new(caller.clone(), new_id, standard, file_id);
+            let new_project = ProjectStruct::<<T as frame_system::Config>::AccountId, <T as pallet_timestamp::Config>::Moment, T::ABalance>::new(caller.clone(), new_id, standard, file_id);
             <ProjectById<T>>::insert(new_id, new_project);
             LastID::<T>::mutate(|x| *x = x.checked_add(1).unwrap());
 
@@ -618,7 +618,7 @@ pub mod pallet {
                             let meta = annual_report::CarbonCreditsMeta::new(name, symbol, Default::default());
                             ensure!(meta.is_metadata_valid(), Error::<T>::BadMetadataParameters);
                             project.annual_reports
-                                .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
+                                .push(annual_report::AnnualReportStruct::<T::AccountId, T::Moment, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
                             Ok(())
                         }
                     }
@@ -675,7 +675,7 @@ pub mod pallet {
                             );
                             pallet_evercity_filesign::Pallet::<T>::create_new_file(origin, tag, filehash, Some(file_id))?;
                             project.annual_reports
-                                        .push(annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
+                                        .push(annual_report::AnnualReportStruct::<T::AccountId, T::Moment, T::ABalance>::new(file_id, carbon_credits_count, Timestamp::<T>::get(), meta));
                             Ok(().into())
                         }
                     }
@@ -1540,7 +1540,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Changes state of a project by signing
         fn change_project_state(
-            project: &mut ProjectStruct<T::AccountId, T, T::ABalance>, 
+            project: &mut ProjectStruct<T::AccountId, T::Moment, T::ABalance>, 
             caller: T::AccountId, 
             event: &mut Option<Event<T>>
         ) -> DispatchResult {
@@ -1621,7 +1621,7 @@ pub mod pallet {
 
         /// Changes state of an annual report by signing
         fn change_project_annual_report_state(
-            project: &mut ProjectStruct<T::AccountId, T, T::ABalance>, 
+            project: &mut ProjectStruct<T::AccountId, T::Moment, T::ABalance>, 
             caller: T::AccountId, 
             event: &mut Option<Event<T>>
         ) -> DispatchResult {
@@ -1701,12 +1701,12 @@ pub mod pallet {
             }
         }
 
-        fn is_correct_project_signer(project: &ProjectStruct<T::AccountId, T, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
+        fn is_correct_project_signer(project: &ProjectStruct<T::AccountId, T::Moment, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
             pallet_evercity_accounts::Pallet::<T>::account_is_selected_role(&account, role) &&
             project.is_required_signer((account, role))
         }
 
-        fn is_correct_annual_report_signer(annual_report: &annual_report::AnnualReportStruct<T::AccountId, T, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
+        fn is_correct_annual_report_signer(annual_report: &annual_report::AnnualReportStruct<T::AccountId, T::Moment, T::ABalance>, account: T::AccountId, role: RoleMask) -> bool {
             pallet_evercity_accounts::Pallet::<T>::account_is_selected_role(&account, role) &&
             annual_report.is_required_signer((account, role))
         }
@@ -1762,7 +1762,7 @@ pub mod pallet {
 
     
         #[cfg(test)]
-        pub fn get_proj_by_id(id: ProjectId) -> Option<ProjectStruct<T::AccountId, T, T::ABalance>> {
+        pub fn get_proj_by_id(id: ProjectId) -> Option<ProjectStruct<T::AccountId, T::Moment, T::ABalance>> {
             ProjectById::<T>::get(id)
         }
     
@@ -1806,7 +1806,7 @@ pub mod pallet {
             let meta = annual_report::CarbonCreditsMeta::new(Vec::new(), Vec::new(), 0);
             new_project.state = project_state;//project::REGISTERED;
 
-            let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T, T::ABalance>::new(
+            let mut annual_report = annual_report::AnnualReportStruct::<T::AccountId, T::Moment, T::ABalance>::new(
                 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
                 cc_count, 
                 Timestamp::<T>::get(),

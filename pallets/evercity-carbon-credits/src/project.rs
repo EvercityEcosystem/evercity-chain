@@ -62,7 +62,7 @@ pub struct ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq 
     bond_id: Option<BondId>,
 }
 
-impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq + Clone, Moment: pallet_timestamp::Config, Balance: Clone {
+impl<AccountId, Moment, Balance> ProjectStruct<AccountId, Moment, Balance> where AccountId: PartialEq + Clone, Balance: Clone {
     /// constructor for project
     pub fn new(owner: AccountId, id: u32, standard: Standard, file_id: Option<FileId>) -> Self {
         ProjectStruct{
