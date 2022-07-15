@@ -325,6 +325,12 @@ impl pallet_evercity_bonds::Config for Runtime {
     type OnAddBond = ();
 }
 
+pub use pallet_evercity_carbon_credits;
+impl pallet_evercity_carbon_credits::Config for Runtime {
+    type Event = Event;
+    type Randomness = RandomnessCollectiveFlip;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -344,7 +350,7 @@ construct_runtime!(
 		EvercityAccounts: pallet_evercity_accounts,
 		EvercityFilesign: pallet_evercity_filesign,
 		Evercity: pallet_evercity_bonds,
-
+		EvercityCarbonCredits: pallet_evercity_carbon_credits,
 	}
 );
 
