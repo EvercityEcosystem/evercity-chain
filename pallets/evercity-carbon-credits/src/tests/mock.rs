@@ -22,17 +22,19 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{ Module, Call, Config, Storage, Event<T> },
-        Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		CarbonCredits: pallet_carbon_credits::{ Module, Call, Storage, Event<T> },
-		EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Event<T> },
-		Timestamp: pallet_timestamp::{ Module, Call, Storage, Inherent},
-        Assets: pallet_assets::{ Module, Call, Storage, Event<T> },
-        EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-        EvercityBonds: pallet_evercity_bonds::{Module, Call, Storage, Event<T>},
+		System: frame_system::{ Pallet, Call, Config, Storage, Event<T> },
+        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		CarbonCredits: pallet_carbon_credits::{ Pallet, Call, Storage, Event<T> },
+		EvercityAccounts: pallet_evercity_accounts::{ Pallet, Call, Storage, Event<T> },
+		Timestamp: pallet_timestamp::{ Pallet, Call, Storage, Inherent},
+        Assets: pallet_assets::{ Pallet, Call, Storage, Event<T> },
+        EvercityFilesign: pallet_evercity_filesign::{ Pallet, Call, Storage, Event<T> },
+        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
+        EvercityBonds: pallet_evercity_bonds::{Pallet, Call, Storage, Event<T>},
 	}
 );
+
+impl pallet_randomness_collective_flip::Config for TestRuntime {}
 
 const DEFAULT_DAY_DURATION: u32 = 60; // 86400; seconds in 1 DAY
 
@@ -56,7 +58,7 @@ impl pallet_evercity_bonds::Config for TestRuntime {
 type AccountId = u64;
 
 impl frame_system::Config for TestRuntime {
-	type BaseCallFilter = ();
+	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -78,6 +80,8 @@ impl frame_system::Config for TestRuntime {
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+    type OnSetCode = ();
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
 impl pallet_carbon_credits::Config for TestRuntime {
@@ -109,7 +113,9 @@ parameter_types! {
 
 impl pallet_balances::Config for TestRuntime {
     type Balance = Balance;
-    type Event = Event;
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
+     type Event = Event;
     type DustRemoval = ();
     type ExistentialDeposit = ExistentialDeposit;
     type AccountStore = System;
@@ -263,9 +269,9 @@ pub fn get_test_bond(carbon_metadata: pallet_evercity_bonds::bond::CarbonUnitsMe
         },
 
         issuer: 0,
-        manager: 0,
-        auditor: 0,
-        impact_reporter: 0,
+        manager: None,
+        auditor: None,
+        impact_reporter: None,
 
         issued_amount: 0,
         booking_start_date: Default::default(),

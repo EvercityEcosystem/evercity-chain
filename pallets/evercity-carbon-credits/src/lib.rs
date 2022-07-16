@@ -16,7 +16,6 @@ pub mod tests;
 use sp_std::{prelude::*};
 use frame_support::{
     dispatch::{
-        DispatchResult,
         Vec,
     },
     traits::UnfilteredDispatchable,
@@ -1785,7 +1784,8 @@ pub mod pallet {
         ) -> DispatchResult {
             let new_carbon_credits_holder_source = <T::Lookup as StaticLookup>::unlookup(account_id.clone());
             let origin = frame_system::RawOrigin::Signed(account_id).into();
-            let mint_call = pallet_evercity_assets::Call::<T>::mint(asset_id, new_carbon_credits_holder_source, cc_amount);
+            let mint_call = pallet_evercity_assets::Call::<T>::mint 
+                {id: asset_id, beneficiary: new_carbon_credits_holder_source, amount: cc_amount};
             let _ = mint_call.dispatch_bypass_filter(origin);
             <CarbonCreditPassportRegistry<T>>::insert(asset_id, CarbonCreditsPassport::new(asset_id, fake_project_id, 1));
             Ok(())

@@ -38,11 +38,11 @@ pub(crate) fn create_annual_report_file(account: u64) -> FileId {
 }
 
 /// Return tuple -> (project, project_id, project_owner)
-pub(crate) fn get_registerd_project_and_owner_gold_standard() -> (ProjectStruct<u64, TestRuntime, CCAmount>, ProjectId, u64) {
+pub(crate) fn get_registerd_project_and_owner_gold_standard() -> (ProjectStruct<u64, u64, CCAmount>, ProjectId, u64) {
     get_project_and_owner_and_custom_signers(assign_project_mock_users_required_signers_gold_standard)
 }
 
-pub(crate) fn get_project_and_owner_and_custom_signers<F>(sign_func: F) -> (ProjectStruct<u64, TestRuntime, CCAmount>, ProjectId, u64) where F: Fn(ProjectId) {
+pub(crate) fn get_project_and_owner_and_custom_signers<F>(sign_func: F) -> (ProjectStruct<u64, u64, CCAmount>, ProjectId, u64) where F: Fn(ProjectId) {
     let owner = ROLES[1].0;
     let auditor = ROLES[2].0;
     let standard_acc = ROLES[3].0;
@@ -62,11 +62,11 @@ pub(crate) fn get_project_and_owner_and_custom_signers<F>(sign_func: F) -> (Proj
 }
 
 /// Return tuple -> (project, project_id, project_owner)
-pub(crate) fn full_sign_annual_report_gold_standard() -> (ProjectStruct<u64, TestRuntime, CCAmount>, ProjectId, u64) {
+pub(crate) fn full_sign_annual_report_gold_standard() -> (ProjectStruct<u64, u64, CCAmount>, ProjectId, u64) {
     get_annual_report_and_owner_custom_signers(assign_annual_report_mock_users_required_signers_gold_standard)
 }
 
-pub(crate) fn get_annual_report_and_owner_custom_signers<F>(sign_func: F) -> (ProjectStruct<u64, TestRuntime, CCAmount>, ProjectId, u64) where F: Fn(ProjectId) {
+pub(crate) fn get_annual_report_and_owner_custom_signers<F>(sign_func: F) -> (ProjectStruct<u64, u64, CCAmount>, ProjectId, u64) where F: Fn(ProjectId) {
     let (project, proj_id, owner) = get_registerd_project_and_owner_gold_standard();
     let auditor = ROLES[2].0;
     let standard_acc = ROLES[3].0;

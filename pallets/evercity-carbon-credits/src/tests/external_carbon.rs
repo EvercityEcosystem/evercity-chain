@@ -21,7 +21,7 @@ fn setup_blocks(blocks: u64) {
 
     for i in 1..(blocks + 1) {
         System::reset_events();
-        System::initialize(&i, &parent_hash, &Default::default(), Default::default());
+        System::initialize(&i, &parent_hash, &Default::default());
 
         let header = System::finalize();
         parent_hash = header.hash();
@@ -34,7 +34,7 @@ fn random_batch_id_ok() {
     new_test_ext().execute_with(|| {
         setup_blocks(38);
         let acc = 4;
-        <frame_system::Module<TestRuntime>>::set_extrinsic_index(1);
+        <frame_system::Pallet<TestRuntime>>::set_extrinsic_index(1);
         let rnd = CarbonCredits::get_random_batch_id(&acc);
         assert!(rnd.len() == 32);
         assert_eq!(&rnd[0..13], "EVERCITY-1.0-".as_bytes());
@@ -52,7 +52,7 @@ fn it_works_create_batch_asset() {
         assert_ok!(CarbonCredits::external_create_batch_asset(Origin::signed(acc)));
         let event = System::events().pop().unwrap().event;
         let batch_id = CarbonCredits::get_random_batch_id(&acc);
-        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
+        assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
 
         let asset = CarbonCredits::batch_asset(batch_id).unwrap();
         assert_eq!(acc, asset.owner);
@@ -73,7 +73,7 @@ fn it_works_update_batch_asset() {
         assert_ok!(CarbonCredits::external_create_batch_asset(Origin::signed(acc)));
         let event = System::events().pop().unwrap().event;
         let batch_id = CarbonCredits::get_random_batch_id(&acc);
-        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
+        assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetCreated(acc, batch_id)), event);
 
         let asset = CarbonCredits::batch_asset(batch_id).unwrap();
         assert_eq!(acc, asset.owner);
@@ -81,7 +81,7 @@ fn it_works_update_batch_asset() {
         assert_ok!(CarbonCredits::external_update_batch_asset(Origin::signed(acc), batch_id, RegistryType::Cercarbono,
             external_project_id.clone(), Some(vintage_name.clone()), serial_number.clone(), amount));
         let event = System::events().pop().unwrap().event;
-        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetUpdated(batch_id)), event);
+        assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetUpdated(batch_id)), event);
         let asset = CarbonCredits::batch_asset(batch_id).unwrap();
         assert_eq!(acc, asset.owner);
         assert_eq!(BatchStatus::AWAITING_VERIFICATION, asset.status);
@@ -122,7 +122,7 @@ fn create_update_batch_asset() -> BatchAssetId {
     assert_ok!(CarbonCredits::external_create_batch_asset(Origin::signed(ASSET_OWNER)));
     let event = System::events().pop().unwrap().event;
     let batch_id = CarbonCredits::get_random_batch_id(&ASSET_OWNER);
-    assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetCreated(ASSET_OWNER, batch_id)), event);
+    assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetCreated(ASSET_OWNER, batch_id)), event);
 
     let asset = CarbonCredits::batch_asset(batch_id).unwrap();
     assert_eq!(ASSET_OWNER, asset.owner);
@@ -142,7 +142,7 @@ fn create_full_batch_asset() -> BatchAssetId {
     assert_eq!(uri, asset.uri);
     assert_eq!(hash.clone(), asset.ipfs_hash);
     let event = System::events().pop().unwrap().event;
-    assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetAddedIpfsLink(batch_id.clone(), hash)), event);
+    assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetAddedIpfsLink(batch_id.clone(), hash)), event);
     batch_id
 }
 
@@ -158,7 +158,7 @@ fn it_works_add_ipfs_link() {
         assert_eq!(uri, asset.uri);
         assert_eq!(hash.clone(), asset.ipfs_hash);
         let event = System::events().pop().unwrap().event;
-        assert_eq!(Event::pallet_carbon_credits(crate::Event::BatchAssetAddedIpfsLink(batch_id, hash)), event);
+        assert_eq!(Event::CarbonCredits(crate::Event::BatchAssetAddedIpfsLink(batch_id, hash)), event);
     });
 }
 

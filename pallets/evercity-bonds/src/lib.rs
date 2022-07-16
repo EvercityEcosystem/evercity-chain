@@ -2181,5 +2181,89 @@ pub mod pallet {
                 bond_fund,
             }
         }
+
+        #[cfg(debug_assertions)]
+        pub fn create_test_finished_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
+            let now = Timestamp::<T>::get();
+            let item = BondStruct {
+                    inner,
+                    creation_date: now,
+                    issuer,
+                    state: BondState::FINISHED, 
+                    manager: None,
+                    auditor: None,
+                    impact_reporter: None,
+                    issued_amount: 0,
+                    booking_start_date: Default::default(),
+                    active_start_date: Default::default(),
+                    bond_debit: 0, 
+                    bond_credit: 0,
+                    coupon_yield: 0,
+                    nonce: 0,
+            };
+            BondRegistry::<T>::insert(&bond_id, item);
+            Ok(().into())
+        }
+    
+        #[cfg(debug_assertions)]
+        pub fn create_test_active_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
+            let now = Timestamp::<T>::get();
+            let item = BondStruct {
+                    inner,
+                    creation_date: now,
+                    issuer,
+                    state: BondState::ACTIVE, 
+                    manager: None,
+                    auditor: None,
+                    impact_reporter: None,
+                    issued_amount: 0,
+                    booking_start_date: Default::default(),
+                    active_start_date: Default::default(),
+                    bond_debit: 0, 
+                    bond_credit: 0,
+                    coupon_yield: 0,
+                    nonce: 0,
+            };
+            BondRegistry::<T>::insert(&bond_id, item);
+            Ok(().into())
+        }
+    
+        #[cfg(debug_assertions)]
+        pub fn create_test_not_finished_bond(issuer: T::AccountId, bond_id: BondId, inner: BondInnerStructOf<T>) -> Result<(), ()> {
+            let now = Timestamp::<T>::get();
+            let item = BondStruct {
+                    inner,
+                    creation_date: now,
+                    issuer,
+                    manager: None,
+                    auditor: None,
+                    impact_reporter: None,
+                    issued_amount: 0,
+                    booking_start_date: Default::default(),
+                    active_start_date: Default::default(),
+                    state: BondState::PREPARE, 
+                    bond_debit: 0, 
+                    bond_credit: 0,
+                    coupon_yield: 0,
+                    nonce: 0,
+            };
+            BondRegistry::<T>::insert(&bond_id, item);
+            Ok(().into())
+        }
+    
+        #[cfg(debug_assertions)]
+        pub fn add_test_bond_unit_packages(bond_id: &BondId, units: Vec<(T::AccountId, BondUnitAmount)>) {
+            for (acc, unit_amount) in units {
+                BondUnitPackageRegistry::<T>::mutate(bond_id, &acc, |packages|{
+                    packages.push(
+                        BondUnitPackage{
+                             bond_units: unit_amount,
+                             acquisition: 0,
+                             coupon_yield: 0,
+                        }
+                    );
+                })
+            }
+        }
     }
 }

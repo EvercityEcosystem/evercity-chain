@@ -350,17 +350,12 @@ fn it_fails_sign_project_not_an_owner_role_gold_standard() {
         let _ = CarbonCredits::assign_project_signer(Origin::signed(owner), ROLES[0].0, MASTER_ROLE_MASK, 1);
         let _ = CarbonCredits::assign_project_signer(Origin::signed(owner), ROLES[4].0, CC_INVESTOR_ROLE_MASK, 1);
 
-
-        ROLES.iter()
-            .filter(|x| x.1 != CC_PROJECT_OWNER_ROLE_MASK)
-            .map(|x| x.0)
-            .for_each(|x| {
-                let owner_sign_result = CarbonCredits::sign_project(Origin::signed(x), 1);
-                assert_noop!(
-                    owner_sign_result,
-                    RuntimeError::AccountNotOwner
-                );
-            });
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[0].0), 1), RuntimeError::AccountNotOwner);
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[2].0), 1), RuntimeError::AccountNotOwner);
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[3].0), 1), RuntimeError::AccountNotOwner);
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[4].0), 1), RuntimeError::AccountNotOwner);
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[5].0), 1), RuntimeError::AccountNotOwner);
+        assert_noop!(CarbonCredits::sign_project(Origin::signed(ROLES[6].0), 1), RuntimeError::IncorrectProjectSigner);
     });
 }
 
@@ -627,7 +622,7 @@ fn it_works_for_create_new_project_deposit_event_gold_standard() {
         let last_event = last_event().unwrap();
         crate::tests::helpers::assign_project_mock_users_required_signers_gold_standard(1);
 
-        let check_event = Event::pallet_carbon_credits(crate::Event::ProjectCreated(owner, 1));
+        let check_event = Event::CarbonCredits(crate::Event::ProjectCreated(owner, 1));
 
         assert_eq!(check_event, last_event);
     });
@@ -647,10 +642,10 @@ fn it_works_sign_project_deposit_events_gold_standard() {
         crate::tests::helpers::assign_project_mock_users_required_signers_gold_standard(1);
 
         let tuple_vec = vec![
-            (owner, Event::pallet_carbon_credits(crate::Event::ProjectSubmited(owner, 1))),
-            (auditor, Event::pallet_carbon_credits(crate::Event::ProjectSignedByAduitor(auditor, 1))),
-            (standard_acc, Event::pallet_carbon_credits(crate::Event::ProjectSignedByStandard(standard_acc, 1))),
-            (registry, Event::pallet_carbon_credits(crate::Event::ProjectSignedByRegistry(registry, 1)))
+            (owner, Event::CarbonCredits(crate::Event::ProjectSubmited(owner, 1))),
+            (auditor, Event::CarbonCredits(crate::Event::ProjectSignedByAduitor(auditor, 1))),
+            (standard_acc, Event::CarbonCredits(crate::Event::ProjectSignedByStandard(standard_acc, 1))),
+            (registry, Event::CarbonCredits(crate::Event::ProjectSignedByRegistry(registry, 1)))
         ];
 
         // sign here:
