@@ -115,7 +115,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		ChainType::Local,
 		move || {
 			let master_account_id: AccountId =
-                Ss58Codec::from_ss58check("5DJBx8EcrJqWqDQDe3xPd7Bw2zL3obvHigdLZKVGDHx7GRwW")
+                Ss58Codec::from_ss58check("5Fc6su9eJgm18K1LT2V5KnqfhaW9z9MmLszG5YvTzcVJ7sVL")
                     .unwrap();
 
 			testnet_genesis(
@@ -123,7 +123,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				// Initial PoA authorities
 				vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
 				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				master_account_id.clone(),
 				// Pre-funded accounts
                 vec![(master_account_id.clone(), MASTER_ROLE_MASK, 0)],
 				true,

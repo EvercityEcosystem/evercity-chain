@@ -4,7 +4,7 @@ edition = '2021'
 license = 'Apache-2.0'
 name = 'evercity-runtime'
 repository = 'https://github.com/EvercityEcosystem/evercity-chain'
-version = '0.2.1'
+version = '0.3.0'
 resolver = "2"
 
 [package.metadata.docs.rs]
