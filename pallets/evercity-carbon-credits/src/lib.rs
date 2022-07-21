@@ -1173,6 +1173,7 @@ pub mod pallet {
             ensure!(passport.is_some(), Error::<T>::PassportNotExist);
 
             // purge expired lots
+            // @TODO restrain iteration amount to some boundary
             let now = Timestamp::<T>::get();
 			CarbonCreditLotRegistry::<T>::mutate_exists(&credits_holder, asset_id, 
 				|lots| match lots {
@@ -1239,6 +1240,7 @@ pub mod pallet {
 			}
 
 			// purge expired lots
+            // @TODO restrain iteration amount to some boundary
 			CarbonCreditLotRegistry::<T>::mutate_exists(&caller, asset_id, 
 				|lots| match lots {
                     None => (),
@@ -1337,6 +1339,7 @@ pub mod pallet {
                                 )?;
                                 
                                 // purge expired lots
+                                // @TODO restrain iteration amount to some boundary
                                 if !lots.is_empty() {
                                     lots.retain(|item| !item.is_expired(now));
                                 }

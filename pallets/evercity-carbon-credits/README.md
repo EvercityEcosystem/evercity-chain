@@ -46,10 +46,13 @@ Entity for registering carbon credits as assets
 
 Entity for granting certificates for carbon emissions offsetting using carbon credits
 
- ### 4.6 CarbonCreditsPackageLot 
+### 4.6 CarbonCreditsPackageLot 
 
- Struct representing pack of carbon credits for sale.
- Can include target bearer (to sell only to them). Lot has deadline, after whitch selling is impossible.
+Entity representing pack of carbon credits for sale.
+
+### 4.7 Batch Assets
+
+Entity for representing carbon credits from external projects transferred on Evercity chain.
 
 
 
@@ -57,10 +60,11 @@ Entity for granting certificates for carbon emissions offsetting using carbon cr
 
 ### 5.1 Roles
 
-The system of roles in Evercity is presented in Evercity accounts pallet https://github.com/EvercityEcosystem/evercity-accounts
+The system of roles in Evercity is presented in Evercity accounts pallet https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts
 
 - CC_PROJECT_OWNER: the role which can create carbon projects, annual reports and issue carbon credits
 - CC_STANDARD; CC_AUDITOR; CC_REGISTRY: the roles which sign project documentation and annual reports (the order of signatures is determined by Carbon Standard entity)
+- MANAGER: manages external carbon credits minting on chain.
 
 ### 5.2 Basic scenario
 
@@ -144,12 +148,14 @@ Types are described in the types.json file
 Add to runtime cargo.toml
 
 ```toml
-pallet-evercity-carbon-credits = { default-features = false, version = '0.2.0', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
-pallet-evercity-filesign = { default-features = false, version = '0.1.4', git = 'https://github.com/EvercityEcosystem/evercity-chain'}
-pallet-evercity-assets = { default-features = false, version = '0.1.0', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
-pallet-evercity-accounts = { default-features = false, version = '0.1.8', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
-pallet-evercity-bonds ={ default-features = false, version = '0.1.3', git = 'https://github.com/EvercityEcosystem/evercity-chain' }
-pallet-randomness-collective-flip = { default-features = false, version = '3.0.0' }
+# Local Dependencies
+pallet-evercity-assets = { default-features = false, version = "0.2.0", git = "https://github.com/EvercityEcosystem/evercity-chain.git"}
+pallet-evercity-accounts = { default-features = false, version = "0.2.0", git = "https://github.com/EvercityEcosystem/evercity-chain.git"}
+pallet-evercity-filesign = { default-features = false, version = "0.2.0",  git = "https://github.com/EvercityEcosystem/evercity-chain.git"}
+pallet-evercity-bonds = { default-features = false, version = "0.2.0", git = "https://github.com/EvercityEcosystem/evercity-chain.git"}
+pallet-evercity-carbon-credits = { default-features = false, version = "0.3.0", git = "https://github.com/EvercityEcosystem/evercity-chain.git"}
+
+pallet-randomness-collective-flip = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.25" }
 #...
 [features]
 default = ['std']
@@ -201,7 +207,7 @@ parameter_types! {
     pub const AssetDepositBase: Balance = 0;
     pub const AssetDepositPerZombie: Balance = 0;
     pub const ApprovalDeposit: Balance = 0;
-    pub const StringLimit: u32 = 50;
+    pub const StringLimit: u32 = 150;
     pub const MetadataDepositBase: Balance = 0;
     pub const MetadataDepositPerByte: Balance = 0;
 }
@@ -233,13 +239,11 @@ construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic
     {
         ...
-        EvercityCarbonCredits: pallet_evercity_carbon_credits::{ Module, Call, Storage, Event<T>},
-        ...
-        // Add dependency pallets:
-        Evercity: pallet_evercity_bonds::{Module, Call, Storage, Event<T>},
-        EvercityAccounts: pallet_evercity_accounts::{ Module, Call, Storage, Config<T>, Event<T>},
-        EvercityFilesign: pallet_evercity_filesign::{ Module, Call, Storage, Event<T> },
-        EvercityAssets: pallet_evercity_assets::{ Module, Storage, Event<T> },
+        EvercityAssets: pallet_evercity_assets,
+		EvercityAccounts: pallet_evercity_accounts,
+		EvercityFilesign: pallet_evercity_filesign,
+		Evercity: pallet_evercity_bonds,
+		EvercityCarbonCredits: pallet_evercity_carbon_credits,
 	    ...
     }
 );
