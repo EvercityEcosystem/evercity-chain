@@ -36,19 +36,19 @@ Evercity pallet implements actions for three types of entities:
 
 Each Evercity account can accommodate one or more roles from the bond and carbon credit pallets. The account only has access to the functions available to its role(s). The approximate functions of each role in the project are as follows:
 
-Bond roles
-
-- MASTER: the administrative role that can create new accounts and assign roles to them. 
-- BOND_ARRANGER: This role regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
-- CUSTODIAN: the role which can mint and burn the main platform token. This role is assigned to the public account of the partner bank, which exchanges USD --> EVERUSD and EVERUSD --> USD.
+- MASTER: the administrative role that can assign roles to accounts
+- CUSTODIAN:  the role which can mint and burn the main platform token. This role is assigned to the public account of the partner bank, which exchanges USD --> EVERUSD and EVERUSD --> USD.
 - ISSUER: the role which can create bonds. An account with the ISSUER role issues a bond to fund a sustainability-aligned project. After receiving funds from the sale of Bond Units, the ISSUER undertakes to provide data on the impact of the project, which influences the coupon rate that should be paid to the investor. The ISSUER is obliged to replenish the bond balance with the amount necessary to cover its financial obligations.
 - INVESTOR: accounts with the INVESTOR role use the EVERUSD token to buy Bond Units and sell them on the secondary market. Each billing period Investor receives a coupon income proportional to its balances of various Bond Units
-- AUDITOR: these accounts check and confirm the environmental impact data sent by Issuer, as well as certify the documents uploaded to the platform
-- MANAGER: the task of accounts with this role is to help Issuers work with projects, verify data and prepare documents
-
-Carbon credit roles
-- CC_PROJECT_OWNER: the role which can create carbon projects, annual reports and issue carbon credits.
-- CC_AUDITOR; CC_REGISTRY: the roles which sign project documentation and annual reports (the order of signatures is determined by Carbon Standard entity).
+- AUDITOR: these accounts check and confirm the environmental impact data sent by Issuer, as well as certify the documents uploaded to the platform.
+- MANAGER: the task of accounts with this role is to help Issuers work with projects, verify data and prepare documents. Also manager verifies batch assets (external carbon credits) and mints carbon credits from batch asset.
+- IMPACT_REPORTER: send impact reports
+- BOND_ARRANGER: This role regulates the launch of bonds to the market, making the final decision on whether the bond meets the requirements.
+- CC_PROJECT_OWNER: the role which can create carbon projects, annual report and issue caebon credits
+- CC_AUDITOR: the role to audit and sign project documentation and annual reports
+- CC_STANDARD: the role to verify and sign project documentation and annual reports according to carbon credits standard
+- CC_INVESTOR: carbon credits investor
+- CC_REGISTRY: the role to verify and sign project documentation and annual reports
 
 
 ### 4.2 Account balances and operations 
@@ -91,7 +91,7 @@ You can find more info about carbon credits flow in this [documentation](https:/
 - Project developer’s account,
 - Investors’ accounts (exact addresses are not known yet).
 2. The bond undergoes its standard flow as described [here](https://github.com/EvercityEcosystem/smart-sustainable-bond). 
-3. After the bond reaches FINISHED state, carbon project can be structured based on the flow described [here](https://github.com/EvercityEcosystem/carbon-credits). During the structuring, a corresponding bond ticker is also indicated. 
+3. After the bond reaches FINISHED state, carbon project can be structured based on the flow described [here](https://github.com/EvercityEcosystem/evercity-chain/blob/master/pallets/evercity-carbon-credits/README.md). During the structuring, a corresponding bond ticker is also indicated. 
 4. Carbon project is approved by CC_AUDITOR and CC_REGISTRY. 
 5. The issuer creates a report where he indicates a number of issued carbon credits (based on the bond project impact), as well as their unique ticker. The report is also approved by CC_AUDITOR and CC_REGISTRY. 
 6. Approved report enables issuance of Carbon Credit units. 

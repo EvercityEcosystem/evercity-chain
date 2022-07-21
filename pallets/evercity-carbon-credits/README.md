@@ -60,7 +60,7 @@ Entity for representing carbon credits from external projects transferred on Eve
 
 ### 5.1 Roles
 
-The system of roles in Evercity is presented in Evercity accounts pallet https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts
+The system of roles in Evercity is presented in Evercity [accounts pallet](https://github.com/EvercityEcosystem/evercity-chain/tree/master/pallets/evercity-accounts)
 
 - CC_PROJECT_OWNER: the role which can create carbon projects, annual reports and issue carbon credits
 - CC_STANDARD; CC_AUDITOR; CC_REGISTRY: the roles which sign project documentation and annual reports (the order of signatures is determined by Carbon Standard entity)
@@ -240,10 +240,10 @@ construct_runtime!(
     {
         ...
         EvercityAssets: pallet_evercity_assets,
-		EvercityAccounts: pallet_evercity_accounts,
-		EvercityFilesign: pallet_evercity_filesign,
-		Evercity: pallet_evercity_bonds,
-		EvercityCarbonCredits: pallet_evercity_carbon_credits,
+        EvercityAccounts: pallet_evercity_accounts,
+        EvercityFilesign: pallet_evercity_filesign,
+        Evercity: pallet_evercity_bonds,
+        EvercityCarbonCredits: pallet_evercity_carbon_credits,
 	    ...
     }
 );

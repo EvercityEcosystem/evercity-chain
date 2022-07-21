@@ -39,7 +39,7 @@ Each Evercity account can can accommodate one or more roles:
 
 ### 4.1 Runtime methods
 
-Documented in `#[pallet::call]`.
+Documented in [`#[pallet::call]`](https://github.com/EvercityEcosystem/evercity-chain/blob/428803ed7c71c90885c3c09f29aa628bf7e81551/pallets/evercity-accounts/src/lib.rs#L33).
 
 ### 4.2 Add to runtime cargo.toml
 
